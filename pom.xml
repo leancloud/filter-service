@@ -11,7 +11,7 @@
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>A filter service for Java.</description>
-    <url>https://github.com/leancloud</url>
+    <url>https://github.com/leancloud/filter-service</url>
 
     <licenses>
         <license>
@@ -34,12 +34,12 @@
         <module>filter-service-metrics</module>
     </modules>
 
-    <!--    <scm>-->
-    <!--        <connection>scm:git:git://github.com/ylgrgyq/reservoir.git</connection>-->
-    <!--        <developerConnection>scm:git:ssh://github.com/ylgrgyq/reservoir.git</developerConnection>-->
-    <!--        <url>http://github.com/ylgrgyq/reservoir/tree/master</url>-->
-    <!--        <tag>HEAD</tag>-->
-    <!--    </scm>-->
+    <scm>
+        <connection>scm:git:git://github.com/leancloud/filter-service.git</connection>
+        <developerConnection>scm:git:ssh://github.com/leancloud/filter-service.git</developerConnection>
+        <url>http://github.com/leancloud/filter-service/tree/master</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
