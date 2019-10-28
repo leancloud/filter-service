@@ -2,10 +2,12 @@ package cn.leancloud.filter.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.linecorp.armeria.common.HttpResponse;
 import com.linecorp.armeria.common.HttpStatus;
 import com.linecorp.armeria.common.MediaType;
+import com.linecorp.armeria.server.Service;
 import com.linecorp.armeria.server.annotation.*;
 
 import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkNotNull;
@@ -77,7 +79,7 @@ public final class BloomFilterHttpService {
             filter.set(testingValue.textValue());
         }
 
-        return createCheckFilterResponse(contain);
+        return BooleanNode.valueOf(contain);
     }
 
     @Post("/{name}/check")
@@ -88,8 +90,8 @@ public final class BloomFilterHttpService {
         checkParameter("value", testingValue.isTextual(), "expect string type");
 
         final var filter = bloomFilterManager.safeGetFilter(name);
-        final var ret = filter.mightContain(testingValue.textValue());
-        return createCheckFilterResponse(ret);
+        final var contain = filter.mightContain(testingValue.textValue());
+        return BooleanNode.valueOf(contain);
     }
 
     @Post("/{name}/multi-check")
@@ -111,9 +113,8 @@ public final class BloomFilterHttpService {
     public JsonNode set(@Param String name,
                         @RequestObject JsonNode req)
             throws FilterNotFoundException {
-        final var testingValue = checkNotNull("value", req.get("value").toString());
+        final var testingValue = checkNotNull("value", req.get("value")).textValue();
         final var filter = bloomFilterManager.safeGetFilter(name);
-
         filter.set(testingValue);
         return EMPTY_RESPONSE;
     }
@@ -123,7 +124,6 @@ public final class BloomFilterHttpService {
                              @RequestObject JsonNode req)
             throws FilterNotFoundException {
         final var values = checkNotNull("values", req.get("values"));
-        checkNotNull("values", values);
         checkParameter("values", values.isArray(), "expect Json array");
 
         final var filter = bloomFilterManager.safeGetFilter(name);
@@ -140,12 +140,4 @@ public final class BloomFilterHttpService {
         bloomFilterManager.remove(name);
         return HttpResponse.of(HttpStatus.OK);
     }
-
-    private ObjectNode createCheckFilterResponse(boolean mightContain) {
-        final var resp = MAPPER.createObjectNode();
-        resp.put("mightContain", mightContain);
-        return MAPPER.createObjectNode().set("result", resp);
-    }
-
-
 }

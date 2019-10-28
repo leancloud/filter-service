@@ -1,6 +1,5 @@
 package cn.leancloud.filter.service;
 
-
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Strings.lenientFormat;
@@ -354,5 +353,4 @@ public final class ServiceParameterPreconditions {
 
         return obj;
     }
-
 }

@@ -5,8 +5,6 @@ import org.junit.Test;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,23 +43,13 @@ public class GuavaBloomFilterTest {
     }
 
     @Test
-    public void testToJson() {
+    public void testToJson() throws Exception {
         final var config = new ExpirableBloomFilterConfig(testingFilterName);
-        final var filter = testingFactory.createFilter(config);
+        final var expectedFilter = testingFactory.createFilter(config);
         final var mapper = new ObjectMapper();
-        final var expectObjectNode = mapper.createObjectNode();
-        expectObjectNode.put("fpp", filter.fpp());
-        expectObjectNode.put("name", testingFilterName);
-        expectObjectNode.put("expectedInsertions", filter.expectedInsertions());
-        expectObjectNode.put("created", formatInstant(filter.created()));
-        expectObjectNode.put("expiration", formatInstant(filter.expiration()));
 
-        final var node = new ObjectMapper().valueToTree(filter);
-        assertThat(node).isEqualTo(expectObjectNode);
-    }
-
-    private String formatInstant(Instant time) {
-        return ZonedDateTime.ofInstant(time, ZoneOffset.UTC)
-                .format(GuavaBloomFilter.InstantSerializer.ISO_8601_FORMATTER);
+        final var json = mapper.valueToTree(expectedFilter).toString();
+        final var filter = new ObjectMapper().readerFor(GuavaBloomFilter.class).readValue(json);
+        assertThat(filter).isEqualTo(expectedFilter);
     }
 }
