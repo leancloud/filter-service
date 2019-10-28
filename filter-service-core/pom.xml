@@ -56,6 +56,10 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+        </dependency>
         <!-- Test dependencies -->
         <dependency>
             <groupId>org.assertj</groupId>
