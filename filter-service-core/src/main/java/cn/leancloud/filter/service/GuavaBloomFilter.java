@@ -92,7 +92,6 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
         return name;
     }
 
-    @Override
     @JsonSerialize(using = InstantSerializer.class)
     @JsonDeserialize(using = InstantDerializer.class)
     public Instant created() {
@@ -119,8 +118,8 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
     }
 
     @Override
-    public void set(String value) {
-        filter.put(value);
+    public boolean set(String value) {
+        return filter.put(value);
     }
 
     @Override

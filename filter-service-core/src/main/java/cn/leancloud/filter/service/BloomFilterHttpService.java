@@ -12,6 +12,9 @@ import com.linecorp.armeria.server.annotation.*;
 import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkNotNull;
 import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkParameter;
 
+/**
+ * An http service powered by armeria to expose RESTFul APIs for Bloom filter operations.
+ */
 @ExceptionHandler(GlobalExceptionHandler.class)
 public final class BloomFilterHttpService {
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -72,12 +75,7 @@ public final class BloomFilterHttpService {
         checkParameter("value", testingValue.isTextual(), "expect string type");
 
         final var filter = bloomFilterManager.getOrCreateDefaultFilter(name);
-        final var contain = filter.mightContain(testingValue.textValue());
-
-        if (!contain) {
-            filter.set(testingValue.textValue());
-        }
-
+        final var contain = !filter.set(testingValue.textValue());
         return BooleanNode.valueOf(contain);
     }
 

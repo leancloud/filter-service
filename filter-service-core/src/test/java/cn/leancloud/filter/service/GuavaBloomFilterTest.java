@@ -38,7 +38,7 @@ public class GuavaBloomFilterTest {
         final var testingValue = "SomeValue";
         final var filter = testingFactory.createFilter(config);
         assertThat(filter.mightContain(testingValue)).isFalse();
-        filter.set(testingValue);
+        assertThat(filter.set(testingValue)).isTrue();
         assertThat(filter.mightContain(testingValue)).isTrue();
     }
 
