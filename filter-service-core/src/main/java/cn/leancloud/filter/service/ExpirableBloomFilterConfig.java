@@ -6,7 +6,7 @@ import java.util.Objects;
 import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkParameter;
 
 final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<ExpirableBloomFilterConfig> {
-    private static final Duration DEFAULT_VALID_PERIOD = Duration.ofDays(1);
+    static final Duration DEFAULT_VALID_PERIOD = Duration.ofDays(1);
 
     private Duration validPeriod;
 
@@ -15,7 +15,7 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
         this.validPeriod = DEFAULT_VALID_PERIOD;
     }
 
-    Duration getValidPeriod() {
+    Duration validPeriod() {
         return validPeriod;
     }
 
@@ -37,12 +37,12 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         final ExpirableBloomFilterConfig that = (ExpirableBloomFilterConfig) o;
-        return getValidPeriod().equals(that.getValidPeriod());
+        return validPeriod().equals(that.validPeriod());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), getValidPeriod());
+        return Objects.hash(super.hashCode(), validPeriod());
     }
 
     @Override

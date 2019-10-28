@@ -16,16 +16,16 @@ public abstract class AbstractBloomFilterConfig<T extends AbstractBloomFilterCon
         this.fpp = DEFAULT_FALSE_POSITIVE_PROBABILITY;
     }
 
-    public String getName() {
+    public String name() {
         return name;
     }
 
-    public int getExpectedInsertions() {
+    public int expectedInsertions() {
         checkNotNull("expectedInsertions", expectedInsertions);
         return expectedInsertions;
     }
 
-    public double getFpp() {
+    public double fpp() {
         checkNotNull("fpp", fpp);
         return fpp;
     }
@@ -59,14 +59,14 @@ public abstract class AbstractBloomFilterConfig<T extends AbstractBloomFilterCon
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final AbstractBloomFilterConfig<?> that = (AbstractBloomFilterConfig<?>) o;
-        return getExpectedInsertions() == that.getExpectedInsertions() &&
-                Double.compare(that.getFpp(), getFpp()) == 0 &&
-                getName().equals(that.getName());
+        return expectedInsertions() == that.expectedInsertions() &&
+                Double.compare(that.fpp(), fpp()) == 0 &&
+                name().equals(that.name());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getExpectedInsertions(), getFpp(), getName());
+        return Objects.hash(expectedInsertions(), fpp(), name());
     }
 
     @Override

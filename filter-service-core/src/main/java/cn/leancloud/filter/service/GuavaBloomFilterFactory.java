@@ -4,9 +4,9 @@ public class GuavaBloomFilterFactory implements BloomFilterFactory<GuavaBloomFil
     @Override
     public GuavaBloomFilter createFilter(ExpirableBloomFilterConfig config) {
         return new GuavaBloomFilter(
-                config.getName(),
-                config.getExpectedInsertions(),
-                config.getFpp(),
-                config.getValidPeriod());
+                config.name(),
+                config.expectedInsertions(),
+                config.fpp(),
+                config.validPeriod());
     }
 }

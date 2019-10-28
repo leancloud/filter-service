@@ -25,9 +25,9 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
     }
 
     @Override
-    public T createFilter(String name, ExpirableBloomFilterConfig config) {
+    public T createFilter(ExpirableBloomFilterConfig config) {
         final var filter = factory.createFilter(config);
-        filterMap.put(name, filter);
+        filterMap.put(config.name(), filter);
 
         notifyBloomFilterCreated(config, filter);
         return filter;

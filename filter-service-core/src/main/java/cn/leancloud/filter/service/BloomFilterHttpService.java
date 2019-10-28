@@ -41,7 +41,7 @@ public final class BloomFilterHttpService {
             config.setValidPeriod(validPeriod.longValue());
         }
 
-        final BloomFilter filter = bloomFilterManager.createFilter(name, config);
+        final BloomFilter filter = bloomFilterManager.createFilter(config);
         return HttpResponse.of(HttpStatus.CREATED,
                 MediaType.JSON_UTF_8,
                 MAPPER.valueToTree(filter).toString());

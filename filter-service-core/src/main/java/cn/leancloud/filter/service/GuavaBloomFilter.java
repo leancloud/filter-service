@@ -27,12 +27,29 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
     private final double fpp;
     private final int expectedInsertions;
 
-    GuavaBloomFilter(String name, int expectedInsertions, double fpp, Duration duration) {
+    GuavaBloomFilter(String name, int expectedInsertions, double fpp, Duration validPeriod) {
+        this(name, expectedInsertions, fpp, Instant.now(), validPeriod);
+    }
+
+    /**
+     * Internal testing usage only.
+     * This constructor can set an arbitrary creation time for the constructed {@code GuavaBloomFilter}.
+     *
+     * @param name               the name for the filter
+     * @param expectedInsertions the number of expected insertions to the constructed {@code GuavaBloomFilter};
+     *                           must be positive
+     * @param fpp                the desired false positive probability (must be positive and less than 1.0)
+     * @param created            the creation time for the constructed {@code GuavaBloomFilter}
+     * @param validPeriod        the valid duration in second for the constructed {@code GuavaBloomFilter}. When
+     *                           time past creation time + validPeriod, the constructed {@code GuavaBloomFilter}
+     *                           will be expired and can not be used any more.
+     */
+    GuavaBloomFilter(String name, int expectedInsertions, double fpp, Instant created, Duration validPeriod) {
         this.name = name;
         this.fpp = fpp;
         this.expectedInsertions = expectedInsertions;
-        this.created = Instant.now();
-        this.expiration = this.created.plus(duration);
+        this.created = created;
+        this.expiration = this.created.plus(validPeriod);
         this.filter = com.google.common.hash.BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8)
                 , expectedInsertions,
                 fpp);
@@ -84,7 +101,7 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
     }
 
     public static class InstantSerializer extends JsonSerializer<Instant> {
-        private static final DateTimeFormatter ISO_8601_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        static final DateTimeFormatter ISO_8601_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 
         @Override
         public void serialize(Instant arg0, JsonGenerator arg1, SerializerProvider arg2) throws IOException {

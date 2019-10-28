@@ -4,13 +4,13 @@ public interface BloomFilterConfig<T extends BloomFilterConfig<T>> {
     int DEFAULT_EXPECTED_INSERTIONS = 1000_000;
     double DEFAULT_FALSE_POSITIVE_PROBABILITY = 0.0001;
 
-    String getName();
+    String name();
 
-    int getExpectedInsertions();
+    int expectedInsertions();
 
     T setExpectedInsertions(int expectedInsertions);
 
-    double getFpp();
+    double fpp();
 
     T setFpp(double fpp);
 }
