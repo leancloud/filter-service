@@ -5,7 +5,7 @@ import picocli.CommandLine.Option;
 
 @Command(name = "filter-service",
         showDefaultValues = true,
-        version = "filter-service v1.0-SNAPSHOT",
+        version = "filter-service v1.0",
         description = "filter-service is a daemon network service which is used to expose bloom filters " +
                 "and operations by RESTFul API.",
         mixinStandardHelpOptions = true)
