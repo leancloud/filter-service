@@ -102,16 +102,16 @@ public final class Bootstrap {
         final BloomFilterManagerImpl<GuavaBloomFilter> bloomFilterManager = new BloomFilterManagerImpl<>(factory);
         bloomFilterManager.addListener(new BloomFilterManagerListener<>() {
             @Override
-            public void onBloomFilterCreated(ExpirableBloomFilterConfig config, GuavaBloomFilter filter) {
-                logger.info("Bloom filter with name: {} was created.", filter.name());
+            public void onBloomFilterCreated(String name, ExpirableBloomFilterConfig config, GuavaBloomFilter filter) {
+                logger.info("Bloom filter with name: {} was created.", name);
             }
 
             @Override
-            public void onBloomFilterRemoved(GuavaBloomFilter filter) {
+            public void onBloomFilterRemoved(String name, GuavaBloomFilter filter) {
                 if (filter.expired()) {
-                    logger.info("Bloom filter with name: {} was purged due to expiration.", filter.name());
+                    logger.info("Bloom filter with name: {} was purged due to expiration.", name);
                 } else {
-                    logger.info("Bloom filter with name: {} was removed.", filter.name());
+                    logger.info("Bloom filter with name: {} was removed.", name);
                 }
             }
         });

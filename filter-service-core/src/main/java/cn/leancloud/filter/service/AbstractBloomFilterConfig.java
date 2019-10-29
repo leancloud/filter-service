@@ -8,16 +8,14 @@ import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkPar
 public abstract class AbstractBloomFilterConfig<T extends AbstractBloomFilterConfig<T>> implements BloomFilterConfig<T> {
     private int expectedInsertions;
     private double fpp;
-    private String name;
 
-    AbstractBloomFilterConfig(String name) {
-        this.name = name;
-        this.expectedInsertions = DEFAULT_EXPECTED_INSERTIONS;
-        this.fpp = DEFAULT_FALSE_POSITIVE_PROBABILITY;
+    AbstractBloomFilterConfig() {
+        this(DEFAULT_EXPECTED_INSERTIONS, DEFAULT_FALSE_POSITIVE_PROBABILITY);
     }
 
-    public String name() {
-        return name;
+    AbstractBloomFilterConfig(int expectedInsertions, double fpp) {
+        this.expectedInsertions = expectedInsertions;
+        this.fpp = fpp;
     }
 
     public int expectedInsertions() {
@@ -60,19 +58,17 @@ public abstract class AbstractBloomFilterConfig<T extends AbstractBloomFilterCon
         if (o == null || getClass() != o.getClass()) return false;
         final AbstractBloomFilterConfig<?> that = (AbstractBloomFilterConfig<?>) o;
         return expectedInsertions() == that.expectedInsertions() &&
-                Double.compare(that.fpp(), fpp()) == 0 &&
-                name().equals(that.name());
+                Double.compare(that.fpp(), fpp()) == 0;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(expectedInsertions(), fpp(), name());
+        return Objects.hash(expectedInsertions(), fpp());
     }
 
     @Override
     public String toString() {
         return "expectedInsertions=" + expectedInsertions +
-                ", fpp=" + fpp +
-                ", name='" + name + '\'';
+                ", fpp=" + fpp;
     }
 }

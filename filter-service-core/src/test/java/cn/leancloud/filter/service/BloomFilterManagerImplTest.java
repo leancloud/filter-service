@@ -29,29 +29,53 @@ public class BloomFilterManagerImplTest {
     }
 
     @Test
-    public void testCreateFilter() {
+    public void testCreateNonExistsFilter() {
         final var validPeriod = 1000;
         final var expectedInsertions = 1000000;
         final var fpp = 0.0001;
-        final var config = new ExpirableBloomFilterConfig(testingFilterName)
-                .setValidPeriod(validPeriod)
-                .setExpectedInsertions(expectedInsertions)
-                .setFpp(fpp);
+        final var config = new ExpirableBloomFilterConfig(expectedInsertions, fpp, validPeriod);
         final var instantBeforeFilterCreate = Instant.now();
-        final var filter = manager.createFilter(config);
+        final var result = manager.createFilter(testingFilterName, config);
+        final var filter = result.getFilter();
 
+        assertThat(result.isCreated()).isTrue();
         assertThat(filter.fpp()).isEqualTo(fpp);
         assertThat(filter.expectedInsertions()).isEqualTo(expectedInsertions);
-        assertThat(filter.name()).isEqualTo(testingFilterName);
         assertThat(filter.expiration()).isEqualTo(filter.created().plus(Duration.ofSeconds(validPeriod)));
         assertThat(filter.created()).isAfter(instantBeforeFilterCreate);
         assertThat(filter.expired()).isFalse();
     }
 
     @Test
+    public void testCreateExistsFilter() {
+        final var config = new ExpirableBloomFilterConfig();
+        final var firstCreateFilterResult = manager.createFilter(testingFilterName, config);
+        final var existsFilter = firstCreateFilterResult.getFilter();
+        assertThat(firstCreateFilterResult.isCreated()).isTrue();
+
+        final var secondCreateFilterResult = manager.createFilter(testingFilterName, config);
+        final var filter = secondCreateFilterResult.getFilter();
+        assertThat(secondCreateFilterResult.isCreated()).isFalse();
+        assertThat(filter).isSameAs(existsFilter);
+    }
+
+    @Test
+    public void testOverwriteExistsFilter() {
+        final var config = new ExpirableBloomFilterConfig();
+        final var firstCreateFilterResult = manager.createFilter(testingFilterName, config);
+        final var existsFilter = firstCreateFilterResult.getFilter();
+        assertThat(firstCreateFilterResult.isCreated()).isTrue();
+
+        final var secondCreateFilterResult = manager.createFilter(testingFilterName, new ExpirableBloomFilterConfig(), true);
+        final var filter = secondCreateFilterResult.getFilter();
+        assertThat(secondCreateFilterResult.isCreated()).isTrue();
+        assertThat(filter).isNotSameAs(existsFilter);
+    }
+
+    @Test
     public void testGetExistsFilter() {
-        final var config = new ExpirableBloomFilterConfig(testingFilterName);
-        final var filter = manager.createFilter(config);
+        final var config = new ExpirableBloomFilterConfig();
+        final var filter = manager.createFilter(testingFilterName, config).getFilter();
         assertThat(manager.getFilter(testingFilterName)).isSameAs(filter);
     }
 
@@ -62,8 +86,8 @@ public class BloomFilterManagerImplTest {
 
     @Test
     public void testSafeGetExistsFilter() throws Exception {
-        final var config = new ExpirableBloomFilterConfig(testingFilterName);
-        final var filter = manager.createFilter(config);
+        final var config = new ExpirableBloomFilterConfig();
+        final var filter = manager.createFilter(testingFilterName, config).getFilter();
         assertThat(manager.safeGetFilter(testingFilterName)).isSameAs(filter);
     }
 
@@ -81,9 +105,9 @@ public class BloomFilterManagerImplTest {
     @Test
     public void testSize() {
         final var expectSize = ThreadLocalRandom.current().nextInt(1, 1000);
+        final var config = new ExpirableBloomFilterConfig();
         for (int i = 0; i < expectSize; i++) {
-            final var config = new ExpirableBloomFilterConfig(numberString(i));
-            manager.createFilter(config);
+            manager.createFilter(numberString(i), config);
         }
 
         assertThat(manager.size()).isEqualTo(expectSize);
@@ -94,8 +118,8 @@ public class BloomFilterManagerImplTest {
         final var expectFilterNames = IntStream.range(1, 1000).mapToObj(TestingUtils::numberString).collect(Collectors.toList());
 
         for (final var name : expectFilterNames) {
-            final var config = new ExpirableBloomFilterConfig(name);
-            manager.createFilter(config);
+            final var config = new ExpirableBloomFilterConfig();
+            manager.createFilter(name, config);
         }
 
         assertThat(manager.getAllFilterNames()).containsExactlyInAnyOrderElementsOf(expectFilterNames);
@@ -103,8 +127,8 @@ public class BloomFilterManagerImplTest {
 
     @Test
     public void testRemove() {
-        final var config = new ExpirableBloomFilterConfig(testingFilterName);
-        final var filter = manager.createFilter(config);
+        final var config = new ExpirableBloomFilterConfig();
+        final var filter = manager.createFilter(testingFilterName, config).getFilter();
         assertThat(manager.getFilter(testingFilterName)).isSameAs(filter);
         manager.remove(testingFilterName);
         assertThat(manager.getFilter(testingFilterName)).isNull();
@@ -112,19 +136,19 @@ public class BloomFilterManagerImplTest {
 
     @Test
     public void testPurge() {
-        final var config = new ExpirableBloomFilterConfig(testingFilterName);
+        final var config = new ExpirableBloomFilterConfig();
         final var creationTime = Instant.now().minus(Duration.ofSeconds(10));
         final var mockedFactory = Mockito.mock(GuavaBloomFilterFactory.class);
 
         Mockito.when(mockedFactory.createFilter(config))
-                .thenReturn(new GuavaBloomFilter(testingFilterName,
+                .thenReturn(new GuavaBloomFilter(
                         BloomFilterConfig.DEFAULT_EXPECTED_INSERTIONS,
                         BloomFilterConfig.DEFAULT_FALSE_POSITIVE_PROBABILITY,
                         creationTime,
                         Duration.ofSeconds(5)));
 
         final var manager = new BloomFilterManagerImpl<>(mockedFactory);
-        final var filter = manager.createFilter(config);
+        final var filter = manager.createFilter(testingFilterName, config).getFilter();
 
         assertThat(filter.expired()).isTrue();
         assertThat(manager.getFilter(testingFilterName)).isSameAs(filter);
@@ -140,12 +164,14 @@ public class BloomFilterManagerImplTest {
 
         manager.addListener(listener);
 
-        final var config = new ExpirableBloomFilterConfig(testingFilterName);
-        final var filter = manager.createFilter(config);
-        List<FilterEvent> events = listener.getReceivedEvents();
+        final var config = new ExpirableBloomFilterConfig();
+        final var filter = manager.createFilter(testingFilterName, config).getFilter();
+        final var events = listener.getReceivedEvents();
         assertThat(events.size()).isEqualTo(1);
-        assertThat(((FilterCreatedEvent) events.get(0)).getConfig()).isSameAs(config);
-        assertThat(((FilterCreatedEvent) events.get(0)).getFilter()).isSameAs(filter);
+        final var receivedEvent = ((FilterCreatedEvent) events.get(0));
+        assertThat(receivedEvent.getName()).isSameAs(testingFilterName);
+        assertThat(receivedEvent.getConfig()).isSameAs(config);
+        assertThat(receivedEvent.getFilter()).isSameAs(filter);
     }
 
     @Test
@@ -154,24 +180,25 @@ public class BloomFilterManagerImplTest {
 
         manager.addListener(listener);
 
-        final var config = new ExpirableBloomFilterConfig(testingFilterName);
-        final var filter = manager.createFilter(config);
+        final var config = new ExpirableBloomFilterConfig();
+        final var filter = manager.createFilter(testingFilterName, config).getFilter();
         manager.remove(testingFilterName);
 
-        List<FilterEvent> events = listener.getReceivedEvents();
+        final var events = listener.getReceivedEvents();
         assertThat(events.size()).isEqualTo(2);
         assertThat(((FilterRemovedEvent) events.get(1)).getFilter()).isSameAs(filter);
+        assertThat((events.get(1)).getName()).isSameAs(testingFilterName);
     }
 
     @Test
     public void testListenFilterPurged() {
         final var listener = new TestingListener();
-        final var config = new ExpirableBloomFilterConfig(testingFilterName);
+        final var config = new ExpirableBloomFilterConfig();
         final var creationTime = Instant.now().minus(Duration.ofSeconds(10));
         final var mockedFactory = Mockito.mock(GuavaBloomFilterFactory.class);
 
         Mockito.when(mockedFactory.createFilter(config))
-                .thenReturn(new GuavaBloomFilter(testingFilterName,
+                .thenReturn(new GuavaBloomFilter(
                         BloomFilterConfig.DEFAULT_EXPECTED_INSERTIONS,
                         BloomFilterConfig.DEFAULT_FALSE_POSITIVE_PROBABILITY,
                         creationTime,
@@ -180,12 +207,13 @@ public class BloomFilterManagerImplTest {
         final var manager = new BloomFilterManagerImpl<>(mockedFactory);
         manager.addListener(listener);
 
-        final var filter = manager.createFilter(config);
+        final var filter = manager.createFilter(testingFilterName, config).getFilter();
         manager.purge();
 
-        List<FilterEvent> events = listener.getReceivedEvents();
+        final var events = listener.getReceivedEvents();
         assertThat(events.size()).isEqualTo(2);
         assertThat(((FilterRemovedEvent) events.get(1)).getFilter()).isSameAs(filter);
+        assertThat((events.get(1)).getName()).isSameAs(testingFilterName);
     }
 
     @Test
@@ -195,8 +223,8 @@ public class BloomFilterManagerImplTest {
         manager.addListener(listener);
         manager.removeListener(listener);
 
-        final var config = new ExpirableBloomFilterConfig(testingFilterName);
-        manager.createFilter(config);
+        final var config = new ExpirableBloomFilterConfig();
+        manager.createFilter(testingFilterName, config);
 
         List<FilterEvent> events = listener.getReceivedEvents();
         assertThat(events.size()).isZero();
@@ -209,16 +237,15 @@ public class BloomFilterManagerImplTest {
 
 
         @Override
-
-        public void onBloomFilterCreated(ExpirableBloomFilterConfig config, GuavaBloomFilter filter) {
+        public void onBloomFilterCreated(String name, ExpirableBloomFilterConfig config, GuavaBloomFilter filter) {
             onFilterCreatedCalled.incrementAndGet();
-            receivedEvents.add(new FilterCreatedEvent(config, filter));
+            receivedEvents.add(new FilterCreatedEvent(name, config, filter));
         }
 
         @Override
-        public void onBloomFilterRemoved(GuavaBloomFilter filter) {
+        public void onBloomFilterRemoved(String name, GuavaBloomFilter filter) {
             onFilterRemovedCalled.incrementAndGet();
-            receivedEvents.add(new FilterRemovedEvent(filter));
+            receivedEvents.add(new FilterRemovedEvent(name, filter));
         }
 
         List<FilterEvent> getReceivedEvents() {
@@ -226,13 +253,25 @@ public class BloomFilterManagerImplTest {
         }
     }
 
-    private interface FilterEvent {}
+    private static abstract class FilterEvent {
+        private final String name;
 
-    private static class FilterCreatedEvent implements FilterEvent {
+        FilterEvent(String name) {
+            this.name = name;
+        }
+
+        String getName() {
+            return name;
+        }
+    }
+
+    private static class FilterCreatedEvent extends FilterEvent {
+
         private final ExpirableBloomFilterConfig config;
         private final GuavaBloomFilter filter;
 
-        FilterCreatedEvent(ExpirableBloomFilterConfig config, GuavaBloomFilter filter) {
+        FilterCreatedEvent(String name, ExpirableBloomFilterConfig config, GuavaBloomFilter filter) {
+            super(name);
             this.config = config;
             this.filter = filter;
         }
@@ -246,10 +285,11 @@ public class BloomFilterManagerImplTest {
         }
     }
 
-    private static class FilterRemovedEvent implements FilterEvent {
+    private static class FilterRemovedEvent extends FilterEvent {
         private final GuavaBloomFilter filter;
 
-        FilterRemovedEvent(GuavaBloomFilter filter) {
+        FilterRemovedEvent(String name, GuavaBloomFilter filter) {
+            super(name);
             this.filter = filter;
         }
 

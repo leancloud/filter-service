@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
@@ -26,9 +25,8 @@ import java.util.Objects;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class GuavaBloomFilter implements ExpirableBloomFilter {
-    static final DateTimeFormatter ISO_8601_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+    private static final DateTimeFormatter ISO_8601_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 
-    private final String name;
     private final Instant created;
     @JsonIgnore
     private final com.google.common.hash.BloomFilter<CharSequence> filter;
@@ -40,7 +38,6 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
      * Internal testing usage only.
      * This constructor can checkAndSet an arbitrary creation time for the constructed {@code GuavaBloomFilter}.
      *
-     * @param name               the name for the filter
      * @param expectedInsertions the number of expected insertions to the constructed {@code GuavaBloomFilter};
      *                           must be positive
      * @param fpp                the desired false positive probability (must be positive and less than 1.0)
@@ -48,15 +45,14 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
      *                           time past creation time + validPeriod, the constructed {@code GuavaBloomFilter}
      *                           will be expired and can not be used any more.
      */
-    GuavaBloomFilter(String name, int expectedInsertions, double fpp, Duration validPeriod) {
-        this(name, expectedInsertions, fpp, Instant.now(), validPeriod);
+    GuavaBloomFilter(int expectedInsertions, double fpp, Duration validPeriod) {
+        this(expectedInsertions, fpp, Instant.now(), validPeriod);
     }
 
     /**
      * Internal testing usage only.
      * This constructor can checkAndSet an arbitrary creation time for the constructed {@code GuavaBloomFilter}.
      *
-     * @param name               the name for the filter
      * @param expectedInsertions the number of expected insertions to the constructed {@code GuavaBloomFilter};
      *                           must be positive
      * @param fpp                the desired false positive probability (must be positive and less than 1.0)
@@ -65,17 +61,15 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
      *                           time past creation time + validPeriod, the constructed {@code GuavaBloomFilter}
      *                           will be expired and can not be used any more.
      */
-    GuavaBloomFilter(String name, int expectedInsertions, double fpp, Instant created, Duration validPeriod) {
-        this(name, expectedInsertions, fpp, created, created.plus(validPeriod));
+    GuavaBloomFilter(int expectedInsertions, double fpp, Instant created, Duration validPeriod) {
+        this(expectedInsertions, fpp, created, created.plus(validPeriod));
     }
 
     @JsonCreator
-    private GuavaBloomFilter(@JsonProperty("name") String name,
-                             @JsonProperty("expectedInsertions") int expectedInsertions,
+    private GuavaBloomFilter(@JsonProperty("expectedInsertions") int expectedInsertions,
                              @JsonProperty("fpp") double fpp,
                              @JsonProperty("created") Instant created,
                              @JsonProperty("expiration") Instant expiration) {
-        this.name = name;
         this.fpp = fpp;
         this.expectedInsertions = expectedInsertions;
         this.created = created;
@@ -83,13 +77,6 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
         this.filter = com.google.common.hash.BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8)
                 , expectedInsertions,
                 fpp);
-    }
-
-
-    @Override
-    @JsonGetter("name")
-    public String name() {
-        return name;
     }
 
     @JsonSerialize(using = InstantSerializer.class)
@@ -154,7 +141,7 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
         final GuavaBloomFilter that = (GuavaBloomFilter) o;
         return Double.compare(that.fpp, fpp) == 0 &&
                 expectedInsertions == that.expectedInsertions &&
-                name.equals(that.name) &&
+//                name.equals(that.name) &&
                 created.getEpochSecond() == that.created.getEpochSecond() &&
                 expiration.getEpochSecond() == that.expiration.getEpochSecond() &&
                 filter.equals(that.filter);
@@ -162,13 +149,15 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, created, filter, expiration, fpp, expectedInsertions);
+        return Objects.hash(
+//                name,
+                created, filter, expiration, fpp, expectedInsertions);
     }
 
     @Override
     public String toString() {
         return "GuavaBloomFilter{" +
-                "name='" + name + '\'' +
+//                "name='" + name + '\'' +
                 ", created=" + created +
                 ", filter=" + filter +
                 ", expiration=" + expiration +

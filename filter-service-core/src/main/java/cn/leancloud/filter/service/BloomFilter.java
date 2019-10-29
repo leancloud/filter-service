@@ -20,13 +20,6 @@ public interface BloomFilter {
     double fpp();
 
     /**
-     * Get the name of this {@code BloomFilter}.
-     *
-     * @return the name of this {@code BloomFilter}.
-     */
-    String name();
-
-    /**
      * Returns {@code true} if the input {@code value} <i>might</i> have been
      * put in this Bloom filter before, {@code false} if this is
      * <i>definitely</i> not the case.

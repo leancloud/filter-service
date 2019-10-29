@@ -10,13 +10,6 @@ public interface BloomFilterConfig<T extends BloomFilterConfig<T>> {
     double DEFAULT_FALSE_POSITIVE_PROBABILITY = 0.0001;
 
     /**
-     * Get the name for a {@link BloomFilter}.
-     *
-     * @return the configured name for a {@link BloomFilter}.
-     */
-    String name();
-
-    /**
      * Get the number of expected insertions to a {@link BloomFilter}.
      *
      * @return the configured number of expected insertions

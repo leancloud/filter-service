@@ -1,5 +1,6 @@
 package cn.leancloud.filter.service;
 
+import cn.leancloud.filter.service.BloomFilterManager.CreateFilterResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.linecorp.armeria.common.HttpStatus;
 import org.junit.Before;
@@ -30,7 +31,7 @@ public class BloomFilterHttpServiceTest {
     }
 
     @Test
-    public void testCreateFilter() throws Exception {
+    public void testForceCreateFilter() throws Exception {
         final var validPeriod = 1000;
         final var expectedInsertions = 1000000;
         final var fpp = 0.0001;
@@ -38,25 +39,45 @@ public class BloomFilterHttpServiceTest {
         request.put("validPeriod", validPeriod);
         request.put("fpp", fpp);
         request.put("expectedInsertions", expectedInsertions);
-        final var expectConfig = new ExpirableBloomFilterConfig(testingFilterName)
-                .setValidPeriod(validPeriod)
-                .setExpectedInsertions(expectedInsertions)
-                .setFpp(fpp);
+        request.put("overwrite", true);
+        final var expectConfig = new ExpirableBloomFilterConfig(expectedInsertions, fpp, validPeriod);
         final var expectedFilter = factory.createFilter(expectConfig);
+        final var result = new CreateFilterResult<>(expectedFilter, true);
 
-        when(mockedManager.createFilter(expectConfig)).thenReturn(expectedFilter);
+        when(mockedManager.createFilter(testingFilterName, expectConfig, true)).thenReturn(result);
 
         final var response = service.create(testingFilterName, request).aggregate().get();
         assertThat(response.status().code()).isEqualTo(HttpStatus.CREATED.code());
+        final var responseInJson = mapper.readTree(response.content(StandardCharsets.UTF_8));
+        assertThat(responseInJson.has(testingFilterName)).isTrue();
         final var filter = new ObjectMapper()
                 .readerFor(GuavaBloomFilter.class)
-                .readValue(response.content(StandardCharsets.UTF_8));
+                .readValue(responseInJson.get(testingFilterName));
+        assertThat(filter).isNotNull().isInstanceOf(GuavaBloomFilter.class).isEqualTo(expectedFilter);
+    }
+
+    @Test
+    public void testCreateAlreadyExistsFilter() throws Exception {
+        final var request = mapper.createObjectNode();
+        final var expectConfig = new ExpirableBloomFilterConfig();
+        final var expectedFilter = factory.createFilter(expectConfig);
+        final var result = new CreateFilterResult<>(expectedFilter, false);
+
+        when(mockedManager.createFilter(testingFilterName, expectConfig)).thenReturn(result);
+
+        final var response = service.create(testingFilterName, request).aggregate().get();
+        assertThat(response.status().code()).isEqualTo(HttpStatus.OK.code());
+        final var responseInJson = mapper.readTree(response.content(StandardCharsets.UTF_8));
+        assertThat(responseInJson.has(testingFilterName)).isTrue();
+        final var filter = new ObjectMapper()
+                .readerFor(GuavaBloomFilter.class)
+                .readValue(responseInJson.get(testingFilterName));
         assertThat(filter).isNotNull().isInstanceOf(GuavaBloomFilter.class).isEqualTo(expectedFilter);
     }
 
     @Test
     public void testGetFilterInfo() throws Exception {
-        final var expectedFilter = factory.createFilter(new ExpirableBloomFilterConfig(testingFilterName));
+        final var expectedFilter = factory.createFilter(new ExpirableBloomFilterConfig());
         when(mockedManager.safeGetFilter(testingFilterName)).thenReturn(expectedFilter);
         final var filter = mapper.convertValue(service.getFilterInfo(testingFilterName), GuavaBloomFilter.class);
         assertThat(filter).isEqualTo(expectedFilter);
@@ -93,7 +114,7 @@ public class BloomFilterHttpServiceTest {
     @Test
     public void testCheckAndSet() throws Exception {
         final var testingValue = "testing-value";
-        final var testingFilter = factory.createFilter(new ExpirableBloomFilterConfig(testingFilterName));
+        final var testingFilter = factory.createFilter(new ExpirableBloomFilterConfig());
         when(mockedManager.safeGetFilter(testingFilterName)).thenReturn(testingFilter);
         final var param = mapper.createObjectNode();
         param.put("value", testingValue);
@@ -123,7 +144,7 @@ public class BloomFilterHttpServiceTest {
     @Test
     public void testMultiSet() throws Exception {
         final var testingValues = List.of("testing-value", "testing-value2", "testing-value3");
-        final var testingFilter = factory.createFilter(new ExpirableBloomFilterConfig(testingFilterName));
+        final var testingFilter = factory.createFilter(new ExpirableBloomFilterConfig());
         when(mockedManager.safeGetFilter(testingFilterName)).thenReturn(testingFilter);
         final var values = mapper.createArrayNode();
         testingValues.forEach(values::add);
@@ -161,7 +182,7 @@ public class BloomFilterHttpServiceTest {
     @Test
     public void testCheck() throws Exception {
         final var testingValue = "testing-value";
-        final var testingFilter = factory.createFilter(new ExpirableBloomFilterConfig(testingFilterName));
+        final var testingFilter = factory.createFilter(new ExpirableBloomFilterConfig());
         when(mockedManager.safeGetFilter(testingFilterName)).thenReturn(testingFilter);
         final var param = mapper.createObjectNode();
         param.put("value", testingValue);
@@ -190,7 +211,7 @@ public class BloomFilterHttpServiceTest {
     @Test
     public void testMultiCheckAndSet() throws Exception {
         final var testingValue = List.of("testing-value", "testing-value2", "testing-value3");
-        final var testingFilter = factory.createFilter(new ExpirableBloomFilterConfig(testingFilterName));
+        final var testingFilter = factory.createFilter(new ExpirableBloomFilterConfig());
         when(mockedManager.safeGetFilter(testingFilterName)).thenReturn(testingFilter);
         final var values = mapper.createArrayNode();
         testingValue.forEach(values::add);
@@ -203,7 +224,7 @@ public class BloomFilterHttpServiceTest {
     }
 
     @Test
-    public void testRemove() throws Exception{
+    public void testRemove() throws Exception {
         final var res = service.remove(testingFilterName).aggregate().get();
         assertThat(res.status()).isEqualTo(HttpStatus.OK);
         verify(mockedManager).remove(testingFilterName);

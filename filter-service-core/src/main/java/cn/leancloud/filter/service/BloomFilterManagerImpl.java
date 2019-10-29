@@ -24,12 +24,21 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
     }
 
     @Override
-    public T createFilter(ExpirableBloomFilterConfig config) {
-        final var filter = factory.createFilter(config);
-        filterMap.put(config.name(), filter);
+    public CreateFilterResult<T> createFilter(String name, ExpirableBloomFilterConfig config, boolean overwrite) {
+        var filter = factory.createFilter(config);
+        var created = true;
+        if (overwrite) {
+            filterMap.put(name, filter);
+        } else {
+            final var prevFilter = filterMap.putIfAbsent(name, filter);
+            if (prevFilter != null) {
+                created = false;
+                filter = prevFilter;
+            }
+        }
 
-        notifyBloomFilterCreated(config, filter);
-        return filter;
+        notifyBloomFilterCreated(name, config, filter);
+        return new CreateFilterResult<>(filter, created);
     }
 
     @Override
@@ -70,7 +79,7 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
     public void remove(String name) {
         final var filter = filterMap.remove(name);
         if (filter != null) {
-            notifyBloomFilterRemoved(filter);
+            notifyBloomFilterRemoved(name, filter);
         }
     }
 
@@ -79,19 +88,20 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
         for (Map.Entry<String, T> entry : filterMap.entrySet()) {
             final var filter = entry.getValue();
             if (filter.expired()) {
-                if (filterMap.remove(entry.getKey(), filter)) {
-                    notifyBloomFilterRemoved(filter);
+                final var name = entry.getKey();
+                if (filterMap.remove(name, filter)) {
+                    notifyBloomFilterRemoved(name, filter);
                 }
             }
         }
     }
 
-    private void notifyBloomFilterCreated(ExpirableBloomFilterConfig config, T filter) {
-        notifyListeners(l -> l.onBloomFilterCreated(config, filter));
+    private void notifyBloomFilterCreated(String name, ExpirableBloomFilterConfig config, T filter) {
+        notifyListeners(l -> l.onBloomFilterCreated(name, config, filter));
     }
 
-    private void notifyBloomFilterRemoved(T filter) {
-        notifyListeners(l -> l.onBloomFilterRemoved(filter));
+    private void notifyBloomFilterRemoved(String name, T filter) {
+        notifyListeners(l -> l.onBloomFilterRemoved(name, filter));
     }
 
     private void notifyListeners(Consumer<BloomFilterManagerListener<T, ExpirableBloomFilterConfig>> consumer) {

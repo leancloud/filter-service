@@ -14,7 +14,7 @@ public interface BloomFilterManagerListener<F extends BloomFilter, C extends Blo
      * @param config the configuration used to create the {@code filter}
      * @param filter the newly created Bloom filter
      */
-    void onBloomFilterCreated(C config, F filter);
+    void onBloomFilterCreated(String name, C config, F filter);
 
     /**
      * Called when a Bloom filter was removed from {@link BloomFilterManager}.
@@ -22,5 +22,5 @@ public interface BloomFilterManagerListener<F extends BloomFilter, C extends Blo
      *
      * @param filter the removed Bloom filter
      */
-    void onBloomFilterRemoved(F filter);
+    void onBloomFilterRemoved(String name, F filter);
 }

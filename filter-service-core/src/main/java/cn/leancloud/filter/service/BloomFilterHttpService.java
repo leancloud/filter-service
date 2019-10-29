@@ -1,5 +1,6 @@
 package cn.leancloud.filter.service;
 
+import cn.leancloud.filter.service.BloomFilterManager.CreateFilterResult;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.BooleanNode;
@@ -30,7 +31,8 @@ public final class BloomFilterHttpService {
         final JsonNode expectedInsertions = req.get("expectedInsertions");
         final JsonNode fpp = req.get("fpp");
         final JsonNode validPeriod = req.get("validPeriod");
-        final var config = new ExpirableBloomFilterConfig(name);
+        final JsonNode overwrite = req.get("overwrite");
+        final var config = new ExpirableBloomFilterConfig();
 
         if (expectedInsertions != null) {
             config.setExpectedInsertions(expectedInsertions.intValue());
@@ -43,10 +45,18 @@ public final class BloomFilterHttpService {
             config.setValidPeriod(validPeriod.longValue());
         }
 
-        final BloomFilter filter = bloomFilterManager.createFilter(config);
-        return HttpResponse.of(HttpStatus.CREATED,
+        final CreateFilterResult<?> createResult;
+        if (overwrite != null && overwrite.isBoolean() && overwrite.asBoolean()) {
+            createResult = bloomFilterManager.createFilter(name, config, true);
+        } else {
+            createResult = bloomFilterManager.createFilter(name, config);
+        }
+        final var responseBody = MAPPER.createObjectNode();
+        responseBody.set(name, MAPPER.valueToTree(createResult.getFilter()));
+        return HttpResponse.of(
+                createResult.isCreated() ? HttpStatus.CREATED : HttpStatus.OK,
                 MediaType.JSON_UTF_8,
-                MAPPER.valueToTree(filter).toString());
+                responseBody.toString());
     }
 
     @Get("/{name}")

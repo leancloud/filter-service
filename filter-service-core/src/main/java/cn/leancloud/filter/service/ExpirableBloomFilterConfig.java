@@ -10,9 +10,13 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
 
     private Duration validPeriod;
 
-    ExpirableBloomFilterConfig(String name) {
-        super(name);
+    ExpirableBloomFilterConfig() {
         this.validPeriod = DEFAULT_VALID_PERIOD;
+    }
+
+    ExpirableBloomFilterConfig(int expectedInsertions, double fpp, long validPeriod) {
+        super(expectedInsertions, fpp);
+        this.validPeriod = Duration.ofSeconds(validPeriod);
     }
 
     Duration validPeriod() {
