@@ -76,7 +76,7 @@ public class BloomFilterHttpServiceTest {
     @Test
     public void testCheckAndSetValueIsNull() {
         final var param = mapper.createObjectNode();
-        assertThatThrownBy(() -> service.checkAndset(testingFilterName, param))
+        assertThatThrownBy(() -> service.checkAndSet(testingFilterName, param))
                 .isInstanceOf(BadParameterException.class)
                 .hasMessageContaining("required parameter");
     }
@@ -85,7 +85,7 @@ public class BloomFilterHttpServiceTest {
     public void testCheckAndSetValueIsNotString() {
         final var param = mapper.createObjectNode();
         param.put("value", 12345);
-        assertThatThrownBy(() -> service.checkAndset(testingFilterName, param))
+        assertThatThrownBy(() -> service.checkAndSet(testingFilterName, param))
                 .isInstanceOf(BadParameterException.class)
                 .hasMessageContaining("invalid parameter");
     }
@@ -97,7 +97,7 @@ public class BloomFilterHttpServiceTest {
         when(mockedManager.safeGetFilter(testingFilterName)).thenReturn(testingFilter);
         final var param = mapper.createObjectNode();
         param.put("value", testingValue);
-        final var res = service.checkAndset(testingFilterName, param);
+        final var res = service.checkAndSet(testingFilterName, param);
         assertThat(res.isBoolean()).isTrue();
         assertThat(res.asBoolean()).isFalse();
         assertThat(testingFilter.mightContain(testingValue)).isTrue();

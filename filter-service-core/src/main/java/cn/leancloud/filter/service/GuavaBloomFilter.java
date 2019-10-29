@@ -38,7 +38,7 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
 
     /**
      * Internal testing usage only.
-     * This constructor can checkAndset an arbitrary creation time for the constructed {@code GuavaBloomFilter}.
+     * This constructor can checkAndSet an arbitrary creation time for the constructed {@code GuavaBloomFilter}.
      *
      * @param name               the name for the filter
      * @param expectedInsertions the number of expected insertions to the constructed {@code GuavaBloomFilter};
@@ -54,7 +54,7 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
 
     /**
      * Internal testing usage only.
-     * This constructor can checkAndset an arbitrary creation time for the constructed {@code GuavaBloomFilter}.
+     * This constructor can checkAndSet an arbitrary creation time for the constructed {@code GuavaBloomFilter}.
      *
      * @param name               the name for the filter
      * @param expectedInsertions the number of expected insertions to the constructed {@code GuavaBloomFilter};

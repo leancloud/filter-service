@@ -93,8 +93,8 @@ public final class BloomFilterHttpService {
         return response;
     }
 
-    @Post("/{name}/check-and-checkAndset")
-    public JsonNode checkAndset(@Param String name,
+    @Post("/{name}/check-and-checkAndSet")
+    public JsonNode checkAndSet(@Param String name,
                                 @RequestObject JsonNode req)
             throws FilterNotFoundException {
         final var testingValue = checkNotNull("value", req.get("value"));
@@ -105,7 +105,7 @@ public final class BloomFilterHttpService {
         return BooleanNode.valueOf(contain);
     }
 
-    @Post("/{name}/multi-check-and-checkAndset")
+    @Post("/{name}/multi-check-and-checkAndSet")
     public JsonNode multiCheckAndSet(@Param String name,
                                      @RequestObject JsonNode req)
             throws FilterNotFoundException {

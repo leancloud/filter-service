@@ -45,7 +45,7 @@ public interface BloomFilter {
      * @return true if the Bloom filter's bits changed as a result of this operation. If the bits
      *         changed, this is <i>definitely</i> the first time {@code object} has been added to the
      *         filter. If the bits haven't changed, this <i>might</i> be the first time {@code value} has
-     *         been added to the filter. Note that {@code checkAndset(String)} always returns the <i>opposite</i>
+     *         been added to the filter. Note that {@code checkAndSet(String)} always returns the <i>opposite</i>
      *         result to what {@code mightContain(String)} would have returned at the time it is called.
      */
     boolean set(String value);
