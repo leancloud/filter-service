@@ -52,11 +52,10 @@ public final class BloomFilterHttpService {
         } else {
             createResult = bloomFilterManager.createFilter(name, config);
         }
-        final var responseBody = MAPPER.valueToTree(new CreateFilterResponse(name, createResult));
         return HttpResponse.of(
                 createResult.isCreated() ? HttpStatus.CREATED : HttpStatus.OK,
                 MediaType.JSON_UTF_8,
-                responseBody.toString());
+                MAPPER.valueToTree(createResult.getFilter()).toString());
     }
 
     @Get("/{name}")
@@ -138,32 +137,5 @@ public final class BloomFilterHttpService {
     public HttpResponse remove(@Param String name) {
         bloomFilterManager.remove(name);
         return HttpResponse.of(HttpStatus.OK);
-    }
-
-    private static class CreateFilterResponse {
-        private final String name;
-        private final BloomFilter filter;
-        private final boolean created;
-
-        CreateFilterResponse(String name, CreateFilterResult<?> result) {
-            this.name = name;
-            this.filter = result.getFilter();
-            this.created = result.isCreated();
-        }
-
-        @JsonGetter("name")
-        public String getName() {
-            return name;
-        }
-
-        @JsonGetter("filter")
-        public BloomFilter getFilter() {
-            return filter;
-        }
-
-        @JsonGetter("created")
-        public boolean isCreated() {
-            return created;
-        }
     }
 }

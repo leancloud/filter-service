@@ -1,0 +1,327 @@
+swagger: "2.0"
+info:
+  description: "API specification of Filter Service."
+  version: "v1"
+  title: "Filter Service"
+basePath: "/v1"
+tags:
+- name: "Bloom Filter"
+  description: "Operations about Bloom Filter"
+schemes:
+- "http"
+paths:
+  /bloomfilter/{name}:
+    put:
+      tags:
+      - "Bloom Filter"
+      summary: "Create a Bloom filter"
+      description: ""
+      operationId: "createFilter"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "name"
+        in: "path"
+        description: "Name of the Bloom filter to create"
+        required: true
+        type: "string"
+      - name: "body"
+        in: "body"
+        description: "Paremeters used to create bloom filter"
+        required: true
+        schema:
+          $ref: '#/definitions/CreateFilterRequest'
+      responses:
+        201:
+          description: "Success. A new Bloom filter was created."
+          schema:
+            $ref: "#/definitions/Filter"
+        200:
+          description: "A Bloom filter with the same name is already exists. Returns
+          the already exists Bloom filter in response."
+          schema:
+            $ref: "#/definitions/Filter"
+        400:
+          description: "Some of the provided parameter is invalid."
+    get:
+      tags:
+      - "Bloom Filter"
+      summary: "Get a Bloom filter by name"
+      description: ""
+      operationId: "getFilterByName"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "name"
+        in: "path"
+        description: "Name of the Bloom filter to retrieve"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            $ref: "#/definitions/Filter"
+    delete:
+      tags:
+      - "Bloom Filter"
+      summary: "Delete a Bloom filter"
+      description: ""
+      operationId: "deleteFilterByName"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "name"
+        in: "path"
+        description: "Name of the Bloom filter to delete"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Success. The target Bloom Filter was removed."
+          
+  /bloomfilter/list:
+    get:
+      tags:
+      - "Bloom Filter"
+      summary: "Get all the available Bloom filter names."
+      operationId: "getAllFilterNames"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              type: "string"
+            example: ["Filter1", "Filter2", "Filter3"]
+  
+  /bloomfilter/{name}/check:
+    post:
+      tags:
+      - "Bloom Filter"
+      summary: "Check if a value has been set to the taget Bloom filter"
+      description: ""
+      operationId: "checkValue"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "name"
+        in: "path"
+        description: "Name of the target Bloom filter to check"
+        required: true
+        type: "string"
+      - name: "body"
+        in: "body"
+        description: "The testing value."
+        required: true
+        schema: 
+            $ref: "#/definitions/CheckValueRequest"
+      responses:
+        200:
+          description: "Success. Returns true when the testing value *might* have been set to the target
+          Bloom Filter, false if this is *definitely* not the case."
+          schema:
+            type: "boolean"
+        400:
+          description: "Some of the provided parameter is invalid."
+          
+  /bloomfilter/{name}/multi-check:
+    post:
+      tags:
+      - "Bloom Filter"
+      summary: "Check if a list of value have been set to the taget Bloom filter"
+      description: ""
+      operationId: "checkMultiValue"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "name"
+        in: "path"
+        description: "Name of the target Bloom filter to check"
+        required: true
+        type: "string"
+      - name: "body"
+        in: "body"
+        description: "The testing value list."
+        required: true
+        schema: 
+            $ref: "#/definitions/CheckMultiValuesRequest"
+      responses:
+        200:
+          description: "Success. Returns true in the list when the corresponding testing value in
+            request *might* have been set to the target Bloom Filter, false if this is *definitely* not
+            the case."
+          schema:
+            type: "array"
+            items: 
+              type: "boolean"
+            example: [true, false, false]
+        400:
+          description: "Some of the provided parameter is invalid."
+          
+  /bloomfilter/{name}/check-and-set:
+    post:
+      tags:
+      - "Bloom Filter"
+      summary: "Check if a value has been set to the taget Bloom filter. If not, set this value to the target Bloom filter."
+      description: ""
+      operationId: "checkAndSetValue"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "name"
+        in: "path"
+        description: "Name of the target Bloom filter to check"
+        required: true
+        type: "string"
+      - name: "body"
+        in: "body"
+        description: "The testing value."
+        required: true
+        schema: 
+            $ref: "#/definitions/CheckAndSetRequest"
+      responses:
+        200:
+          description: "Success. Returns true when the testing value *might* have been set to the target
+          Bloom Filter, false if this is *definitely* not the case."
+          schema:
+            type: "boolean"
+        400:
+          description: "Some of the provided parameter is invalid."
+          
+  /bloomfilter/{name}/multi-check-and-set:
+    post:
+      tags:
+      - "Bloom Filter"
+      summary: "Check if a list of values have been set to the taget Bloom filter. If not, set those values to the target Bloom filter."
+      description: ""
+      operationId: "checkAndSetMultiValues"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "name"
+        in: "path"
+        description: "Name of the target Bloom filter to check"
+        required: true
+        type: "string"
+      - name: "body"
+        in: "body"
+        description: "The testing value list."
+        required: true
+        schema: 
+            $ref: "#/definitions/CheckAndSetMultiValuesRequest"
+      responses:
+        200:
+          description: "Success. Returns true in the list when the corresponding testing value in
+            request *might* have been set to the target Bloom Filter, false if this is *definitely* not
+            the case."
+          schema:
+            type: "array"
+            items: 
+              type: "boolean"
+            example: [true, false, false]
+        400:
+          description: "Some of the provided parameter is invalid."
+  
+
+definitions:
+  Filter:
+    type: "object"
+    properties:
+      created:
+        type: "string"
+        format: "date-time"
+        description: "The creation time of this filter."
+      expiration:
+        type: "string"
+        format: "date-time"
+        description: "The expiration time of this filter."
+      expectedInsertions:
+        type: "integer"
+        format: "int64"
+        description: "the number of expected insertions to this Bloom Filter."
+        minimum: 1
+      fpp:
+        description: "the desired false positive probability."
+        type: "number"
+        format: "double"
+        exclusiveMinimum: true
+        minimum: 0
+        exclusiveMaximum: true
+        maximum: 1
+    example: {"expectedInsertions":100000,
+              "fpp":0.001,
+              "created":"2019-10-29T11:45:10.672Z",
+              "expiration":"2019-10-30T11:45:10.672Z"}
+  CreateFilterRequest:
+    type: "object"
+    properties:
+      expectedInsertions:
+        description: "the number of expected insertions to the created Bloom Filter."
+        type: "integer"
+        format: "int64"
+        minimum: 1
+      fpp:
+        type: "number"
+        description: "the desired false positive probability."
+        format: "double"
+        exclusiveMinimum: true
+        minimum: 0
+        exclusiveMaximum: true
+        maximum: 1
+      validPeriod:
+        description: "valid period in seconds for the created Bloom Filter. When 
+        time past the creation time + valid period, the Bloom Filter will be expired
+        and can not be used any more."
+        type: "integer"
+        format: "int32"
+        minimum: 1
+      overwrite:
+        description: "true to force create a new Bloom filter. false to create a new 
+        Bloom Filter only when there's no Bloom filter with the same name exits."
+        type: "boolean"
+    example: {"expectedInsertions":100000,
+              "fpp":0.001,
+              "validPeriod":86400,
+              "overwrite":true}
+  CheckValueRequest:
+    type: "object"
+    properties:
+      value:
+        type: "string"
+    example: {"value": "testing value1"}
+  CheckMultiValuesRequest:
+    type: "object"
+    properties:
+      values:
+        type: "array"
+        items:
+          type: "string"
+    example: {"values": ["testing value1", "testing value2", "testing value3"]}
+  CheckAndSetRequest:
+    type: "object"
+    properties:
+      value:
+        type: "string"
+    example: {"value": "testing value1"}
+  CheckAndSetMultiValuesRequest:
+    type: "object"
+    properties:
+      values:
+        type: "array"
+        items:
+          type: "string"
+    example: {"values": ["testing value1", "testing value2", "testing value3"]}
+        
