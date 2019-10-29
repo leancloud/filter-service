@@ -19,15 +19,6 @@ public interface BloomFilterManager<F extends BloomFilter, C extends BloomFilter
     F createFilter(C config);
 
     /**
-     * Try to find the Bloom filter with the input name. If no Bloom filter found,
-     * create a new one with the default configuration.
-     *
-     * @param name the name of the target Bloom filter
-     * @return the exists Bloom filter found, or a newly created Bloom filter
-     */
-    F getOrCreateDefaultFilter(String name);
-
-    /**
      * Get the Bloom filter with the input name.
      *
      * @param name the name of the target Bloom filter

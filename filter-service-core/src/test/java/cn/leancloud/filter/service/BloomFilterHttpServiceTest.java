@@ -76,7 +76,7 @@ public class BloomFilterHttpServiceTest {
     @Test
     public void testCheckAndSetValueIsNull() {
         final var param = mapper.createObjectNode();
-        assertThatThrownBy(() -> service.checkAndSet(testingFilterName, param))
+        assertThatThrownBy(() -> service.checkAndset(testingFilterName, param))
                 .isInstanceOf(BadParameterException.class)
                 .hasMessageContaining("required parameter");
     }
@@ -85,21 +85,60 @@ public class BloomFilterHttpServiceTest {
     public void testCheckAndSetValueIsNotString() {
         final var param = mapper.createObjectNode();
         param.put("value", 12345);
-        assertThatThrownBy(() -> service.checkAndSet(testingFilterName, param))
+        assertThatThrownBy(() -> service.checkAndset(testingFilterName, param))
                 .isInstanceOf(BadParameterException.class)
                 .hasMessageContaining("invalid parameter");
     }
 
     @Test
-    public void testCheckAndSetNormalCase() {
+    public void testCheckAndSet() throws Exception {
         final var testingValue = "testing-value";
         final var testingFilter = factory.createFilter(new ExpirableBloomFilterConfig(testingFilterName));
-        when(mockedManager.getOrCreateDefaultFilter(testingFilterName)).thenReturn(testingFilter);
+        when(mockedManager.safeGetFilter(testingFilterName)).thenReturn(testingFilter);
         final var param = mapper.createObjectNode();
         param.put("value", testingValue);
-        final var res = service.checkAndSet(testingFilterName, param);
+        final var res = service.checkAndset(testingFilterName, param);
+        assertThat(res.isBoolean()).isTrue();
         assertThat(res.asBoolean()).isFalse();
         assertThat(testingFilter.mightContain(testingValue)).isTrue();
+    }
+
+    @Test
+    public void testMultiSetValueIsNull() {
+        final var param = mapper.createObjectNode();
+        assertThatThrownBy(() -> service.multiCheckAndSet(testingFilterName, param))
+                .isInstanceOf(BadParameterException.class)
+                .hasMessageContaining("required parameter");
+    }
+
+    @Test
+    public void testMultiSetValueIsNotArray() {
+        final var param = mapper.createObjectNode();
+        param.put("values", "12345");
+        assertThatThrownBy(() -> service.multiCheckAndSet(testingFilterName, param))
+                .isInstanceOf(BadParameterException.class)
+                .hasMessageContaining("invalid parameter");
+    }
+
+    @Test
+    public void testMultiSet() throws Exception {
+        final var testingValues = List.of("testing-value", "testing-value2", "testing-value3");
+        final var testingFilter = factory.createFilter(new ExpirableBloomFilterConfig(testingFilterName));
+        when(mockedManager.safeGetFilter(testingFilterName)).thenReturn(testingFilter);
+        final var values = mapper.createArrayNode();
+        testingValues.forEach(values::add);
+        final var param = mapper.createObjectNode();
+        param.set("values", values);
+        final var res = service.multiCheckAndSet(testingFilterName, param);
+        assertThat(res.isArray()).isTrue();
+        for (final var mightContain : res) {
+            assertThat(mightContain.isBoolean()).isTrue();
+            assertThat(mightContain.asBoolean()).isFalse();
+        }
+
+        for (final var value : testingValues) {
+            assertThat(testingFilter.mightContain(value)).isTrue();
+        }
     }
 
     @Test
@@ -132,7 +171,7 @@ public class BloomFilterHttpServiceTest {
     }
 
     @Test
-    public void testMultiCheckValueIsNull() {
+    public void testMultiCheckAndSetValueIsNull() {
         final var param = mapper.createObjectNode();
         assertThatThrownBy(() -> service.multiCheck(testingFilterName, param))
                 .isInstanceOf(BadParameterException.class)
@@ -140,7 +179,7 @@ public class BloomFilterHttpServiceTest {
     }
 
     @Test
-    public void testMultiCheckValueIsNotArray() {
+    public void testMultiCheckAndSetValueIsNotArray() {
         final var param = mapper.createObjectNode();
         param.put("values", "12345");
         assertThatThrownBy(() -> service.multiCheck(testingFilterName, param))
@@ -149,7 +188,7 @@ public class BloomFilterHttpServiceTest {
     }
 
     @Test
-    public void testMultiCheck() throws Exception {
+    public void testMultiCheckAndSet() throws Exception {
         final var testingValue = List.of("testing-value", "testing-value2", "testing-value3");
         final var testingFilter = factory.createFilter(new ExpirableBloomFilterConfig(testingFilterName));
         when(mockedManager.safeGetFilter(testingFilterName)).thenReturn(testingFilter);
@@ -160,59 +199,6 @@ public class BloomFilterHttpServiceTest {
         final var res = service.multiCheck(testingFilterName, param);
         for (final var node : res) {
             assertThat(node.asBoolean()).isFalse();
-        }
-    }
-
-    @Test
-    public void testSetValueIsNull() {
-        final var param = mapper.createObjectNode();
-        assertThatThrownBy(() -> service.set(testingFilterName, param))
-                .isInstanceOf(BadParameterException.class)
-                .hasMessageContaining("required parameter");
-    }
-
-    @Test
-    public void testSet() throws Exception {
-        final var testingValue = "testing-value";
-        final var testingFilter = factory.createFilter(new ExpirableBloomFilterConfig(testingFilterName));
-        when(mockedManager.safeGetFilter(testingFilterName)).thenReturn(testingFilter);
-        final var param = mapper.createObjectNode();
-        param.put("value", testingValue);
-        final var res = service.set(testingFilterName, param);
-        assertThat(res.isEmpty()).isTrue();
-        assertThat(testingFilter.mightContain(testingValue)).isTrue();
-    }
-
-    @Test
-    public void testMultiSetValueIsNull() {
-        final var param = mapper.createObjectNode();
-        assertThatThrownBy(() -> service.multiSet(testingFilterName, param))
-                .isInstanceOf(BadParameterException.class)
-                .hasMessageContaining("required parameter");
-    }
-
-    @Test
-    public void testMultiSetValueIsNotArray() {
-        final var param = mapper.createObjectNode();
-        param.put("values", "12345");
-        assertThatThrownBy(() -> service.multiSet(testingFilterName, param))
-                .isInstanceOf(BadParameterException.class)
-                .hasMessageContaining("invalid parameter");
-    }
-
-    @Test
-    public void testMultiSet() throws Exception {
-        final var testingValues = List.of("testing-value", "testing-value2", "testing-value3");
-        final var testingFilter = factory.createFilter(new ExpirableBloomFilterConfig(testingFilterName));
-        when(mockedManager.safeGetFilter(testingFilterName)).thenReturn(testingFilter);
-        final var values = mapper.createArrayNode();
-        testingValues.forEach(values::add);
-        final var param = mapper.createObjectNode();
-        param.set("values", values);
-        final var res = service.multiSet(testingFilterName, param);
-        assertThat(res.isEmpty()).isTrue();
-        for (final var value : testingValues) {
-            assertThat(testingFilter.mightContain(value)).isTrue();
         }
     }
 

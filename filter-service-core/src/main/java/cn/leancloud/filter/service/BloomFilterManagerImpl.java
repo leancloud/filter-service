@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
@@ -30,23 +29,6 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
         filterMap.put(config.name(), filter);
 
         notifyBloomFilterCreated(config, filter);
-        return filter;
-    }
-
-    @Override
-    public T getOrCreateDefaultFilter(String name) {
-        final var created = new AtomicBoolean(false);
-        final var config = new ExpirableBloomFilterConfig(name);
-        final var filter = filterMap.computeIfAbsent(name, k -> {
-                    final var f = factory.createFilter(config);
-                    created.set(true);
-                    return f;
-                }
-        );
-
-        if (created.get()) {
-            notifyBloomFilterCreated(config, filter);
-        }
         return filter;
     }
 

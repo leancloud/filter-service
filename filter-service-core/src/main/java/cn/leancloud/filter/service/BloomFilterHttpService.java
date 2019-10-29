@@ -3,7 +3,6 @@ package cn.leancloud.filter.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.linecorp.armeria.common.HttpResponse;
 import com.linecorp.armeria.common.HttpStatus;
 import com.linecorp.armeria.common.MediaType;
@@ -18,7 +17,6 @@ import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkPar
 @ExceptionHandler(GlobalExceptionHandler.class)
 public final class BloomFilterHttpService {
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final ObjectNode EMPTY_RESPONSE = MAPPER.createObjectNode();
 
     private final BloomFilterManager<?, ? super ExpirableBloomFilterConfig> bloomFilterManager;
 
@@ -61,22 +59,11 @@ public final class BloomFilterHttpService {
     public JsonNode list() {
         final var response = MAPPER.createArrayNode();
 
-        for (String name : bloomFilterManager.getAllFilterNames()) {
+        for (final var name : bloomFilterManager.getAllFilterNames()) {
             response.add(name);
         }
 
         return response;
-    }
-
-    @Post("/{name}/check-and-set")
-    public JsonNode checkAndSet(@Param String name,
-                                @RequestObject JsonNode req) {
-        final var testingValue = checkNotNull("value", req.get("value"));
-        checkParameter("value", testingValue.isTextual(), "expect string type");
-
-        final var filter = bloomFilterManager.getOrCreateDefaultFilter(name);
-        final var contain = !filter.set(testingValue.textValue());
-        return BooleanNode.valueOf(contain);
     }
 
     @Post("/{name}/check")
@@ -100,36 +87,41 @@ public final class BloomFilterHttpService {
 
         final var filter = bloomFilterManager.safeGetFilter(name);
         final var response = MAPPER.createArrayNode();
-        for (JsonNode value : values) {
+        for (final var value : values) {
             response.add(value.isTextual() && filter.mightContain(value.textValue()));
         }
         return response;
     }
 
-    @Post("/{name}/set")
-    public JsonNode set(@Param String name,
-                        @RequestObject JsonNode req)
+    @Post("/{name}/check-and-checkAndset")
+    public JsonNode checkAndset(@Param String name,
+                                @RequestObject JsonNode req)
             throws FilterNotFoundException {
-        final var testingValue = checkNotNull("value", req.get("value")).textValue();
+        final var testingValue = checkNotNull("value", req.get("value"));
+        checkParameter("value", testingValue.isTextual(), "expect string type");
+
         final var filter = bloomFilterManager.safeGetFilter(name);
-        filter.set(testingValue);
-        return EMPTY_RESPONSE;
+        final var contain = !filter.set(testingValue.textValue());
+        return BooleanNode.valueOf(contain);
     }
 
-    @Post("/{name}/multi-set")
-    public JsonNode multiSet(@Param String name,
-                             @RequestObject JsonNode req)
+    @Post("/{name}/multi-check-and-checkAndset")
+    public JsonNode multiCheckAndSet(@Param String name,
+                                     @RequestObject JsonNode req)
             throws FilterNotFoundException {
         final var values = checkNotNull("values", req.get("values"));
         checkParameter("values", values.isArray(), "expect Json array");
 
         final var filter = bloomFilterManager.safeGetFilter(name);
-        for (JsonNode value : values) {
+        final var response = MAPPER.createArrayNode();
+        for (final var value : values) {
             if (value.isTextual()) {
-                filter.set(value.textValue());
+                response.add(BooleanNode.valueOf(!filter.set(value.textValue())));
+            } else {
+                response.add(BooleanNode.FALSE);
             }
         }
-        return EMPTY_RESPONSE;
+        return response;
     }
 
     @Delete("/{name}")

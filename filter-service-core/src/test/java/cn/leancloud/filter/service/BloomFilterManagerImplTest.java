@@ -102,14 +102,6 @@ public class BloomFilterManagerImplTest {
     }
 
     @Test
-    public void testGetOrCreateDefaultFilter() {
-        assertThat(manager.getFilter(testingFilterName)).isNull();
-        final var filter = manager.getOrCreateDefaultFilter(testingFilterName);
-        assertThat(filter).isNotNull();
-        assertThat(manager.getFilter(testingFilterName)).isSameAs(filter);
-    }
-
-    @Test
     public void testRemove() {
         final var config = new ExpirableBloomFilterConfig(testingFilterName);
         final var filter = manager.createFilter(config);
