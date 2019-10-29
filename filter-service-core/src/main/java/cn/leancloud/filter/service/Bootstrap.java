@@ -138,7 +138,7 @@ public final class Bootstrap {
                 .requestTimeout(Duration.ofSeconds(5))
                 .meterRegistry(registry);
 
-        sb.annotatedService("/bloomfilter", new BloomFilterHttpService(bloomFilterManager))
+        sb.annotatedService("/v1/bloomfilter", new BloomFilterHttpService(bloomFilterManager))
                 .decorator(MetricCollectingService.newDecorator(MeterIdPrefixFunction.ofDefault("filter-service")));
         if (opts.isDocServiceEnabled()) {
             sb.serviceUnder("/docs", new DocService());
