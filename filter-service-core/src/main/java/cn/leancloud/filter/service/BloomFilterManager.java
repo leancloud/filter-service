@@ -15,7 +15,7 @@ public interface BloomFilterManager<F extends BloomFilter, C extends BloomFilter
      *
      * @param <F> same with the type F on {@link BloomFilterManager}
      */
-    final class CreateFilterResult<F> {
+    final class CreateFilterResult<F extends BloomFilter> {
         private final F filter;
         private final boolean created;
 

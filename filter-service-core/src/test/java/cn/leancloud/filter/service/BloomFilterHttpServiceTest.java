@@ -49,10 +49,12 @@ public class BloomFilterHttpServiceTest {
         final var response = service.create(testingFilterName, request).aggregate().get();
         assertThat(response.status().code()).isEqualTo(HttpStatus.CREATED.code());
         final var responseInJson = mapper.readTree(response.content(StandardCharsets.UTF_8));
-        assertThat(responseInJson.has(testingFilterName)).isTrue();
+        assertThat(responseInJson.get("name").textValue()).isEqualTo(testingFilterName);
+        assertThat(responseInJson.get("created").isBoolean()).isTrue();
+        assertThat(responseInJson.get("created").asBoolean()).isTrue();
         final var filter = new ObjectMapper()
                 .readerFor(GuavaBloomFilter.class)
-                .readValue(responseInJson.get(testingFilterName));
+                .readValue(responseInJson.get("filter"));
         assertThat(filter).isNotNull().isInstanceOf(GuavaBloomFilter.class).isEqualTo(expectedFilter);
     }
 
@@ -68,10 +70,12 @@ public class BloomFilterHttpServiceTest {
         final var response = service.create(testingFilterName, request).aggregate().get();
         assertThat(response.status().code()).isEqualTo(HttpStatus.OK.code());
         final var responseInJson = mapper.readTree(response.content(StandardCharsets.UTF_8));
-        assertThat(responseInJson.has(testingFilterName)).isTrue();
+        assertThat(responseInJson.get("name").textValue()).isEqualTo(testingFilterName);
+        assertThat(responseInJson.get("created").isBoolean()).isTrue();
+        assertThat(responseInJson.get("created").asBoolean()).isFalse();
         final var filter = new ObjectMapper()
                 .readerFor(GuavaBloomFilter.class)
-                .readValue(responseInJson.get(testingFilterName));
+                .readValue(responseInJson.get("filter"));
         assertThat(filter).isNotNull().isInstanceOf(GuavaBloomFilter.class).isEqualTo(expectedFilter);
     }
 

@@ -175,6 +175,19 @@ public class BloomFilterManagerImplTest {
     }
 
     @Test
+    public void testListenFilterCreatedNotTriggeredWhenNoFilterCreated() {
+        final var config = new ExpirableBloomFilterConfig();
+        manager.createFilter(testingFilterName, config);
+
+        final var listener = new TestingListener();
+        manager.addListener(listener);
+        manager.createFilter(testingFilterName, config);
+
+        final var events = listener.getReceivedEvents();
+        assertThat(events.size()).isEqualTo(0);
+    }
+
+    @Test
     public void testListenFilterRemoved() {
         final var listener = new TestingListener();
 

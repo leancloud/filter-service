@@ -141,7 +141,6 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
         final GuavaBloomFilter that = (GuavaBloomFilter) o;
         return Double.compare(that.fpp, fpp) == 0 &&
                 expectedInsertions == that.expectedInsertions &&
-//                name.equals(that.name) &&
                 created.getEpochSecond() == that.created.getEpochSecond() &&
                 expiration.getEpochSecond() == that.expiration.getEpochSecond() &&
                 filter.equals(that.filter);
@@ -149,15 +148,12 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-//                name,
-                created, filter, expiration, fpp, expectedInsertions);
+        return Objects.hash(created, filter, expiration, fpp, expectedInsertions);
     }
 
     @Override
     public String toString() {
         return "GuavaBloomFilter{" +
-//                "name='" + name + '\'' +
                 ", created=" + created +
                 ", filter=" + filter +
                 ", expiration=" + expiration +

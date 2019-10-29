@@ -37,7 +37,9 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
             }
         }
 
-        notifyBloomFilterCreated(name, config, filter);
+        if (created) {
+            notifyBloomFilterCreated(name, config, filter);
+        }
         return new CreateFilterResult<>(filter, created);
     }
 
