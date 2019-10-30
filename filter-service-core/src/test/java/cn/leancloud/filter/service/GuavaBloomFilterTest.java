@@ -14,15 +14,15 @@ public class GuavaBloomFilterTest {
 
     @Test
     public void testGetters() {
-        final var validPeriod = 1000;
-        final var expectedInsertions = 1000000;
-        final var fpp = 0.0001;
-        final var config = new ExpirableBloomFilterConfig()
+        final int validPeriod = 1000;
+        final int expectedInsertions = 1000000;
+        final double fpp = 0.0001;
+        final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig()
                 .setValidPeriod(validPeriod)
                 .setExpectedInsertions(expectedInsertions)
                 .setFpp(fpp);
-        final var instantBeforeFilterCreate = Instant.now();
-        final var filter = testingFactory.createFilter(config);
+        final Instant instantBeforeFilterCreate = Instant.now();
+        final GuavaBloomFilter filter = testingFactory.createFilter(config);
 
         assertThat(filter.fpp()).isEqualTo(fpp);
         assertThat(filter.expectedInsertions()).isEqualTo(expectedInsertions);
@@ -33,8 +33,8 @@ public class GuavaBloomFilterTest {
 
     @Test
     public void testMightContain() {
-        final var testingValue = "SomeValue";
-        final var filter = testingFactory.createFilter(defaultTestingConfig);
+        final String testingValue = "SomeValue";
+        final GuavaBloomFilter filter = testingFactory.createFilter(defaultTestingConfig);
         assertThat(filter.mightContain(testingValue)).isFalse();
         assertThat(filter.set(testingValue)).isTrue();
         assertThat(filter.mightContain(testingValue)).isTrue();
@@ -42,11 +42,11 @@ public class GuavaBloomFilterTest {
 
     @Test
     public void testToJson() throws Exception {
-        final var expectedFilter = testingFactory.createFilter(defaultTestingConfig);
-        final var mapper = new ObjectMapper();
+        final GuavaBloomFilter expectedFilter = testingFactory.createFilter(defaultTestingConfig);
+        final ObjectMapper mapper = new ObjectMapper();
 
-        final var json = mapper.valueToTree(expectedFilter).toString();
-        final var filter = new ObjectMapper().readerFor(GuavaBloomFilter.class).readValue(json);
+        final String json = mapper.valueToTree(expectedFilter).toString();
+        final GuavaBloomFilter filter = new ObjectMapper().readerFor(GuavaBloomFilter.class).readValue(json);
         assertThat(filter).isEqualTo(expectedFilter);
     }
 }

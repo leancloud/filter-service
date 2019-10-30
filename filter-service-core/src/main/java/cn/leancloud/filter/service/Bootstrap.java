@@ -17,44 +17,43 @@ import picocli.CommandLine.UnmatchedArgumentException;
 
 import javax.annotation.Nullable;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.ServiceLoader;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public final class Bootstrap {
     private static final Logger logger = LoggerFactory.getLogger(Bootstrap.class);
 
     public static void main(String[] args) {
-        final var ret = parseCommandLineArgs(args);
+        final ParseCommandLineArgsResult ret = parseCommandLineArgs(args);
         if (ret.isExit()) {
             System.exit(ret.getExitCode());
             return;
         }
 
-        final var opts = ret.getOptions();
+        final ServerOptions opts = ret.getOptions();
         assert opts != null;
 
-        final var scheduledExecutorService = Executors.newScheduledThreadPool(10,
+        final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(10,
                 new ThreadFactoryBuilder().setNameFormat("scheduled-worker-%s").build());
-        final var bloomFilterManager = newBloomFilterManager();
-        final var purgeFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
+        final BloomFilterManagerImpl<GuavaBloomFilter> bloomFilterManager = newBloomFilterManager();
+        final ScheduledFuture<?> purgeFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
                 bloomFilterManager.purge();
             } catch (Exception ex) {
                 logger.error("Purge bloom filter service failed.", ex);
             }
         }, 0, 300, TimeUnit.MILLISECONDS);
-        final var metricsService = loadMetricsService();
-        final var registry = metricsService.createMeterRegistry();
+        final MetricsService metricsService = loadMetricsService();
+        final MeterRegistry registry = metricsService.createMeterRegistry();
         metricsService.start();
-        final var server = newServer(registry, opts, bloomFilterManager);
+        final Server server = newServer(registry, opts, bloomFilterManager);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             server.stop().join();
             purgeFuture.cancel(false);
 
-            final var shutdownFuture = new CompletableFuture<>();
+            final CompletableFuture<Void> shutdownFuture = new CompletableFuture<>();
             scheduledExecutorService.execute(() ->
                     shutdownFuture.complete(null)
             );
@@ -72,8 +71,8 @@ public final class Bootstrap {
     }
 
     private static ParseCommandLineArgsResult parseCommandLineArgs(String[] args) {
-        final var opts = new ServerOptions();
-        final var cli = new CommandLine(opts);
+        final ServerOptions opts = new ServerOptions();
+        final CommandLine cli = new CommandLine(opts);
         try {
             cli.parseArgs(args);
 
@@ -119,8 +118,8 @@ public final class Bootstrap {
     }
 
     private static MetricsService loadMetricsService() {
-        final var loader = ServiceLoader.load(MetricsService.class);
-        final var optService = loader.findFirst();
+        final ServiceLoader<MetricsService> loader = ServiceLoader.load(MetricsService.class);
+        final Optional<MetricsService> optService = loader.findFirst();
         return optService.orElseGet(DefaultMetricsService::new);
     }
 
