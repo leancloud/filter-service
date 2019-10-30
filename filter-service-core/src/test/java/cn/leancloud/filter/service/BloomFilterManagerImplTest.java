@@ -104,7 +104,7 @@ public class BloomFilterManagerImplTest {
 
     @Test
     public void testSize() {
-        final var expectSize = ThreadLocalRandom.current().nextInt(1, 1000);
+        final var expectSize = ThreadLocalRandom.current().nextInt(1, 100);
         final var config = new ExpirableBloomFilterConfig();
         for (int i = 0; i < expectSize; i++) {
             manager.createFilter(numberString(i), config);
