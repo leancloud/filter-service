@@ -16,7 +16,7 @@ public interface MetricsService {
 
     /**
      * Create a new {@link MeterRegistry} used by filter-service to generate metrics.
-     * @return
+     * @return a custom {@link MeterRegistry} which meet your requirements
      */
     MeterRegistry createMeterRegistry();
 

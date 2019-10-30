@@ -1,7 +1,7 @@
 #!/bin/bash
 
 BASE_DIR=$(dirname $0)/..
-. $BASE_DIR/scripts/filter_service.sh --source-only
+. $BASE_DIR/scripts/filter_service_api.sh --source-only
 
 create_filter check-set-bench 100000000 0.001
 
