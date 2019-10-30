@@ -31,7 +31,7 @@ public class BloomFilterManagerImplTest {
     @Test
     public void testCreateNonExistsFilter() {
         final var validPeriod = 1000;
-        final var expectedInsertions = 1000000;
+        final var expectedInsertions = 10000;
         final var fpp = 0.0001;
         final var config = new ExpirableBloomFilterConfig(expectedInsertions, fpp, validPeriod);
         final var instantBeforeFilterCreate = Instant.now();
@@ -115,7 +115,7 @@ public class BloomFilterManagerImplTest {
 
     @Test
     public void getAllFilterNames() {
-        final var expectFilterNames = IntStream.range(1, 1000).mapToObj(TestingUtils::numberString).collect(Collectors.toList());
+        final var expectFilterNames = IntStream.range(1, 100).mapToObj(TestingUtils::numberString).collect(Collectors.toList());
 
         for (final var name : expectFilterNames) {
             final var config = new ExpirableBloomFilterConfig();
