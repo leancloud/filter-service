@@ -31,7 +31,7 @@ public class BloomFilterManagerImplTest {
     @Test
     public void testCreateNonExistsFilter() {
         final var validPeriod = 1000;
-        final var expectedInsertions = 1000000;
+        final var expectedInsertions = 10000;
         final var fpp = 0.0001;
         final var config = new ExpirableBloomFilterConfig(expectedInsertions, fpp, validPeriod);
         final var instantBeforeFilterCreate = Instant.now();
@@ -104,7 +104,7 @@ public class BloomFilterManagerImplTest {
 
     @Test
     public void testSize() {
-        final var expectSize = ThreadLocalRandom.current().nextInt(1, 1000);
+        final var expectSize = ThreadLocalRandom.current().nextInt(1, 100);
         final var config = new ExpirableBloomFilterConfig();
         for (int i = 0; i < expectSize; i++) {
             manager.createFilter(numberString(i), config);
@@ -115,7 +115,7 @@ public class BloomFilterManagerImplTest {
 
     @Test
     public void getAllFilterNames() {
-        final var expectFilterNames = IntStream.range(1, 1000).mapToObj(TestingUtils::numberString).collect(Collectors.toList());
+        final var expectFilterNames = IntStream.range(1, 100).mapToObj(TestingUtils::numberString).collect(Collectors.toList());
 
         for (final var name : expectFilterNames) {
             final var config = new ExpirableBloomFilterConfig();
@@ -138,6 +138,7 @@ public class BloomFilterManagerImplTest {
     public void testPurge() {
         final var config = new ExpirableBloomFilterConfig();
         final var creationTime = Instant.now().minus(Duration.ofSeconds(10));
+        final var expirationTime = creationTime.plusSeconds(5);
         final var mockedFactory = Mockito.mock(GuavaBloomFilterFactory.class);
 
         Mockito.when(mockedFactory.createFilter(config))
@@ -145,7 +146,7 @@ public class BloomFilterManagerImplTest {
                         BloomFilterConfig.DEFAULT_EXPECTED_INSERTIONS,
                         BloomFilterConfig.DEFAULT_FALSE_POSITIVE_PROBABILITY,
                         creationTime,
-                        Duration.ofSeconds(5)));
+                        expirationTime));
 
         final var manager = new BloomFilterManagerImpl<>(mockedFactory);
         final var filter = manager.createFilter(testingFilterName, config).getFilter();
@@ -208,6 +209,7 @@ public class BloomFilterManagerImplTest {
         final var listener = new TestingListener();
         final var config = new ExpirableBloomFilterConfig();
         final var creationTime = Instant.now().minus(Duration.ofSeconds(10));
+        final var expirationTime = creationTime.plusSeconds(5);
         final var mockedFactory = Mockito.mock(GuavaBloomFilterFactory.class);
 
         Mockito.when(mockedFactory.createFilter(config))
@@ -215,7 +217,7 @@ public class BloomFilterManagerImplTest {
                         BloomFilterConfig.DEFAULT_EXPECTED_INSERTIONS,
                         BloomFilterConfig.DEFAULT_FALSE_POSITIVE_PROBABILITY,
                         creationTime,
-                        Duration.ofSeconds(5)));
+                        expirationTime));
 
         final var manager = new BloomFilterManagerImpl<>(mockedFactory);
         manager.addListener(listener);

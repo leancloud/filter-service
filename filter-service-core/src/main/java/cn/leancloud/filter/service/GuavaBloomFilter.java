@@ -35,8 +35,7 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
     private final int expectedInsertions;
 
     /**
-     * Internal testing usage only.
-     * This constructor can checkAndSet an arbitrary creation time for the constructed {@code GuavaBloomFilter}.
+     * Constructor used by {@link GuavaBloomFilterFactory}.
      *
      * @param expectedInsertions the number of expected insertions to the constructed {@code GuavaBloomFilter};
      *                           must be positive
@@ -49,27 +48,27 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
         this(expectedInsertions, fpp, Instant.now(), validPeriod);
     }
 
+    private GuavaBloomFilter(int expectedInsertions, double fpp, Instant created, Duration validPeriod) {
+        this(expectedInsertions, fpp, created, created.plus(validPeriod));
+    }
+
     /**
-     * Internal testing usage only.
-     * This constructor can checkAndSet an arbitrary creation time for the constructed {@code GuavaBloomFilter}.
+     * Constructor used by testing usage and JSON serialization.
+     * This constructor can set arbitrary creation and expiration time for the constructed {@code GuavaBloomFilter}.
      *
      * @param expectedInsertions the number of expected insertions to the constructed {@code GuavaBloomFilter};
      *                           must be positive
      * @param fpp                the desired false positive probability (must be positive and less than 1.0)
      * @param created            the creation time for the constructed {@code GuavaBloomFilter}
-     * @param validPeriod        the valid duration in second for the constructed {@code GuavaBloomFilter}. When
-     *                           time past creation time + validPeriod, the constructed {@code GuavaBloomFilter}
+     * @param expiration         the expiration time of the constructed {@code GuavaBloomFilter}. When
+     *                           time past this expiration time, the constructed {@code GuavaBloomFilter}
      *                           will be expired and can not be used any more.
      */
-    GuavaBloomFilter(int expectedInsertions, double fpp, Instant created, Duration validPeriod) {
-        this(expectedInsertions, fpp, created, created.plus(validPeriod));
-    }
-
     @JsonCreator
-    private GuavaBloomFilter(@JsonProperty("expectedInsertions") int expectedInsertions,
-                             @JsonProperty("fpp") double fpp,
-                             @JsonProperty("created") Instant created,
-                             @JsonProperty("expiration") Instant expiration) {
+    GuavaBloomFilter(@JsonProperty("expectedInsertions") int expectedInsertions,
+                     @JsonProperty("fpp") double fpp,
+                     @JsonProperty("created") Instant created,
+                     @JsonProperty("expiration") Instant expiration) {
         this.fpp = fpp;
         this.expectedInsertions = expectedInsertions;
         this.created = created;
