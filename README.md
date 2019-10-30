@@ -57,14 +57,14 @@ This is tested on my machine with java 1.8.0_181, 2.3 GHz Intel Core i5 cpu and 
 
 ## Doc service
 
-`DocService` is a feature powered by [Armeria](https://line.github.io/armeria/index.html). It is a single-page web application by which we can browse even invoke all the available operations on Filter-Service. It's a convienent tool for testing.
+`DocService` is a feature powered by [Armeria](https://line.github.io/armeria/index.html). It is a single-page web application by which we can browse or invoke any of the available operations on Filter-Service. It's a convienent tool for testing.
 
 By default, the `DocService` is disabled. To enable it, please run Filter-Service with `-d` option. Asume we are running Filter-Service on port 8080:
 ```
 ./bin/filter-service -d -p 8080
 ```
 
-After Filter-Service start up, we can open  `http://localhost:8080/docs` on the web browser and see the following screen:
+After Filter-Service start up, we can open `http://localhost:8080/docs` on the web browser and see the following screen:
 
 ![08D3D3A6-A4CC-4121-BD62-3AD88001B2E0](https://user-images.githubusercontent.com/1115061/67844505-cd24eb80-fb38-11e9-925c-97a1cef78251.png)
 
