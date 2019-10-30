@@ -17,6 +17,7 @@ import picocli.CommandLine.UnmatchedArgumentException;
 
 import javax.annotation.Nullable;
 import java.time.Duration;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.concurrent.*;
@@ -99,7 +100,7 @@ public final class Bootstrap {
     private static BloomFilterManagerImpl<GuavaBloomFilter> newBloomFilterManager() {
         final GuavaBloomFilterFactory factory = new GuavaBloomFilterFactory();
         final BloomFilterManagerImpl<GuavaBloomFilter> bloomFilterManager = new BloomFilterManagerImpl<>(factory);
-        bloomFilterManager.addListener(new BloomFilterManagerListener<>() {
+        bloomFilterManager.addListener(new BloomFilterManagerListener<GuavaBloomFilter, ExpirableBloomFilterConfig>() {
             @Override
             public void onBloomFilterCreated(String name, ExpirableBloomFilterConfig config, GuavaBloomFilter filter) {
                 logger.info("Bloom filter with name: {} was created.", name);
@@ -119,8 +120,12 @@ public final class Bootstrap {
 
     private static MetricsService loadMetricsService() {
         final ServiceLoader<MetricsService> loader = ServiceLoader.load(MetricsService.class);
-        final Optional<MetricsService> optService = loader.findFirst();
-        return optService.orElseGet(DefaultMetricsService::new);
+        final Iterator<MetricsService> iterator = loader.iterator();
+        if (iterator.hasNext()) {
+            return iterator.next();
+        } else {
+            return new DefaultMetricsService();
+        }
     }
 
     private static Server newServer(MeterRegistry registry,
