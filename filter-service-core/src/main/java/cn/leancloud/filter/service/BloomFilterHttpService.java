@@ -1,9 +1,9 @@
 package cn.leancloud.filter.service;
 
 import cn.leancloud.filter.service.BloomFilterManager.CreateFilterResult;
-import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.linecorp.armeria.common.HttpResponse;
 import com.linecorp.armeria.common.HttpStatus;
@@ -33,7 +33,7 @@ public final class BloomFilterHttpService {
         final JsonNode fpp = req.get("fpp");
         final JsonNode validPeriod = req.get("validPeriod");
         final JsonNode overwrite = req.get("overwrite");
-        final var config = new ExpirableBloomFilterConfig();
+        final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
 
         if (expectedInsertions != null) {
             config.setExpectedInsertions(expectedInsertions.intValue());
@@ -60,15 +60,15 @@ public final class BloomFilterHttpService {
 
     @Get("/{name}")
     public JsonNode getFilterInfo(@Param String name) throws FilterNotFoundException {
-        var filter = bloomFilterManager.safeGetFilter(name);
+        final BloomFilter filter = bloomFilterManager.safeGetFilter(name);
         return MAPPER.valueToTree(filter);
     }
 
     @Get("/list")
     public JsonNode list() {
-        final var response = MAPPER.createArrayNode();
+        final ArrayNode response = MAPPER.createArrayNode();
 
-        for (final var name : bloomFilterManager.getAllFilterNames()) {
+        for (final String name : bloomFilterManager.getAllFilterNames()) {
             response.add(name);
         }
 
@@ -79,11 +79,11 @@ public final class BloomFilterHttpService {
     public JsonNode check(@Param String name,
                           @RequestObject JsonNode req)
             throws FilterNotFoundException {
-        final var testingValue = checkNotNull("value", req.get("value"));
+        final JsonNode testingValue = checkNotNull("value", req.get("value"));
         checkParameter("value", testingValue.isTextual(), "expect string type");
 
-        final var filter = bloomFilterManager.safeGetFilter(name);
-        final var contain = filter.mightContain(testingValue.textValue());
+        final BloomFilter filter = bloomFilterManager.safeGetFilter(name);
+        final boolean contain = filter.mightContain(testingValue.textValue());
         return BooleanNode.valueOf(contain);
     }
 
@@ -91,12 +91,12 @@ public final class BloomFilterHttpService {
     public JsonNode multiCheck(@Param String name,
                                @RequestObject JsonNode req)
             throws FilterNotFoundException {
-        final var values = checkNotNull("values", req.get("values"));
+        final JsonNode values = checkNotNull("values", req.get("values"));
         checkParameter("values", values.isArray(), "expect Json array");
 
-        final var filter = bloomFilterManager.safeGetFilter(name);
-        final var response = MAPPER.createArrayNode();
-        for (final var value : values) {
+        final BloomFilter filter = bloomFilterManager.safeGetFilter(name);
+        final ArrayNode response = MAPPER.createArrayNode();
+        for (final JsonNode value : values) {
             response.add(value.isTextual() && filter.mightContain(value.textValue()));
         }
         return response;
@@ -106,11 +106,11 @@ public final class BloomFilterHttpService {
     public JsonNode checkAndSet(@Param String name,
                                 @RequestObject JsonNode req)
             throws FilterNotFoundException {
-        final var testingValue = checkNotNull("value", req.get("value"));
+        final JsonNode testingValue = checkNotNull("value", req.get("value"));
         checkParameter("value", testingValue.isTextual(), "expect string type");
 
-        final var filter = bloomFilterManager.safeGetFilter(name);
-        final var contain = !filter.set(testingValue.textValue());
+        final BloomFilter filter = bloomFilterManager.safeGetFilter(name);
+        final boolean contain = !filter.set(testingValue.textValue());
         return BooleanNode.valueOf(contain);
     }
 
@@ -118,12 +118,12 @@ public final class BloomFilterHttpService {
     public JsonNode multiCheckAndSet(@Param String name,
                                      @RequestObject JsonNode req)
             throws FilterNotFoundException {
-        final var values = checkNotNull("values", req.get("values"));
+        final JsonNode values = checkNotNull("values", req.get("values"));
         checkParameter("values", values.isArray(), "expect Json array");
 
-        final var filter = bloomFilterManager.safeGetFilter(name);
-        final var response = MAPPER.createArrayNode();
-        for (final var value : values) {
+        final BloomFilter filter = bloomFilterManager.safeGetFilter(name);
+        final ArrayNode response = MAPPER.createArrayNode();
+        for (final JsonNode value : values) {
             if (value.isTextual()) {
                 response.add(BooleanNode.valueOf(!filter.set(value.textValue())));
             } else {

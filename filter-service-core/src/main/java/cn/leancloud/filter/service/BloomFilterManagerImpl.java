@@ -25,12 +25,12 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
 
     @Override
     public CreateFilterResult<T> createFilter(String name, ExpirableBloomFilterConfig config, boolean overwrite) {
-        var filter = factory.createFilter(config);
-        var created = true;
+        T filter = factory.createFilter(config);
+        boolean created = true;
         if (overwrite) {
             filterMap.put(name, filter);
         } else {
-            final var prevFilter = filterMap.putIfAbsent(name, filter);
+            final T prevFilter = filterMap.putIfAbsent(name, filter);
             if (prevFilter != null) {
                 created = false;
                 filter = prevFilter;
@@ -61,7 +61,7 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
 
     @Override
     public T safeGetFilter(String name) throws FilterNotFoundException {
-        final var filter = getFilter(name);
+        final T filter = getFilter(name);
         if (filter == null) {
             throw FILTER_NOT_FOUND_EXCEPTION;
         }
@@ -79,7 +79,7 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
 
     @Override
     public void remove(String name) {
-        final var filter = filterMap.remove(name);
+        final T filter = filterMap.remove(name);
         if (filter != null) {
             notifyBloomFilterRemoved(name, filter);
         }
@@ -88,9 +88,9 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
     @Override
     public void purge() {
         for (Map.Entry<String, T> entry : filterMap.entrySet()) {
-            final var filter = entry.getValue();
+            final T filter = entry.getValue();
             if (filter.expired()) {
-                final var name = entry.getKey();
+                final String name = entry.getKey();
                 if (filterMap.remove(name, filter)) {
                     notifyBloomFilterRemoved(name, filter);
                 }

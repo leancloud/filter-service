@@ -11,13 +11,22 @@ if [ ! -d "$LOG_DIR" ]; then
     mkdir -p $LOG_DIR
 fi
 
+JAVA_VERSION=$($JAVA -version 2>&1 | grep 'version' | awk '{print $3}'')
+echo "Using java version:$JAVA_VERSION path:$JAVA"
+
+JVM_GC_LOG_CONFIGS="-XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=10M -XX:+PrintGCDetails -XX:+PrintReferenceGC -Xloggc:$LOG_DIR/gc.log"
+JAVA_VERSION=$($JAVA -version 2>&1 >/dev/null | grep 'version' | awk '{print $3}')
+if [[ $JAVA_VERSION =~ ^\"1[1-9]+.* ]]; then
+    JVM_GC_LOG_CONFIGS="-Xlog:gc+heap=info:file=$LOG_DIR/gc.log:time,level,tags:filecount=5,filesize=10240"
+fi
+
 $JAVA \
     -Xmx1G -Xms1G \
     -XX:+UseG1GC \
     -XX:+ParallelRefProcEnabled \
     -XX:MaxGCPauseMillis=1000 \
     -server \
-    -Xlog:gc+heap=info:file=$LOG_DIR/gc.log:time,level,tags:filecount=5,filesize=10240 \
+    $JVM_GC_LOG_CONFIGS \
     -DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector \
     -Dlog4j.logdir=$LOG_DIR \
     -cp $CLASSPATH \
