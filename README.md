@@ -1,4 +1,5 @@
 # Filter Service
+
 Filter-Service is a daemon network service which is used to expose bloom filters and operations by RESTFul API. There's already a great daemon like bloom filter lib called [bloomd](https://github.com/armon/bloomd) which has great performance results, but we still write our own because performance is not our first priority but monitorability and client dependency free is (Yes, HTTP still needs client but it is far more common and versatile). So here is Filter-Service.  
 
 ## Features
@@ -24,13 +25,13 @@ Filter-Service spit a lot of metrics like QPS of all the APIs, current connectio
 
 ## Performance
 
-We provide benchmark tools under directory: `filter-service-core/bin/`. It covers all the crucial parts of Filter-Service. You can test Filter-Service with them on your local machine.
+When you uncompress the `filter-service.tar.gz` file from the release list, the benchmakr tools is right at your hand under `./filter-service/bin`, the same path with the script to run Filter-Service daemon mentioned above. Those benchmark tools cover all the crucial parts of Filter-Service. You can test Filter-Service with them on your local machine.
 
-At first, you need to install [wrk](https://github.com/wg/wrk) which is used by all the benchmark tools.
+At first, you need to install [wrk](https://github.com/wg/wrk) which is used by all our benchmark tools.
 
 Then, taking `check-and-set` benchmark as example, you can run the script like this:
 ```
- ./filter-service-core/bin/check-and-set-benchmark.sh
+ ./bin/check-and-set-benchmark.sh
 ```
 
 The test results will show after 30s like:
@@ -60,7 +61,7 @@ This is test on my machine with java 1.8.0_181, 2.3 GHz Intel Core i5 cpu and16G
 
 By default, the `DocService` is disabled. To enable it, please run Filter-Service with `-d` option. Asume we are running Filter-Service on port 8080:
 ```
-./filter-service-core/bin/filter-service -d -p 8080
+./bin/filter-service -d -p 8080
 ```
 
 After Filter-Service start up, we can open  `http://localhost:8080/docs` on the web browser and see the following screen:
