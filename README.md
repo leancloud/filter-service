@@ -29,7 +29,7 @@ When you uncompress the `filter-service.tar.gz` file from the release list, the 
 
 At first, you need to install [wrk](https://github.com/wg/wrk) which is used by all our benchmark tools.
 
-Then, taking `check-and-set` benchmark as example, you can run the script like this:
+Then, taking `check-and-set` benchmark as example, you can run the benchmark like this:
 ```
  ./bin/check-and-set-benchmark.sh
 ```
