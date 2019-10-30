@@ -8,7 +8,7 @@ create_filter() {
 
     curl -s -XPUT \
     -H 'content-type: application/json; charset=utf-8' \
-    "http://localhost:8080/bloomfilter/$name" \
+    "http://localhost:8080/v1/bloomfilter/$name" \
     -d@- > /dev/null <<EOF 
     {
         "expectedInsertions": $expected_insertions,
@@ -25,7 +25,7 @@ set_value() {
 
     curl -s -XPOST \
     -H 'content-type: application/json; charset=utf-8' \
-    "http://localhost:8080/bloomfilter/$name/set" \
+    "http://localhost:8080/v1/bloomfilter/$name/set" \
     -d@- > /dev/null <<EOF 
     {
         "value": $value
@@ -35,7 +35,7 @@ EOF
 
 delete_filter() {
     local name=$1
-    curl -s -XDELETE "http://localhost:8080/bloomfilter/$name" > /dev/null
+    curl -s -XDELETE "http://localhost:8080/v1/bloomfilter/$name" > /dev/null
 
     echo "Filter: \"$name\" deleted."
 }

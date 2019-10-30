@@ -1,15 +1,19 @@
 #!/bin/bash
 
 BASE_DIR=$(dirname $0)/../
-CLASSPATH=$(echo $BASE_DIR/filter-service-core/target/filter-service.jar | tr ' ' ':')
+CLASSPATH=$(echo $BASE_DIR/filter-service.jar | tr ' ' ':')
 
 LOG_DIR="$BASE_DIR/logs"
+
+if [ ! -d "$LOG_DIR" ]; then
+    mkdir -p $LOG_DIR
+fi
 
 java \
     -Xmx1G -Xms1G \
     -XX:+UseG1GC \
     -XX:+ParallelRefProcEnabled \
-    -XX:MaxGCPauseMillis=2000 \
+    -XX:MaxGCPauseMillis=1000 \
     -server \
     -Xlog:gc+heap=info:file=$LOG_DIR/gc.log:time,level,tags:filecount=5,filesize=10240 \
     -DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector \

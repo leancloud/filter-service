@@ -3,15 +3,26 @@
           xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
     <id>distribution</id>
     <formats>
+        <format>dir</format>
         <format>tar.gz</format>
     </formats>
     <includeBaseDirectory>false</includeBaseDirectory>
-    <files>
-        <file>
-            <source>bin/filter-service</source>
-            <outputDirectory>${file.separator}</outputDirectory>
+    <fileSets>
+        <fileSet>
+            <lineEnding>unix</lineEnding>
             <fileMode>0755</fileMode>
-        </file>
+            <includes>
+                <include>bin/**</include>
+                <include>scripts/**</include>
+            </includes>
+            <excludes>
+                <exclude>**/src/**</exclude>
+                <exclude>**/target/**</exclude>
+                <exclude>**/.*/**</exclude>
+            </excludes>
+        </fileSet>
+    </fileSets>
+    <files>
         <file>
             <source>${project.build.directory}/filter-service.jar</source>
             <outputDirectory>${file.separator}</outputDirectory>
