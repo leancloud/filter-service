@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -87,7 +88,10 @@ public class BloomFilterHttpServiceTest {
 
     @Test
     public void testList() {
-        final List<String> expectedNames = List.of("Filter1", "Filter2", "Filter3");
+        final List<String> expectedNames = new ArrayList<>();
+        expectedNames.add("Filter1");
+        expectedNames.add("Filter2");
+        expectedNames.add("Filter3");
         when(mockedManager.getAllFilterNames()).thenReturn(expectedNames);
 
         final JsonNode res = service.list();
@@ -145,7 +149,10 @@ public class BloomFilterHttpServiceTest {
 
     @Test
     public void testMultiSet() throws Exception {
-        final List<String> testingValues = List.of("testing-value", "testing-value2", "testing-value3");
+        final List<String> testingValues = new ArrayList<>();
+        testingValues.add("testing-value1");
+        testingValues.add("testing-value2");
+        testingValues.add("testing-value3");
         final GuavaBloomFilter testingFilter = factory.createFilter(new ExpirableBloomFilterConfig());
         when(mockedManager.safeGetFilter(testingFilterName)).thenReturn(testingFilter);
         final ArrayNode values = mapper.createArrayNode();
@@ -212,11 +219,14 @@ public class BloomFilterHttpServiceTest {
 
     @Test
     public void testMultiCheckAndSet() throws Exception {
-        final List<String> testingValue = List.of("testing-value", "testing-value2", "testing-value3");
+        final List<String> testingValues = new ArrayList<>();
+        testingValues.add("testing-value1");
+        testingValues.add("testing-value2");
+        testingValues.add("testing-value3");
         final GuavaBloomFilter testingFilter = factory.createFilter(new ExpirableBloomFilterConfig());
         when(mockedManager.safeGetFilter(testingFilterName)).thenReturn(testingFilter);
         final ArrayNode values = mapper.createArrayNode();
-        testingValue.forEach(values::add);
+        testingValues.forEach(values::add);
         final ObjectNode param = mapper.createObjectNode();
         param.set("values", values);
         final JsonNode res = service.multiCheck(testingFilterName, param);
