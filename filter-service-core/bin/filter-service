@@ -1,7 +1,7 @@
 #!/bin/bash
 
-BASE_DIR=$(dirname $0)/../
-CLASSPATH=$(echo $BASE_DIR/filter-service.jar | tr ' ' ':')
+BASE_DIR=$(dirname $0)/..
+CLASSPATH=$(echo $BASE_DIR/*.jar | tr ' ' ':')
 
 JAVA="$JAVA_HOME/bin/java"
 
@@ -11,7 +11,7 @@ if [ ! -d "$LOG_DIR" ]; then
     mkdir -p $LOG_DIR
 fi
 
-JAVA_VERSION=$($JAVA -version 2>&1 | grep 'version' | awk '{print $3}'')
+JAVA_VERSION=$($JAVA -version 2>&1 | grep 'version' | awk '{print $3}')
 echo "Using java version:$JAVA_VERSION path:$JAVA"
 
 JVM_GC_LOG_CONFIGS="-XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=10M -XX:+PrintGCDetails -XX:+PrintReferenceGC -Xloggc:$LOG_DIR/gc.log"

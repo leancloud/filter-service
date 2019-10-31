@@ -18,7 +18,6 @@ import picocli.CommandLine.UnmatchedArgumentException;
 import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.Iterator;
-import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.concurrent.*;
 
@@ -122,8 +121,12 @@ public final class Bootstrap {
         final ServiceLoader<MetricsService> loader = ServiceLoader.load(MetricsService.class);
         final Iterator<MetricsService> iterator = loader.iterator();
         if (iterator.hasNext()) {
-            return iterator.next();
+            final MetricsService service = iterator.next();
+            logger.info("Load {} as implementation for cn.leancloud.filter.service.metrics.MetricsService.",
+                    service.getClass().getName());
+            return service;
         } else {
+            logger.info("Using cn.leancloud.filter.service.DefaultMetricsService to record metrics");
             return new DefaultMetricsService();
         }
     }
