@@ -3,13 +3,17 @@
     <parent>
         <artifactId>filter-service</artifactId>
         <groupId>cn.leancloud</groupId>
-        <version>1.0</version>
+        <version>1.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>filter-service-core</artifactId>
     <packaging>jar</packaging>
     <name>filter-service-core ${project.version}</name>
+
+    <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
 
     <dependencies>
         <dependency>
