@@ -12,7 +12,7 @@ public interface MetricsService {
     /**
      * A start hook called before filter-service start.
      */
-    void start() throws Exception;
+    default void start() throws Exception {}
 
     /**
      * Create a new {@link MeterRegistry} used by filter-service to generate metrics.
@@ -23,5 +23,5 @@ public interface MetricsService {
     /**
      * A stop hook called after filter-service is stopped.
      */
-    void stop() throws Exception;
+    default void stop() throws Exception {}
 }
