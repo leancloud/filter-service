@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>cn.leancloud</groupId>
-    <artifactId>filter-service-java</artifactId>
+    <artifactId>filter-service</artifactId>
     <packaging>pom</packaging>
     <version>1.0</version>
 
