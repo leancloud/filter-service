@@ -9,6 +9,7 @@ import com.linecorp.armeria.server.docs.DocService;
 import com.linecorp.armeria.server.metric.MetricCollectingService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.netty.channel.ChannelOption;
+import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -24,7 +25,7 @@ import java.util.concurrent.*;
 public final class Bootstrap {
     private static final Logger logger = LoggerFactory.getLogger(Bootstrap.class);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         final ParseCommandLineArgsResult ret = parseCommandLineArgs(args);
         if (ret.isExit()) {
             System.exit(ret.getExitCode());
@@ -50,19 +51,25 @@ public final class Bootstrap {
         final Server server = newServer(registry, opts, bloomFilterManager);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            server.stop().join();
-            purgeFuture.cancel(false);
+            try {
+                server.stop().join();
+                purgeFuture.cancel(false);
 
-            final CompletableFuture<Void> shutdownFuture = new CompletableFuture<>();
-            scheduledExecutorService.execute(() ->
-                    shutdownFuture.complete(null)
-            );
-            shutdownFuture.join();
-            scheduledExecutorService.shutdown();
+                final CompletableFuture<Void> shutdownFuture = new CompletableFuture<>();
+                scheduledExecutorService.execute(() ->
+                        shutdownFuture.complete(null)
+                );
+                shutdownFuture.join();
+                scheduledExecutorService.shutdown();
 
-            metricsService.stop();
 
-            logger.info("Filter server has been stopped.");
+                metricsService.stop();
+                logger.info("Filter service has been stopped.");
+            } catch (Exception ex) {
+                logger.info("Got unexpected exception during shutdown filter service, exit anyway.", ex);
+            } finally {
+                LogManager.shutdown();
+            }
         }));
 
         server.start().join();
