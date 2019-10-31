@@ -3,9 +3,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>cn.leancloud</groupId>
-    <artifactId>filter-service-java</artifactId>
+    <artifactId>filter-service</artifactId>
     <packaging>pom</packaging>
-    <version>1.0</version>
+    <version>1.2</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>A bloom filters daemon for Java.</description>
@@ -48,7 +48,7 @@
             <dependency>
                 <groupId>cn.leancloud</groupId>
                 <artifactId>filter-service-metrics</artifactId>
-                <version>1.0</version>
+                <version>1.2</version>
             </dependency>
             <dependency>
                 <groupId>com.linecorp.armeria</groupId>
@@ -317,6 +317,23 @@
                     <id>ossrh</id>
                     <url>https://oss.sonatype.org/content/repositories/snapshots</url>
                 </snapshotRepository>
+            </distributionManagement>
+        </profile>
+        <profile>
+            <id>release-clojars</id>
+            <repositories>
+                <repository>
+                    <id>clojars.org</id>
+                    <url>https://repo.clojars.org</url>
+                </repository>
+            </repositories>
+
+            <distributionManagement>
+                <repository>
+                    <id>clojars</id>
+                    <name>Clojars repository</name>
+                    <url>https://clojars.org/repo</url>
+                </repository>
             </distributionManagement>
         </profile>
     </profiles>

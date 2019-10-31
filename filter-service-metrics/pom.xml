@@ -1,28 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>filter-service-java</artifactId>
+        <artifactId>filter-service</artifactId>
         <groupId>cn.leancloud</groupId>
-        <version>1.0</version>
+        <version>1.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>filter-service-metrics</artifactId>
-
-    <repositories>
-        <repository>
-            <id>clojars.org</id>
-            <url>https://repo.clojars.org</url>
-        </repository>
-    </repositories>
-
-    <distributionManagement>
-        <repository>
-            <id>clojars</id>
-            <name>Clojars repository</name>
-            <url>https://clojars.org/repo</url>
-        </repository>
-    </distributionManagement>
 
     <dependencies>
         <!--keep same with armeria-->
@@ -53,6 +38,10 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>com.linecorp.armeria</groupId>
+            <artifactId>armeria</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -62,12 +51,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.2</version>
-                <configuration>
-                    <excludes>
-                        <exclude>**/.gitignore</exclude>
-                    </excludes>
-                </configuration>
             </plugin>
         </plugins>
     </build>
