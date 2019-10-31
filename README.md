@@ -24,7 +24,63 @@ Filter-Service requires Java 8 or  newer  to build and run. So please ensure tha
 
 ## Metrics
 
-Filter-Service spit a lot of metrics like QPS of all the APIs, current connections, active worker threads size, requests queue size etc. We are using [micrometer](https://github.com/micrometer-metrics/micrometer), a metrics facade for many popular monitoring tools, to collect these metrics. Please check the docunment on [Micrometer Document](https://micrometer.io/docs) for how to bridge micrometer to your monitoring system.
+Filter-Service spit a lot of metrics like QPS of all the APIs, current connections, active worker threads size, requests queue size etc. We are using [Micrometer](https://github.com/micrometer-metrics/micrometer), a metrics facade for many popular monitoring tools, to collect these metrics. Please check the docunment on [Micrometer Document](https://micrometer.io/docs) for more informations.
+
+For simplicity, we are taking [DefaultMetricsService](https://github.com/leancloud/filter-service/blob/master/filter-service-core/src/main/java/cn/leancloud/filter/service/DefaultMetricsService.java) as a default implemntation for [MetricsService](https://github.com/leancloud/filter-service/blob/master/filter-service-metrics/src/main/java/cn/leancloud/filter/service/metrics/MetricsService.java) to handle metrics. It only use [LoggingMeterRegistry](https://static.javadoc.io/io.micrometer/micrometer-core/1.1.3/io/micrometer/core/instrument/logging/LoggingMeterRegistry.html) , from `Micrometer`, to log all the available metrics to a file. If you think it's not enough, you can implrement your own `MetricsService`, then package it as a SPI implementation and put it to the extracted directory `filter-service`. Filter-Service will use [ServiceLoader](https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html) to load the `MetricsService`you implemented from the provided Jar file and use it to handle metrics.
+
+For example, assume that you are using [Prometheus](https://prometheus.io/) to collect metrcis and we are taking [the codes from Micrometer](https://micrometer.io/docs/registry/prometheus) as an example.
+
+1. You can implement `MetricsService` like this:
+```java
+package cn.leancloud.example;
+
+...
+
+public final class PrometheusMetricsService implements MetricsService {
+    @Override
+    public MeterRegistry createMeterRegistry() throws Exception {
+        final PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+
+        try {
+            final HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+            server.createContext("/prometheus", httpExchange -> {
+                final String response = prometheusRegistry.scrape();
+                httpExchange.sendResponseHeaders(200, response.getBytes().length);
+                try (OutputStream os = httpExchange.getResponseBody()) {
+                    os.write(response.getBytes());
+                }
+            });
+
+            new Thread(server::start).start();
+            return prometheusRegistry;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
+```
+
+2. Write a file with name `cn.leancloud.filter.service.metrics.MetricsService` and with content:
+```
+cn.leancloud.example.PrometheusMetricsService
+```
+
+and put this file in path `resources/META-INFO/services`.  So your project structure would be like:
+```
+src
+ `-- main.
+      |--java
+      |   `--cn.leancloud.example
+      |           `-- PrometheusMetricsService.java
+      `--resources
+          `-- META-INFO
+               `--services
+					 `-- cn.leancloud.filter.service.metrics.MetricsService
+```
+
+3. Package your project into a Jar;
+4. Put your Jar file and all your dependent Jar files to `./filter-service`;
+5. Run Filter-Service with `./filter-service/bin/filter-service` and wait metrics be collected to `Prometheus` using `PrometheusMeterRegistry`;
 
 ## Performance
 
