@@ -319,5 +319,22 @@
                 </snapshotRepository>
             </distributionManagement>
         </profile>
+        <profile>
+            <id>release-clojars</id>
+            <repositories>
+                <repository>
+                    <id>clojars.org</id>
+                    <url>https://repo.clojars.org</url>
+                </repository>
+            </repositories>
+
+            <distributionManagement>
+                <repository>
+                    <id>clojars</id>
+                    <name>Clojars repository</name>
+                    <url>https://clojars.org/repo</url>
+                </repository>
+            </distributionManagement>
+        </profile>
     </profiles>
 </project>

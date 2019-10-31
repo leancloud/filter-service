@@ -9,21 +9,6 @@
 
     <artifactId>filter-service-metrics</artifactId>
 
-    <repositories>
-        <repository>
-            <id>clojars.org</id>
-            <url>https://repo.clojars.org</url>
-        </repository>
-    </repositories>
-
-    <distributionManagement>
-        <repository>
-            <id>clojars</id>
-            <name>Clojars repository</name>
-            <url>https://clojars.org/repo</url>
-        </repository>
-    </distributionManagement>
-
     <dependencies>
         <!--keep same with armeria-->
         <dependency>
