@@ -43,7 +43,7 @@ public final class BloomFilterHttpService {
         }
 
         if (validPeriod != null) {
-            config.setValidPeriod(validPeriod.longValue());
+            config.setValidPeriod(validPeriod.intValue());
         }
 
         final CreateFilterResult<?> createResult;

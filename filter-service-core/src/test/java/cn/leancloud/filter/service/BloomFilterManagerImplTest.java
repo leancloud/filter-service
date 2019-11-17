@@ -6,7 +6,8 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.time.Duration;
-import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -35,7 +36,7 @@ public class BloomFilterManagerImplTest {
         final int expectedInsertions = 10000;
         final double fpp = 0.0001;
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig(expectedInsertions, fpp, validPeriod);
-        final Instant instantBeforeFilterCreate = Instant.now();
+        final ZonedDateTime instantBeforeFilterCreate = ZonedDateTime.now(ZoneOffset.UTC);
         final CreateFilterResult<GuavaBloomFilter> result = manager.createFilter(testingFilterName, config);
         final GuavaBloomFilter filter = result.getFilter();
 
@@ -138,8 +139,8 @@ public class BloomFilterManagerImplTest {
     @Test
     public void testPurge() {
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
-        final Instant creationTime = Instant.now().minus(Duration.ofSeconds(10));
-        final Instant expirationTime = creationTime.plusSeconds(5);
+        final ZonedDateTime creationTime = ZonedDateTime.now(ZoneOffset.UTC).minus(Duration.ofSeconds(10));
+        final ZonedDateTime expirationTime = creationTime.plusSeconds(5);
         final GuavaBloomFilterFactory mockedFactory = Mockito.mock(GuavaBloomFilterFactory.class);
 
         Mockito.when(mockedFactory.createFilter(config))
@@ -209,8 +210,8 @@ public class BloomFilterManagerImplTest {
     public void testListenFilterPurged() {
         final TestingListener listener = new TestingListener();
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
-        final Instant creationTime = Instant.now().minus(Duration.ofSeconds(10));
-        final Instant expirationTime = creationTime.plusSeconds(5);
+        final ZonedDateTime creationTime = ZonedDateTime.now(ZoneOffset.UTC).minus(Duration.ofSeconds(10));
+        final ZonedDateTime expirationTime = creationTime.plusSeconds(5);
         final GuavaBloomFilterFactory mockedFactory = Mockito.mock(GuavaBloomFilterFactory.class);
 
         Mockito.when(mockedFactory.createFilter(config))
