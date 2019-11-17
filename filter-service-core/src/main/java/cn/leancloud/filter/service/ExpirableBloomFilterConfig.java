@@ -13,7 +13,7 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
 
     private Duration validPeriodAfterCreate;
     @Nullable
-    private Duration validPeriodAfterAccess;
+    private Duration extendValidPeriodAfterAccess;
 
     ExpirableBloomFilterConfig() {
         this.validPeriodAfterCreate = DEFAULT_VALID_PERIOD;
@@ -40,18 +40,18 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
     }
 
     @Nullable
-    Duration validPeriodAfterAccess() {
-        return validPeriodAfterAccess;
+    Duration extendValidPeriodAfterAccess() {
+        return extendValidPeriodAfterAccess;
     }
 
-    ExpirableBloomFilterConfig setValidPeriodAfterAccess(Duration validPeriod) {
-        checkNotNull("validPeriodAfterAccess", validPeriod);
-        checkParameter("validPeriodAfterAccess",
+    ExpirableBloomFilterConfig setExtendValidPeriodAfterAccess(Duration validPeriod) {
+        checkNotNull("extendValidPeriodAfterAccess", validPeriod);
+        checkParameter("extendValidPeriodAfterAccess",
                 validPeriod.getSeconds() > 0L,
                 "expected: > 0, actual: %s",
                 validPeriod);
 
-        this.validPeriodAfterAccess = validPeriod;
+        this.extendValidPeriodAfterAccess = validPeriod;
 
         return this;
     }
@@ -64,8 +64,8 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
      */
     ZonedDateTime expiration(ZonedDateTime creation) {
         ZonedDateTime expiration;
-        if (validPeriodAfterAccess != null) {
-            expiration = creation.plus(validPeriodAfterAccess);
+        if (extendValidPeriodAfterAccess != null) {
+            expiration = creation.plus(extendValidPeriodAfterAccess);
         } else {
             expiration = creation.plus(validPeriodAfterCreate);
         }
@@ -79,12 +79,12 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
         if (!super.equals(o)) return false;
         final ExpirableBloomFilterConfig that = (ExpirableBloomFilterConfig) o;
         return validPeriodAfterCreate.equals(that.validPeriodAfterCreate) &&
-                (validPeriodAfterAccess == null || validPeriodAfterAccess.equals(that.validPeriodAfterAccess));
+                (extendValidPeriodAfterAccess == null || extendValidPeriodAfterAccess.equals(that.extendValidPeriodAfterAccess));
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), validPeriodAfterCreate, validPeriodAfterAccess);
+        return Objects.hash(super.hashCode(), validPeriodAfterCreate, extendValidPeriodAfterAccess);
     }
 
     @Override
@@ -92,7 +92,7 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
         return "ExpirableBloomFilterConfig{" +
                 super.toString() +
                 "validPeriodAfterCreate=" + validPeriodAfterCreate +
-                ", validPeriodAfterAccess=" + validPeriodAfterAccess +
+                ", extendValidPeriodAfterAccess=" + extendValidPeriodAfterAccess +
                 '}';
     }
 
@@ -100,7 +100,7 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
     protected Object clone() throws CloneNotSupportedException {
         final ExpirableBloomFilterConfig config = (ExpirableBloomFilterConfig) super.clone();
         config.validPeriodAfterCreate = validPeriodAfterCreate;
-        config.validPeriodAfterAccess = validPeriodAfterAccess;
+        config.extendValidPeriodAfterAccess = extendValidPeriodAfterAccess;
         return config;
     }
 }

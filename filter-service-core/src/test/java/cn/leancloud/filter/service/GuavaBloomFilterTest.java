@@ -30,7 +30,7 @@ public class GuavaBloomFilterTest {
         assertThat(filter.fpp()).isEqualTo(fpp);
         assertThat(filter.expectedInsertions()).isEqualTo(expectedInsertions);
         assertThat(filter.expiration()).isEqualTo(expiration);
-        assertThat(filter.validPeriodAfterAccess()).isEqualTo(validPeriodAfterAccess);
+        assertThat(filter.extendValidPeriodAfterAccess()).isEqualTo(validPeriodAfterAccess);
         assertThat(filter.created()).isEqualTo(creation);
         assertThat(filter.expired()).isFalse();
     }
@@ -108,7 +108,7 @@ public class GuavaBloomFilterTest {
     public void testToJson() throws Exception {
         final Duration validPeriodAfterAccess = Duration.ofSeconds(10);
         final ExpirableBloomFilterConfig config = (ExpirableBloomFilterConfig) defaultTestingConfig.clone();
-        config.setValidPeriodAfterAccess(validPeriodAfterAccess);
+        config.setExtendValidPeriodAfterAccess(validPeriodAfterAccess);
 
         final GuavaBloomFilter expectedFilter = testingFactory.createFilter(config);
         final ObjectMapper mapper = new ObjectMapper();

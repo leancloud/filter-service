@@ -33,8 +33,9 @@ public final class BloomFilterHttpService {
                                @RequestObject JsonNode req) {
         final JsonNode expectedInsertions = req.get("expectedInsertions");
         final JsonNode fpp = req.get("fpp");
-        final JsonNode validPeriodAfterCreate = req.get("validPeriodAfterCreate");
-        final JsonNode validPeriodAfterAccess = req.get("validPeriodAfterAccess");
+        final JsonNode validPeriodAfterCreate = req.get("validPeriod") == null ?
+                req.get("validPeriodAfterCreate") : req.get("validPeriod");
+        final JsonNode extendValidPeriodAfterAccess = req.get("extendValidPeriodAfterAccess");
         final JsonNode overwrite = req.get("overwrite");
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
 
@@ -49,8 +50,8 @@ public final class BloomFilterHttpService {
             config.setValidPeriodAfterCreate(Duration.ofSeconds(validPeriodAfterCreate.intValue()));
         }
 
-        if (validPeriodAfterAccess != null) {
-            config.setValidPeriodAfterAccess(Duration.ofSeconds(validPeriodAfterAccess.intValue()));
+        if (extendValidPeriodAfterAccess != null) {
+            config.setExtendValidPeriodAfterAccess(Duration.ofSeconds(extendValidPeriodAfterAccess.intValue()));
         }
 
         final CreateFilterResult<?> createResult;

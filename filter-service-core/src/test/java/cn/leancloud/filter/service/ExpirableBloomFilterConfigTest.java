@@ -45,7 +45,7 @@ public class ExpirableBloomFilterConfigTest {
     public void testDefaultValidPeriodAfterAccess() {
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
         assertThat(config.validPeriodAfterCreate()).isEqualTo(ExpirableBloomFilterConfig.DEFAULT_VALID_PERIOD);
-        assertThat(config.validPeriodAfterAccess()).isNull();
+        assertThat(config.extendValidPeriodAfterAccess()).isNull();
     }
 
     @Test
@@ -53,28 +53,28 @@ public class ExpirableBloomFilterConfigTest {
         final int expectedValidPeriodAfterAccess = ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
 
-        assertThat(config.setValidPeriodAfterAccess(Duration.ofSeconds(expectedValidPeriodAfterAccess))).isSameAs(config);
-        assertThat(config.validPeriodAfterAccess()).isEqualTo(Duration.ofSeconds(expectedValidPeriodAfterAccess));
+        assertThat(config.setExtendValidPeriodAfterAccess(Duration.ofSeconds(expectedValidPeriodAfterAccess))).isSameAs(config);
+        assertThat(config.extendValidPeriodAfterAccess()).isEqualTo(Duration.ofSeconds(expectedValidPeriodAfterAccess));
     }
 
     @Test
     public void testSetNegativeValidPeriodAfterAccess() {
         final int invalidValidPeriod = -1 * Math.abs(ThreadLocalRandom.current().nextInt());
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
-        assertThatThrownBy(() -> config.setValidPeriodAfterAccess(Duration.ofSeconds(invalidValidPeriod)))
+        assertThatThrownBy(() -> config.setExtendValidPeriodAfterAccess(Duration.ofSeconds(invalidValidPeriod)))
                 .isInstanceOf(BadParameterException.class)
                 .hasMessageContaining("invalid parameter");
-        assertThat(config.validPeriodAfterAccess()).isNull();
+        assertThat(config.extendValidPeriodAfterAccess()).isNull();
     }
 
     @Test
     public void testSetZeroValidPeriodAfterAccess() {
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
-        assertThatThrownBy(() -> config.setValidPeriodAfterAccess(Duration.ofSeconds(0)))
+        assertThatThrownBy(() -> config.setExtendValidPeriodAfterAccess(Duration.ofSeconds(0)))
                 .isInstanceOf(BadParameterException.class)
                 .hasMessageContaining("invalid parameter");
 
-        assertThat(config.validPeriodAfterAccess()).isNull();
+        assertThat(config.extendValidPeriodAfterAccess()).isNull();
     }
 
     @Test
