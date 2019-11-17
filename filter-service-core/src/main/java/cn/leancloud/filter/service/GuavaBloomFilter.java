@@ -62,7 +62,7 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
     @JsonIgnore
     private final com.google.common.hash.BloomFilter<CharSequence> filter;
     @Nullable
-    private final Duration extendValidPeriodAfterAccess;
+    private final Duration validPeriodAfterAccess;
     private final double fpp;
     private final int expectedInsertions;
     private final Timer timer;
@@ -76,8 +76,8 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
                      @JsonProperty("fpp") double fpp,
                      @JsonProperty("created") ZonedDateTime created,
                      @JsonProperty("expiration") ZonedDateTime expiration,
-                     @Nullable @JsonProperty("extendValidPeriodAfterAccess") Duration extendValidPeriodAfterAccess) {
-        this(expectedInsertions, fpp, created, expiration, extendValidPeriodAfterAccess, Timer.DEFAULT_TIMER);
+                     @Nullable @JsonProperty("validPeriodAfterAccess") Duration validPeriodAfterAccess) {
+        this(expectedInsertions, fpp, created, expiration, validPeriodAfterAccess, Timer.DEFAULT_TIMER);
     }
 
     /**
@@ -91,7 +91,7 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
      * @param expiration                   the expiration time of the constructed {@code GuavaBloomFilter}. When
      *                                     time past this expiration time, the constructed {@code GuavaBloomFilter}
      *                                     will be expired and can not be used any more.
-     * @param extendValidPeriodAfterAccess the time duration to push the expiration of the filter forward after calling
+     * @param validPeriodAfterAccess the time duration to push the expiration of the filter forward after calling
      *                                     {@link GuavaBloomFilter#set(String)} or {@link GuavaBloomFilter#mightContain(String)}
      *                                     each time
      * @param timer                        the {@link Timer} used to get current {@link ZonedDateTime} with UTC offset. This
@@ -101,7 +101,7 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
                      double fpp,
                      ZonedDateTime created,
                      ZonedDateTime expiration,
-                     @Nullable Duration extendValidPeriodAfterAccess,
+                     @Nullable Duration validPeriodAfterAccess,
                      Timer timer) {
         this.fpp = fpp;
         this.expectedInsertions = expectedInsertions;
@@ -111,7 +111,7 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
                 Funnels.stringFunnel(StandardCharsets.UTF_8),
                 expectedInsertions,
                 fpp);
-        this.extendValidPeriodAfterAccess = extendValidPeriodAfterAccess;
+        this.validPeriodAfterAccess = validPeriodAfterAccess;
         this.timer = timer;
     }
 
@@ -149,7 +149,7 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
 
     @Override
     public boolean expired() {
-        if (extendValidPeriodAfterAccess == null) {
+        if (validPeriodAfterAccess == null) {
             return timer.utcNow().isAfter(expiration);
         } else {
             synchronized (this) {
@@ -171,8 +171,8 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final GuavaBloomFilter that = (GuavaBloomFilter) o;
-        if ((extendValidPeriodAfterAccess == null && that.extendValidPeriodAfterAccess == null) ||
-                extendValidPeriodAfterAccess != null && that.extendValidPeriodAfterAccess != null) {
+        if ((validPeriodAfterAccess == null && that.validPeriodAfterAccess == null) ||
+                validPeriodAfterAccess != null && that.validPeriodAfterAccess != null) {
             return Double.compare(that.fpp, fpp) == 0 &&
                     expectedInsertions == that.expectedInsertions &&
                     created.toInstant().getEpochSecond() == that.created.toInstant().getEpochSecond() &&
@@ -180,9 +180,9 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
                     expiration.toInstant().getEpochSecond() == that.expiration.toInstant().getEpochSecond() &&
                     expiration.getOffset() == that.expiration.getOffset() &&
                     filter.equals(that.filter) &&
-                    (extendValidPeriodAfterAccess == null ||
-                            extendValidPeriodAfterAccess.getSeconds() ==
-                                    that.extendValidPeriodAfterAccess.getSeconds()) &&
+                    (validPeriodAfterAccess == null ||
+                            validPeriodAfterAccess.getSeconds() ==
+                                    that.validPeriodAfterAccess.getSeconds()) &&
                     timer.equals(that.timer);
 
         }
@@ -191,7 +191,7 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
 
     @Override
     public int hashCode() {
-        return Objects.hash(created, filter, expiration, fpp, expectedInsertions, extendValidPeriodAfterAccess);
+        return Objects.hash(created, filter, expiration, fpp, expectedInsertions, validPeriodAfterAccess);
     }
 
     @Override
@@ -202,23 +202,23 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
                 ", expiration=" + expiration +
                 ", fpp=" + fpp +
                 ", expectedInsertions=" + expectedInsertions +
-                ", extendValidPeriodAfterAccess" + extendValidPeriodAfterAccess +
+                ", validPeriodAfterAccess" + validPeriodAfterAccess +
                 '}';
     }
 
     @Nullable
     @JsonInclude(Include.NON_NULL)
-    @JsonGetter("extendValidPeriodAfterAccess")
+    @JsonGetter("validPeriodAfterAccess")
     @JsonSerialize(using = DurationSerializer.class)
     @JsonDeserialize(using = DurationDeserializer.class)
-    Duration extendValidPeriodAfterAccess() {
-        return extendValidPeriodAfterAccess;
+    Duration validPeriodAfterAccess() {
+        return validPeriodAfterAccess;
     }
 
     private void tryExtendExpiration() {
-        if (extendValidPeriodAfterAccess != null) {
+        if (validPeriodAfterAccess != null) {
             synchronized (this) {
-                expiration = timer.utcNow().plus(extendValidPeriodAfterAccess);
+                expiration = timer.utcNow().plus(validPeriodAfterAccess);
             }
         }
     }

@@ -282,12 +282,12 @@ definitions:
         exclusiveMaximum: true
         maximum: 1
       validPeriodAfterWrite:
-        description: "valid period in seconds for the created Bloom Filter. When time past the creation time + valid period, the Bloom Filter will be expired and can not be used any more. Please note that `validPeriodAfterWrite` and `extendValidPeriodAfterAccess` is mutually exclusive. Only one of them can take effect."
+        description: "valid period in seconds for the created Bloom Filter. When time past the creation time + valid period, the Bloom Filter will be expired and can not be used any more. Please note that `validPeriodAfterWrite` and `validPeriodAfterAccess` is mutually exclusive. Only one of them can take effect."
         type: "integer"
         format: "int32"
         minimum: 1
-      extendValidPeriodAfterAccess:
-        description: "valid period in seconds for the created Bloom Filter. The difference from this argument to `validPeriodAfterWrite` is that every access (`check` or `checkAndSet`) to the created Bloom Filter will push the expiration time forward `extendValidPeriodAfterAccess` seconds.Please note that `validPeriodAfterWrite` and `extendValidPeriodAfterAccess` is mutually exclusive. Only one of them can take effect."
+      validPeriodAfterAccess:
+        description: "valid period in seconds for the created Bloom Filter. The difference from this argument to `validPeriodAfterWrite` is that every access (`check` or `checkAndSet`) to the created Bloom Filter will push the expiration time forward `validPeriodAfterAccess` seconds.Please note that `validPeriodAfterWrite` and `validPeriodAfterAccess` is mutually exclusive. Only one of them can take effect."
         type: "integer"
         format: "int32"
         minimum: 1

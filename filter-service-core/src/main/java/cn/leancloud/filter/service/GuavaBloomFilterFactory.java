@@ -14,6 +14,6 @@ public class GuavaBloomFilterFactory implements BloomFilterFactory<GuavaBloomFil
                 config.fpp(),
                 creation,
                 expiration,
-                config.extendValidPeriodAfterAccess());
+                config.validPeriodAfterAccess());
     }
 }

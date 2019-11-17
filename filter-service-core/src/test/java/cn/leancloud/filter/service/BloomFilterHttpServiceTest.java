@@ -44,13 +44,13 @@ public class BloomFilterHttpServiceTest {
         final double fpp = 0.0001;
         final ObjectNode request = mapper.createObjectNode();
         request.put("validPeriodAfterCreate", validPeriodAfterCreate);
-        request.put("extendValidPeriodAfterAccess", validPeriodAfterAccess);
+        request.put("validPeriodAfterAccess", validPeriodAfterAccess);
         request.put("fpp", fpp);
         request.put("expectedInsertions", expectedInsertions);
         request.put("overwrite", true);
         final ExpirableBloomFilterConfig expectConfig = new ExpirableBloomFilterConfig(expectedInsertions, fpp);
         expectConfig.setValidPeriodAfterCreate(Duration.ofSeconds(validPeriodAfterCreate));
-        expectConfig.setExtendValidPeriodAfterAccess(Duration.ofSeconds(validPeriodAfterAccess));
+        expectConfig.setValidPeriodAfterAccess(Duration.ofSeconds(validPeriodAfterAccess));
         final GuavaBloomFilter expectedFilter = factory.createFilter(expectConfig);
         final CreateFilterResult<GuavaBloomFilter> result = new CreateFilterResult<>(expectedFilter, true);
 
