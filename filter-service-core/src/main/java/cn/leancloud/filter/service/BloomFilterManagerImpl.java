@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
@@ -16,6 +18,7 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
     private final List<BloomFilterManagerListener<T, ExpirableBloomFilterConfig>> listeners;
     private final ConcurrentHashMap<String, T> filterMap;
     private final BloomFilterFactory<? extends T, ? super ExpirableBloomFilterConfig> factory;
+    private final Lock filterMapLock = new ReentrantLock();
 
     BloomFilterManagerImpl(BloomFilterFactory<? extends T, ? super ExpirableBloomFilterConfig> factory) {
         this.filterMap = new ConcurrentHashMap<>();
@@ -25,21 +28,31 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
 
     @Override
     public CreateFilterResult<T> createFilter(String name, ExpirableBloomFilterConfig config, boolean overwrite) {
-        T filter = factory.createFilter(config);
-        boolean created = true;
-        if (overwrite) {
-            filterMap.put(name, filter);
-        } else {
-            final T prevFilter = filterMap.putIfAbsent(name, filter);
-            if (prevFilter != null) {
-                created = false;
+        T filter;
+        T prevFilter;
+        boolean created = false;
+        filterMapLock.lock();
+        try {
+            prevFilter = filterMap.get(name);
+            if (overwrite || prevFilter == null || prevFilter.expired()) {
+                filter = factory.createFilter(config);
+                filterMap.put(name, filter);
+                created = true;
+            } else {
                 filter = prevFilter;
             }
+        } finally {
+            filterMapLock.unlock();
         }
 
         if (created) {
+            if (prevFilter != null) {
+                notifyBloomFilterRemoved(name, prevFilter);
+            }
+
             notifyBloomFilterCreated(name, config, filter);
         }
+
         return new CreateFilterResult<>(filter, created);
     }
 
@@ -79,7 +92,15 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
 
     @Override
     public void remove(String name) {
-        final T filter = filterMap.remove(name);
+        final T filter;
+
+        filterMapLock.lock();
+        try {
+            filter = filterMap.remove(name);
+        } finally {
+            filterMapLock.unlock();
+        }
+
         if (filter != null) {
             notifyBloomFilterRemoved(name, filter);
         }
@@ -91,7 +112,15 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
             final T filter = entry.getValue();
             if (filter.expired()) {
                 final String name = entry.getKey();
-                if (filterMap.remove(name, filter)) {
+                final boolean removed;
+                filterMapLock.lock();
+                try {
+                    removed = filterMap.remove(name, filter);
+                } finally {
+                    filterMapLock.unlock();
+                }
+
+                if (removed) {
                     notifyBloomFilterRemoved(name, filter);
                 }
             }
