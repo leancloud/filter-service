@@ -96,7 +96,7 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
      *                               time past this expiration time, the constructed {@code GuavaBloomFilter}
      *                               will be expired and can not be used any more.
      * @param validPeriodAfterAccess the valid duration in second for the constructed {@code GuavaBloomFilter}. When
-     *                               time past creation time + validPeriodAfterWrite, the constructed {@code GuavaBloomFilter}
+     *                               time past creation time + validPeriodAfterCreate, the constructed {@code GuavaBloomFilter}
      *                               will be expired and can not be used any more.
      * @param timer                  the {@link Timer} used to get current {@link ZonedDateTime} with UTC offset. This
      *                               argument is used under test to set an arbitrary current time.
@@ -211,7 +211,7 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
     private void tryExtendExpiration() {
         if (validPeriodAfterAccess != null) {
             synchronized (this) {
-                expiration = expiration.plus(validPeriodAfterAccess);
+                expiration = timer.utcNow().plus(validPeriodAfterAccess);
             }
         }
     }

@@ -36,8 +36,7 @@ public class BloomFilterManagerImplTest {
         final int expectedInsertions = 10000;
         final double fpp = 0.0001;
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig(expectedInsertions, fpp);
-        config.setValidPeriodAfterWrite(Duration.ofSeconds(validPeriod));
-        final ZonedDateTime instantBeforeFilterCreate = ZonedDateTime.now(ZoneOffset.UTC);
+        config.setValidPeriodAfterCreate(Duration.ofSeconds(validPeriod));
         final CreateFilterResult<GuavaBloomFilter> result = manager.createFilter(testingFilterName, config);
         final GuavaBloomFilter filter = result.getFilter();
 
@@ -45,7 +44,6 @@ public class BloomFilterManagerImplTest {
         assertThat(filter.fpp()).isEqualTo(fpp);
         assertThat(filter.expectedInsertions()).isEqualTo(expectedInsertions);
         assertThat(filter.expiration()).isEqualTo(filter.created().plus(Duration.ofSeconds(validPeriod)));
-        assertThat(filter.created()).isAfter(instantBeforeFilterCreate);
         assertThat(filter.expired()).isFalse();
     }
 

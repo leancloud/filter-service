@@ -10,6 +10,8 @@ import com.linecorp.armeria.common.HttpStatus;
 import com.linecorp.armeria.common.MediaType;
 import com.linecorp.armeria.server.annotation.*;
 
+import java.time.Duration;
+
 import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkNotNull;
 import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkParameter;
 
@@ -31,7 +33,8 @@ public final class BloomFilterHttpService {
                                @RequestObject JsonNode req) {
         final JsonNode expectedInsertions = req.get("expectedInsertions");
         final JsonNode fpp = req.get("fpp");
-        final JsonNode validPeriod = req.get("validPeriod");
+        final JsonNode validPeriodAfterCreate = req.get("validPeriodAfterCreate");
+        final JsonNode validPeriodAfterAccess = req.get("validPeriodAfterAccess");
         final JsonNode overwrite = req.get("overwrite");
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
 
@@ -42,8 +45,12 @@ public final class BloomFilterHttpService {
             config.setFpp(fpp.doubleValue());
         }
 
-        if (validPeriod != null) {
-            config.setValidPeriod(validPeriod.intValue());
+        if (validPeriodAfterCreate != null) {
+            config.setValidPeriodAfterCreate(Duration.ofSeconds(validPeriodAfterCreate.intValue()));
+        }
+
+        if (validPeriodAfterAccess != null) {
+            config.setValidPeriodAfterAccess(Duration.ofSeconds(validPeriodAfterAccess.intValue()));
         }
 
         final CreateFilterResult<?> createResult;

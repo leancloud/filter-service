@@ -7,13 +7,7 @@ public class GuavaBloomFilterFactory implements BloomFilterFactory<GuavaBloomFil
     @Override
     public GuavaBloomFilter createFilter(ExpirableBloomFilterConfig config) {
         final ZonedDateTime creation = ZonedDateTime.now(ZoneOffset.UTC);
-        ZonedDateTime expiration;
-
-        if (config.validPeriodAfterAccess() != null) {
-            expiration = creation.plus(config.validPeriodAfterAccess());
-        } else {
-            expiration = creation.plus(config.validPeriodAfterWrite());
-        }
+        final ZonedDateTime expiration = config.expiration(creation);
 
         return new GuavaBloomFilter(
                 config.expectedInsertions(),

@@ -11,40 +11,40 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class ExpirableBloomFilterConfigTest {
     @Test
-    public void testGetAndSetValidPeriodAfterWrite() {
+    public void testGetAndSetValidPeriodAfterCreate() {
         final int expectedValidPeriod = ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
-        assertThat(config.validPeriodAfterWrite()).isEqualTo(ExpirableBloomFilterConfig.DEFAULT_VALID_PERIOD);
-        assertThat(config.setValidPeriodAfterWrite(Duration.ofSeconds(expectedValidPeriod))).isSameAs(config);
-        assertThat(config.validPeriodAfterWrite()).isEqualTo(Duration.ofSeconds(expectedValidPeriod));
+        assertThat(config.validPeriodAfterCreate()).isEqualTo(ExpirableBloomFilterConfig.DEFAULT_VALID_PERIOD);
+        assertThat(config.setValidPeriodAfterCreate(Duration.ofSeconds(expectedValidPeriod))).isSameAs(config);
+        assertThat(config.validPeriodAfterCreate()).isEqualTo(Duration.ofSeconds(expectedValidPeriod));
     }
 
     @Test
-    public void testSetNegativeValidPeriodAfterWrite() {
+    public void testSetNegativeValidPeriodAfterCreate() {
         final int invalidValidPeriod = -1 * Math.abs(ThreadLocalRandom.current().nextInt());
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
-        final Duration old = config.validPeriodAfterWrite();
-        assertThatThrownBy(() -> config.setValidPeriodAfterWrite(Duration.ofSeconds(invalidValidPeriod)))
+        final Duration old = config.validPeriodAfterCreate();
+        assertThatThrownBy(() -> config.setValidPeriodAfterCreate(Duration.ofSeconds(invalidValidPeriod)))
                 .isInstanceOf(BadParameterException.class)
                 .hasMessageContaining("invalid parameter");
-        assertThat(config.validPeriodAfterWrite()).isSameAs(old);
+        assertThat(config.validPeriodAfterCreate()).isSameAs(old);
     }
 
     @Test
-    public void testSetZeroValidPeriodAfterWrite() {
+    public void testSetZeroValidPeriodAfterCreate() {
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
-        final Duration old = config.validPeriodAfterWrite();
-        assertThatThrownBy(() -> config.setValidPeriodAfterWrite(Duration.ofSeconds(0)))
+        final Duration old = config.validPeriodAfterCreate();
+        assertThatThrownBy(() -> config.setValidPeriodAfterCreate(Duration.ofSeconds(0)))
                 .isInstanceOf(BadParameterException.class)
                 .hasMessageContaining("invalid parameter");
 
-        assertThat(config.validPeriodAfterWrite()).isEqualTo(old);
+        assertThat(config.validPeriodAfterCreate()).isEqualTo(old);
     }
 
     @Test
     public void testDefaultValidPeriodAfterAccess() {
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
-        assertThat(config.validPeriodAfterWrite()).isEqualTo(ExpirableBloomFilterConfig.DEFAULT_VALID_PERIOD);
+        assertThat(config.validPeriodAfterCreate()).isEqualTo(ExpirableBloomFilterConfig.DEFAULT_VALID_PERIOD);
         assertThat(config.validPeriodAfterAccess()).isNull();
     }
 
@@ -83,12 +83,12 @@ public class ExpirableBloomFilterConfigTest {
         final double fpp = ThreadLocalRandom.current().nextDouble(0.0001, 1);
         final int expectedInsertions = ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE);
         final ExpirableBloomFilterConfig filterA = new ExpirableBloomFilterConfig()
-                .setValidPeriodAfterWrite(Duration.ofSeconds(validPeriod))
+                .setValidPeriodAfterCreate(Duration.ofSeconds(validPeriod))
                 .setFpp(fpp)
                 .setExpectedInsertions(expectedInsertions);
 
         final ExpirableBloomFilterConfig filterB = new ExpirableBloomFilterConfig()
-                .setValidPeriodAfterWrite(Duration.ofSeconds(validPeriod))
+                .setValidPeriodAfterCreate(Duration.ofSeconds(validPeriod))
                 .setFpp(fpp)
                 .setExpectedInsertions(expectedInsertions);
 
@@ -101,12 +101,12 @@ public class ExpirableBloomFilterConfigTest {
         final double fpp = ThreadLocalRandom.current().nextDouble(0.0001, 1);
         final int expectedInsertions = ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE);
         final ExpirableBloomFilterConfig filterA = new ExpirableBloomFilterConfig()
-                .setValidPeriodAfterWrite(Duration.ofSeconds(validPeriod))
+                .setValidPeriodAfterCreate(Duration.ofSeconds(validPeriod))
                 .setFpp(fpp)
                 .setExpectedInsertions(expectedInsertions);
 
         final ExpirableBloomFilterConfig filterB = new ExpirableBloomFilterConfig()
-                .setValidPeriodAfterWrite(Duration.ofSeconds(validPeriod))
+                .setValidPeriodAfterCreate(Duration.ofSeconds(validPeriod))
                 .setFpp(fpp)
                 .setExpectedInsertions(expectedInsertions);
 
