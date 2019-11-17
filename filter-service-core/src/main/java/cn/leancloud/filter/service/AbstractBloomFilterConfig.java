@@ -5,7 +5,7 @@ import java.util.Objects;
 import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkNotNull;
 import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkParameter;
 
-public abstract class AbstractBloomFilterConfig<T extends AbstractBloomFilterConfig<T>> implements BloomFilterConfig<T> {
+public abstract class AbstractBloomFilterConfig<T extends AbstractBloomFilterConfig<T>> implements BloomFilterConfig<T>, Cloneable {
     private int expectedInsertions;
     private double fpp;
 
@@ -70,5 +70,13 @@ public abstract class AbstractBloomFilterConfig<T extends AbstractBloomFilterCon
     public String toString() {
         return "expectedInsertions=" + expectedInsertions +
                 ", fpp=" + fpp;
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        final AbstractBloomFilterConfig config = (AbstractBloomFilterConfig) super.clone();
+        config.fpp = fpp;
+        config.expectedInsertions = expectedInsertions;
+        return config;
     }
 }

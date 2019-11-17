@@ -78,4 +78,12 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
                 ", validPeriodAfterAccess=" + validPeriodAfterAccess +
                 '}';
     }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        final ExpirableBloomFilterConfig config = (ExpirableBloomFilterConfig) super.clone();
+        config.validPeriodAfterWrite = validPeriodAfterWrite;
+        config.validPeriodAfterAccess = validPeriodAfterAccess;
+        return config;
+    }
 }

@@ -15,20 +15,23 @@ public class GuavaBloomFilterTest {
 
     @Test
     public void testGetters() {
-        final int validPeriod = 1000;
+        final Duration validPeriodAfterAccess = Duration.ofSeconds(3);
         final int expectedInsertions = 1000000;
         final double fpp = 0.0001;
-        final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig()
-                .setValidPeriod(validPeriod)
-                .setExpectedInsertions(expectedInsertions)
-                .setFpp(fpp);
-        final ZonedDateTime instantBeforeFilterCreate = ZonedDateTime.now(ZoneOffset.UTC);
-        final GuavaBloomFilter filter = testingFactory.createFilter(config);
+        final ZonedDateTime creation = ZonedDateTime.now(ZoneOffset.UTC);
+        final ZonedDateTime expiration = creation.plus(Duration.ofSeconds(10));
+        final GuavaBloomFilter filter = new GuavaBloomFilter(
+                expectedInsertions,
+                fpp,
+                creation,
+                expiration,
+                validPeriodAfterAccess);
 
         assertThat(filter.fpp()).isEqualTo(fpp);
         assertThat(filter.expectedInsertions()).isEqualTo(expectedInsertions);
-        assertThat(filter.expiration()).isEqualTo(filter.created().plus(Duration.ofSeconds(validPeriod)));
-        assertThat(filter.created()).isAfter(instantBeforeFilterCreate);
+        assertThat(filter.expiration()).isEqualTo(expiration);
+        assertThat(filter.validPeriodAfterAccess()).isEqualTo(validPeriodAfterAccess);
+        assertThat(filter.created()).isEqualTo(creation);
         assertThat(filter.expired()).isFalse();
     }
 
@@ -42,8 +45,72 @@ public class GuavaBloomFilterTest {
     }
 
     @Test
+    public void testExpiredFilter() {
+        final AdjustableTimer timer = new AdjustableTimer();
+        final ZonedDateTime creation = ZonedDateTime.now(ZoneOffset.UTC);
+        final ZonedDateTime expiration = creation.plusSeconds(10);
+        final GuavaBloomFilter filter = new GuavaBloomFilter(
+                1000,
+                0.001,
+                creation,
+                expiration,
+                null,
+                timer);
+        timer.setNow(expiration);
+        assertThat(filter.expired()).isFalse();
+        timer.setNow(expiration.plusSeconds(1));
+        assertThat(filter.expired()).isTrue();
+    }
+
+    @Test
+    public void testExtendExpirationOnSet() {
+        final String testingValue = "SomeValue";
+        final AdjustableTimer timer = new AdjustableTimer();
+        final Duration validPeriodAfterAccess = Duration.ofSeconds(5);
+        final ZonedDateTime creation = ZonedDateTime.now(ZoneOffset.UTC);
+        final ZonedDateTime expiration = creation.plus(validPeriodAfterAccess);
+        final GuavaBloomFilter filter = new GuavaBloomFilter(
+                1000,
+                0.001,
+                creation,
+                expiration,
+                validPeriodAfterAccess,
+                timer);
+        timer.setNow(expiration);
+        assertThat(filter.expired()).isFalse();
+        filter.set(testingValue);
+        timer.setNow(expiration.plus(Duration.ofSeconds(1)));
+        assertThat(filter.expired()).isFalse();
+    }
+
+    @Test
+    public void testExtendExpirationOnMightContain() {
+        final String testingValue = "SomeValue";
+        final AdjustableTimer timer = new AdjustableTimer();
+        final Duration validPeriodAfterAccess = Duration.ofSeconds(5);
+        final ZonedDateTime creation = ZonedDateTime.now(ZoneOffset.UTC);
+        final ZonedDateTime expiration = creation.plus(validPeriodAfterAccess);
+        final GuavaBloomFilter filter = new GuavaBloomFilter(
+                1000,
+                0.001,
+                creation,
+                expiration,
+                validPeriodAfterAccess,
+                timer);
+        timer.setNow(expiration);
+        assertThat(filter.expired()).isFalse();
+        filter.mightContain(testingValue);
+        timer.setNow(expiration.plus(Duration.ofSeconds(1)));
+        assertThat(filter.expired()).isFalse();
+    }
+
+    @Test
     public void testToJson() throws Exception {
-        final GuavaBloomFilter expectedFilter = testingFactory.createFilter(defaultTestingConfig);
+        final Duration validPeriodAfterAccess = Duration.ofSeconds(10);
+        final ExpirableBloomFilterConfig config = (ExpirableBloomFilterConfig) defaultTestingConfig.clone();
+        config.setValidPeriodAfterAccess(validPeriodAfterAccess);
+
+        final GuavaBloomFilter expectedFilter = testingFactory.createFilter(config);
         final ObjectMapper mapper = new ObjectMapper();
 
         final String json = mapper.valueToTree(expectedFilter).toString();
