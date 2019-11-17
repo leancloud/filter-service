@@ -35,8 +35,8 @@ public class BloomFilterManagerImplTest {
         final int validPeriod = 1000;
         final int expectedInsertions = 10000;
         final double fpp = 0.0001;
-        final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig(expectedInsertions, fpp, validPeriod);
-        final ZonedDateTime instantBeforeFilterCreate = ZonedDateTime.now(ZoneOffset.UTC);
+        final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig(expectedInsertions, fpp);
+        config.setValidPeriodAfterCreate(Duration.ofSeconds(validPeriod));
         final CreateFilterResult<GuavaBloomFilter> result = manager.createFilter(testingFilterName, config);
         final GuavaBloomFilter filter = result.getFilter();
 
@@ -44,7 +44,6 @@ public class BloomFilterManagerImplTest {
         assertThat(filter.fpp()).isEqualTo(fpp);
         assertThat(filter.expectedInsertions()).isEqualTo(expectedInsertions);
         assertThat(filter.expiration()).isEqualTo(filter.created().plus(Duration.ofSeconds(validPeriod)));
-        assertThat(filter.created()).isAfter(instantBeforeFilterCreate);
         assertThat(filter.expired()).isFalse();
     }
 
@@ -71,7 +70,8 @@ public class BloomFilterManagerImplTest {
                         config.expectedInsertions(),
                         config.fpp(),
                         created,
-                        expiration)
+                        expiration,
+                        null)
         );
 
         final BloomFilterManagerImpl<GuavaBloomFilter> manager = new BloomFilterManagerImpl<>(expiredFilterFactory);
@@ -175,7 +175,8 @@ public class BloomFilterManagerImplTest {
                         BloomFilterConfig.DEFAULT_EXPECTED_INSERTIONS,
                         BloomFilterConfig.DEFAULT_FALSE_POSITIVE_PROBABILITY,
                         creationTime,
-                        expirationTime));
+                        expirationTime,
+                        null));
 
         final BloomFilterManagerImpl<GuavaBloomFilter> manager = new BloomFilterManagerImpl<>(mockedFactory);
         final GuavaBloomFilter filter = manager.createFilter(testingFilterName, config).getFilter();
@@ -235,7 +236,8 @@ public class BloomFilterManagerImplTest {
                         config.expectedInsertions(),
                         config.fpp(),
                         created,
-                        expiration)
+                        expiration,
+                        null)
         );
 
         final BloomFilterManagerImpl<GuavaBloomFilter> manager = new BloomFilterManagerImpl<>(expiredFilterFactory);
@@ -302,7 +304,8 @@ public class BloomFilterManagerImplTest {
                         BloomFilterConfig.DEFAULT_EXPECTED_INSERTIONS,
                         BloomFilterConfig.DEFAULT_FALSE_POSITIVE_PROBABILITY,
                         creationTime,
-                        expirationTime));
+                        expirationTime,
+                        null));
 
         final BloomFilterManagerImpl<GuavaBloomFilter> manager = new BloomFilterManagerImpl<>(mockedFactory);
         manager.addListener(listener);

@@ -24,7 +24,7 @@ $JAVA \
     -Xmx1G -Xms1G \
     -XX:+UseG1GC \
     -XX:+ParallelRefProcEnabled \
-    -XX:MaxGCPauseMillis=1000 \
+    -XX:MaxGCPauseMillis=100 \
     -server \
     $JVM_GC_LOG_CONFIGS \
     -DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector \

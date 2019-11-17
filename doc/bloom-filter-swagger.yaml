@@ -81,7 +81,7 @@ paths:
       responses:
         200:
           description: "Success. The target Bloom Filter was removed."
-          
+
   /bloomfilter/list:
     get:
       tags:
@@ -98,7 +98,7 @@ paths:
             items:
               type: "string"
             example: ["Filter1", "Filter2", "Filter3"]
-  
+
   /bloomfilter/{name}/check:
     post:
       tags:
@@ -120,7 +120,7 @@ paths:
         in: "body"
         description: "The testing value."
         required: true
-        schema: 
+        schema:
             $ref: "#/definitions/CheckValueRequest"
       responses:
         200:
@@ -130,7 +130,7 @@ paths:
             type: "boolean"
         400:
           description: "Some of the provided parameter is invalid."
-          
+
   /bloomfilter/{name}/multi-check:
     post:
       tags:
@@ -152,7 +152,7 @@ paths:
         in: "body"
         description: "The testing value list."
         required: true
-        schema: 
+        schema:
             $ref: "#/definitions/CheckMultiValuesRequest"
       responses:
         200:
@@ -161,12 +161,12 @@ paths:
             the case."
           schema:
             type: "array"
-            items: 
+            items:
               type: "boolean"
             example: [true, false, false]
         400:
           description: "Some of the provided parameter is invalid."
-          
+
   /bloomfilter/{name}/check-and-set:
     post:
       tags:
@@ -188,7 +188,7 @@ paths:
         in: "body"
         description: "The testing value."
         required: true
-        schema: 
+        schema:
             $ref: "#/definitions/CheckAndSetRequest"
       responses:
         200:
@@ -198,7 +198,7 @@ paths:
             type: "boolean"
         400:
           description: "Some of the provided parameter is invalid."
-          
+
   /bloomfilter/{name}/multi-check-and-set:
     post:
       tags:
@@ -220,7 +220,7 @@ paths:
         in: "body"
         description: "The testing value list."
         required: true
-        schema: 
+        schema:
             $ref: "#/definitions/CheckAndSetMultiValuesRequest"
       responses:
         200:
@@ -229,12 +229,12 @@ paths:
             the case."
           schema:
             type: "array"
-            items: 
+            items:
               type: "boolean"
             example: [true, false, false]
         400:
           description: "Some of the provided parameter is invalid."
-  
+
 
 definitions:
   Filter:
@@ -281,20 +281,23 @@ definitions:
         minimum: 0
         exclusiveMaximum: true
         maximum: 1
-      validPeriod:
-        description: "valid period in seconds for the created Bloom Filter. When 
-        time past the creation time + valid period, the Bloom Filter will be expired
-        and can not be used any more."
+      validPeriodAfterWrite:
+        description: "valid period in seconds for the created Bloom Filter. When time past the creation time + valid period, the Bloom Filter will be expired and can not be used any more. Please note that `validPeriodAfterWrite` and `validPeriodAfterAccess` is mutually exclusive. Only one of them can take effect."
+        type: "integer"
+        format: "int32"
+        minimum: 1
+      validPeriodAfterAccess:
+        description: "valid period in seconds for the created Bloom Filter. The difference from this argument to `validPeriodAfterWrite` is that every access (`check` or `checkAndSet`) to the created Bloom Filter will push the expiration time forward `validPeriodAfterAccess` seconds.Please note that `validPeriodAfterWrite` and `validPeriodAfterAccess` is mutually exclusive. Only one of them can take effect."
         type: "integer"
         format: "int32"
         minimum: 1
       overwrite:
-        description: "true to force create a new Bloom filter. false to create a new 
+        description: "true to force create a new Bloom filter. false to create a new
         Bloom Filter only when there's no Bloom filter with the same name exits."
         type: "boolean"
     example: {"expectedInsertions":100000,
               "fpp":0.001,
-              "validPeriod":86400,
+              "validPeriodAfterWrite":86400,
               "overwrite":true}
   CheckValueRequest:
     type: "object"
