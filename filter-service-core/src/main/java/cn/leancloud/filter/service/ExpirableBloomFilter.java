@@ -1,6 +1,6 @@
 package cn.leancloud.filter.service;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 
 /**
  * A bloom filter which have expiration and can expire after expiration.
@@ -11,7 +11,7 @@ public interface ExpirableBloomFilter extends BloomFilter {
      *
      * @return the expiration time of this Bloom filter
      */
-    Instant expiration();
+    ZonedDateTime expiration();
 
     /**
      * Check if this Bloom filter is already expired.

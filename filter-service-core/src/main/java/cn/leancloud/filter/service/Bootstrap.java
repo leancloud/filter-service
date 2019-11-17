@@ -148,7 +148,7 @@ public final class Bootstrap {
                 .childChannelOption(ChannelOption.TCP_NODELAY, true)
                 .http(opts.getHttpPort())
                 .maxNumConnections(1000)
-                .maxRequestLength(2048)  // 2KB
+                .maxRequestLength(10 * 1024 * 1024)  // 10 MB
                 .requestTimeout(Duration.ofSeconds(5))
                 .meterRegistry(registry);
 

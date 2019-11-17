@@ -4,7 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
 import java.time.Duration;
-import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,7 +22,7 @@ public class GuavaBloomFilterTest {
                 .setValidPeriod(validPeriod)
                 .setExpectedInsertions(expectedInsertions)
                 .setFpp(fpp);
-        final Instant instantBeforeFilterCreate = Instant.now();
+        final ZonedDateTime instantBeforeFilterCreate = ZonedDateTime.now(ZoneOffset.UTC);
         final GuavaBloomFilter filter = testingFactory.createFilter(config);
 
         assertThat(filter.fpp()).isEqualTo(fpp);

@@ -17,7 +17,6 @@ import com.google.common.hash.Funnels;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -27,10 +26,10 @@ import java.util.Objects;
 public final class GuavaBloomFilter implements ExpirableBloomFilter {
     private static final DateTimeFormatter ISO_8601_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 
-    private final Instant created;
+    private final ZonedDateTime created;
     @JsonIgnore
     private final com.google.common.hash.BloomFilter<CharSequence> filter;
-    private final Instant expiration;
+    private final ZonedDateTime expiration;
     private final double fpp;
     private final int expectedInsertions;
 
@@ -45,10 +44,10 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
      *                           will be expired and can not be used any more.
      */
     GuavaBloomFilter(int expectedInsertions, double fpp, Duration validPeriod) {
-        this(expectedInsertions, fpp, Instant.now(), validPeriod);
+        this(expectedInsertions, fpp, ZonedDateTime.now(ZoneOffset.UTC), validPeriod);
     }
 
-    private GuavaBloomFilter(int expectedInsertions, double fpp, Instant created, Duration validPeriod) {
+    private GuavaBloomFilter(int expectedInsertions, double fpp, ZonedDateTime created, Duration validPeriod) {
         this(expectedInsertions, fpp, created, created.plus(validPeriod));
     }
 
@@ -67,8 +66,8 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
     @JsonCreator
     GuavaBloomFilter(@JsonProperty("expectedInsertions") int expectedInsertions,
                      @JsonProperty("fpp") double fpp,
-                     @JsonProperty("created") Instant created,
-                     @JsonProperty("expiration") Instant expiration) {
+                     @JsonProperty("created") ZonedDateTime created,
+                     @JsonProperty("expiration") ZonedDateTime expiration) {
         this.fpp = fpp;
         this.expectedInsertions = expectedInsertions;
         this.created = created;
@@ -78,16 +77,16 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
                 fpp);
     }
 
-    @JsonSerialize(using = InstantSerializer.class)
-    @JsonDeserialize(using = InstantDerializer.class)
-    public Instant created() {
+    @JsonSerialize(using = ZonedDateTimeSerializer.class)
+    @JsonDeserialize(using = ZonedDateTimeDerializer.class)
+    public ZonedDateTime created() {
         return created;
     }
 
     @Override
-    @JsonSerialize(using = InstantSerializer.class)
-    @JsonDeserialize(using = InstantDerializer.class)
-    public Instant expiration() {
+    @JsonSerialize(using = ZonedDateTimeSerializer.class)
+    @JsonDeserialize(using = ZonedDateTimeDerializer.class)
+    public ZonedDateTime expiration() {
         return expiration;
     }
 
@@ -110,7 +109,7 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
 
     @Override
     public boolean expired() {
-        return Instant.now().isAfter(expiration);
+        return ZonedDateTime.now(ZoneOffset.UTC).isAfter(expiration);
     }
 
     @Override
@@ -118,18 +117,18 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
         return filter.mightContain(value);
     }
 
-    public static class InstantSerializer extends JsonSerializer<Instant> {
+    public static class ZonedDateTimeSerializer extends JsonSerializer<ZonedDateTime> {
         @Override
-        public void serialize(Instant arg0, JsonGenerator arg1, SerializerProvider arg2) throws IOException {
-            String zonedTime = ZonedDateTime.ofInstant(arg0, ZoneOffset.UTC).format(ISO_8601_FORMATTER);
+        public void serialize(ZonedDateTime arg0, JsonGenerator arg1, SerializerProvider arg2) throws IOException {
+            final String zonedTime = arg0.format(ISO_8601_FORMATTER);
             arg1.writeString(zonedTime);
         }
     }
 
-    public static class InstantDerializer extends JsonDeserializer<Instant> {
+    public static class ZonedDateTimeDerializer extends JsonDeserializer<ZonedDateTime> {
         @Override
-        public Instant deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-            return ZonedDateTime.parse(p.getText(), ISO_8601_FORMATTER).toInstant();
+        public ZonedDateTime deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            return ZonedDateTime.parse(p.getText(), ISO_8601_FORMATTER);
         }
     }
 
@@ -140,8 +139,10 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
         final GuavaBloomFilter that = (GuavaBloomFilter) o;
         return Double.compare(that.fpp, fpp) == 0 &&
                 expectedInsertions == that.expectedInsertions &&
-                created.getEpochSecond() == that.created.getEpochSecond() &&
-                expiration.getEpochSecond() == that.expiration.getEpochSecond() &&
+                created.toInstant().getEpochSecond() == that.created.toInstant().getEpochSecond() &&
+                created.getOffset() == that.created.getOffset() &&
+                expiration.toInstant().getEpochSecond() == that.expiration.toInstant().getEpochSecond() &&
+                expiration.getOffset() == that.expiration.getOffset() &&
                 filter.equals(that.filter);
     }
 

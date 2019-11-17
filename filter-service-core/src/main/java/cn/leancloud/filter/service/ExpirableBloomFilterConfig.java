@@ -23,7 +23,7 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
         return validPeriod;
     }
 
-    ExpirableBloomFilterConfig setValidPeriod(long validPeriod) {
+    ExpirableBloomFilterConfig setValidPeriod(int validPeriod) {
         checkParameter("validPeriod",
                 validPeriod >= 0,
                 "expected: >= 0, actual: %s",

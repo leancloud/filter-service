@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class ExpirableBloomFilterConfigTest {
     @Test
     public void testGetAndSetValidPeriod() {
-        final long expectedValidPeriod = ThreadLocalRandom.current().nextLong(0, Long.MAX_VALUE);
+        final int expectedValidPeriod = ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
         assertThat(config.validPeriod()).isEqualTo(ExpirableBloomFilterConfig.DEFAULT_VALID_PERIOD);
         assertThat(config.setValidPeriod(expectedValidPeriod)).isSameAs(config);
@@ -21,7 +21,7 @@ public class ExpirableBloomFilterConfigTest {
 
     @Test
     public void testSetInvalidValidPeriod() {
-        final long invalidValidPeriod = -1 * Math.abs(ThreadLocalRandom.current().nextLong());
+        final int invalidValidPeriod = -1 * Math.abs(ThreadLocalRandom.current().nextInt());
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
         final Duration old = config.validPeriod();
         assertThatThrownBy(() -> config.setValidPeriod(invalidValidPeriod))
@@ -41,7 +41,7 @@ public class ExpirableBloomFilterConfigTest {
 
     @Test
     public void testEquals() {
-        final long validPeriod = ThreadLocalRandom.current().nextLong(0, Long.MAX_VALUE);
+        final int validPeriod = ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
         final double fpp = ThreadLocalRandom.current().nextDouble(0.0001, 1);
         final int expectedInsertions = ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE);
         final ExpirableBloomFilterConfig filterA = new ExpirableBloomFilterConfig()
@@ -59,7 +59,7 @@ public class ExpirableBloomFilterConfigTest {
 
     @Test
     public void testHashCode() {
-        final long validPeriod = ThreadLocalRandom.current().nextLong(0, Long.MAX_VALUE);
+        final int validPeriod = ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
         final double fpp = ThreadLocalRandom.current().nextDouble(0.0001, 1);
         final int expectedInsertions = ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE);
         final ExpirableBloomFilterConfig filterA = new ExpirableBloomFilterConfig()
