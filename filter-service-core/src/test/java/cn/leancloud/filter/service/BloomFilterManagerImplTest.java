@@ -178,6 +178,26 @@ public class BloomFilterManagerImplTest {
     }
 
     @Test
+    public void testListenFilterOverwrite() {
+        final TestingListener listener = new TestingListener();
+
+        final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
+        final GuavaBloomFilter prevFilter = manager.createFilter(testingFilterName, config).getFilter();
+        manager.addListener(listener);
+        final GuavaBloomFilter newFilter = manager.createFilter(testingFilterName, config, true).getFilter();
+        final List<FilterEvent> events = listener.getReceivedEvents();
+        assertThat(events.size()).isEqualTo(2);
+        final FilterRemovedEvent prevFilterRemovedEvent = ((FilterRemovedEvent) events.get(0));
+        assertThat(prevFilterRemovedEvent.getName()).isSameAs(testingFilterName);
+        assertThat(prevFilterRemovedEvent.getFilter()).isSameAs(prevFilter);
+
+        final FilterCreatedEvent newFilterCreatedEvent = ((FilterCreatedEvent) events.get(1));
+        assertThat(newFilterCreatedEvent.getName()).isSameAs(testingFilterName);
+        assertThat(newFilterCreatedEvent.getConfig()).isSameAs(config);
+        assertThat(newFilterCreatedEvent.getFilter()).isSameAs(newFilter);
+    }
+
+    @Test
     public void testListenFilterCreatedNotTriggeredWhenNoFilterCreated() {
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
         manager.createFilter(testingFilterName, config);
