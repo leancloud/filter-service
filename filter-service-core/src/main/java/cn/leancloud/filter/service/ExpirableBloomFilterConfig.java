@@ -4,6 +4,7 @@ import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.Objects;
 
+import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkNotNull;
 import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkParameter;
 
 final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<ExpirableBloomFilterConfig> {
@@ -26,15 +27,14 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
         return validPeriodAfterWrite;
     }
 
-    ExpirableBloomFilterConfig setValidPeriodAfterWrite(int validPeriod) {
+    ExpirableBloomFilterConfig setValidPeriodAfterWrite(Duration validPeriod) {
+        checkNotNull("validPeriodAfterWrite", validPeriod);
         checkParameter("validPeriodAfterWrite",
-                validPeriod >= 0,
-                "expected: >= 0, actual: %s",
+                validPeriod.getSeconds() > 0L,
+                "expected: > 0, actual: %s",
                 validPeriod);
 
-        if (validPeriod > 0) {
-            this.validPeriodAfterWrite = Duration.ofSeconds(validPeriod);
-        }
+        this.validPeriodAfterWrite = validPeriod;
         return this;
     }
 
@@ -43,15 +43,15 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
         return validPeriodAfterAccess;
     }
 
-    ExpirableBloomFilterConfig setValidPeriodAfterAccess(int validPeriod) {
+    ExpirableBloomFilterConfig setValidPeriodAfterAccess(Duration validPeriod) {
+        checkNotNull("validPeriodAfterAccess", validPeriod);
         checkParameter("validPeriodAfterAccess",
-                validPeriod >= 0,
-                "expected: >= 0, actual: %s",
+                validPeriod.getSeconds() > 0L,
+                "expected: > 0, actual: %s",
                 validPeriod);
 
-        if (validPeriod > 0) {
-            this.validPeriodAfterAccess = Duration.ofSeconds(validPeriod);
-        }
+        this.validPeriodAfterAccess = validPeriod;
+
         return this;
     }
 
@@ -61,7 +61,7 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         final ExpirableBloomFilterConfig that = (ExpirableBloomFilterConfig) o;
-        return (validPeriodAfterWrite == null || validPeriodAfterWrite.equals(that.validPeriodAfterWrite)) &&
+        return validPeriodAfterWrite.equals(that.validPeriodAfterWrite) &&
                 (validPeriodAfterAccess == null || validPeriodAfterAccess.equals(that.validPeriodAfterAccess));
     }
 
