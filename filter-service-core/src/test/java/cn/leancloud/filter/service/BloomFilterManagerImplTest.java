@@ -62,13 +62,40 @@ public class BloomFilterManagerImplTest {
     }
 
     @Test
+    public void testOverwriteExpiredFilter() {
+        final ZonedDateTime created = ZonedDateTime.now(ZoneOffset.UTC);
+        final ZonedDateTime expiration = created.minus(Duration.ofSeconds(10));
+        // a filter factory only to produce expired bloom filters
+        final BloomFilterFactory<GuavaBloomFilter, ExpirableBloomFilterConfig> expiredFilterFactory = (config ->
+                new GuavaBloomFilter(
+                        config.expectedInsertions(),
+                        config.fpp(),
+                        created,
+                        expiration)
+        );
+
+        final BloomFilterManagerImpl<GuavaBloomFilter> manager = new BloomFilterManagerImpl<>(expiredFilterFactory);
+
+        final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
+        final CreateFilterResult<GuavaBloomFilter> firstCreateFilterResult = manager.createFilter(testingFilterName, config);
+        final GuavaBloomFilter existsFilter = firstCreateFilterResult.getFilter();
+        assertThat(firstCreateFilterResult.isCreated()).isTrue();
+
+        // overwrite mark is not set, but the exists filter still was overwritten
+        final CreateFilterResult<GuavaBloomFilter> secondCreateFilterResult = manager.createFilter(testingFilterName, config);
+        final GuavaBloomFilter filter = secondCreateFilterResult.getFilter();
+        assertThat(secondCreateFilterResult.isCreated()).isTrue();
+        assertThat(filter).isNotSameAs(existsFilter);
+    }
+
+    @Test
     public void testOverwriteExistsFilter() {
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
         final CreateFilterResult<GuavaBloomFilter> firstCreateFilterResult = manager.createFilter(testingFilterName, config);
         final GuavaBloomFilter existsFilter = firstCreateFilterResult.getFilter();
         assertThat(firstCreateFilterResult.isCreated()).isTrue();
 
-        final CreateFilterResult<GuavaBloomFilter> secondCreateFilterResult = manager.createFilter(testingFilterName, new ExpirableBloomFilterConfig(), true);
+        final CreateFilterResult<GuavaBloomFilter> secondCreateFilterResult = manager.createFilter(testingFilterName, config, true);
         final GuavaBloomFilter filter = secondCreateFilterResult.getFilter();
         assertThat(secondCreateFilterResult.isCreated()).isTrue();
         assertThat(filter).isNotSameAs(existsFilter);
@@ -178,13 +205,49 @@ public class BloomFilterManagerImplTest {
     }
 
     @Test
-    public void testListenFilterOverwrite() {
+    public void testListenFilterOverwrited() {
         final TestingListener listener = new TestingListener();
 
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
         final GuavaBloomFilter prevFilter = manager.createFilter(testingFilterName, config).getFilter();
         manager.addListener(listener);
         final GuavaBloomFilter newFilter = manager.createFilter(testingFilterName, config, true).getFilter();
+        final List<FilterEvent> events = listener.getReceivedEvents();
+        assertThat(events.size()).isEqualTo(2);
+        final FilterRemovedEvent prevFilterRemovedEvent = ((FilterRemovedEvent) events.get(0));
+        assertThat(prevFilterRemovedEvent.getName()).isSameAs(testingFilterName);
+        assertThat(prevFilterRemovedEvent.getFilter()).isSameAs(prevFilter);
+
+        final FilterCreatedEvent newFilterCreatedEvent = ((FilterCreatedEvent) events.get(1));
+        assertThat(newFilterCreatedEvent.getName()).isSameAs(testingFilterName);
+        assertThat(newFilterCreatedEvent.getConfig()).isSameAs(config);
+        assertThat(newFilterCreatedEvent.getFilter()).isSameAs(newFilter);
+    }
+
+    @Test
+    public void testListenOverwriteExpiredFilter() {
+        final TestingListener listener = new TestingListener();
+        final ZonedDateTime created = ZonedDateTime.now(ZoneOffset.UTC);
+        final ZonedDateTime expiration = created.minus(Duration.ofSeconds(10));
+        // a filter factory only to produce expired bloom filters
+        final BloomFilterFactory<GuavaBloomFilter, ExpirableBloomFilterConfig> expiredFilterFactory = (config ->
+                new GuavaBloomFilter(
+                        config.expectedInsertions(),
+                        config.fpp(),
+                        created,
+                        expiration)
+        );
+
+        final BloomFilterManagerImpl<GuavaBloomFilter> manager = new BloomFilterManagerImpl<>(expiredFilterFactory);
+
+        final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
+        final GuavaBloomFilter prevFilter = manager.createFilter(testingFilterName, config).getFilter();
+
+        manager.addListener(listener);
+
+        // overwrite mark is not set, but the exists filter still was overwritten
+        final GuavaBloomFilter newFilter = manager.createFilter(testingFilterName, config).getFilter();
+
         final List<FilterEvent> events = listener.getReceivedEvents();
         assertThat(events.size()).isEqualTo(2);
         final FilterRemovedEvent prevFilterRemovedEvent = ((FilterRemovedEvent) events.get(0));
