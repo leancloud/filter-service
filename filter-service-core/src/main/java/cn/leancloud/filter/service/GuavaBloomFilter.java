@@ -22,8 +22,6 @@ import java.util.Objects;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class GuavaBloomFilter implements ExpirableBloomFilter {
-    public static final Timer defaultTimer = new DefaultTimer();
-
     private static final DateTimeFormatter ISO_8601_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 
 
@@ -79,7 +77,7 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
                      @JsonProperty("created") ZonedDateTime created,
                      @JsonProperty("expiration") ZonedDateTime expiration,
                      @Nullable @JsonProperty("extendValidPeriodAfterAccess") Duration extendValidPeriodAfterAccess) {
-        this(expectedInsertions, fpp, created, expiration, extendValidPeriodAfterAccess, defaultTimer);
+        this(expectedInsertions, fpp, created, expiration, extendValidPeriodAfterAccess, Timer.DEFAULT_TIMER);
     }
 
     /**
@@ -173,18 +171,27 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final GuavaBloomFilter that = (GuavaBloomFilter) o;
-        return Double.compare(that.fpp, fpp) == 0 &&
-                expectedInsertions == that.expectedInsertions &&
-                created.toInstant().getEpochSecond() == that.created.toInstant().getEpochSecond() &&
-                created.getOffset() == that.created.getOffset() &&
-                expiration.toInstant().getEpochSecond() == that.expiration.toInstant().getEpochSecond() &&
-                expiration.getOffset() == that.expiration.getOffset() &&
-                filter.equals(that.filter);
+        if ((extendValidPeriodAfterAccess == null && that.extendValidPeriodAfterAccess == null) ||
+                extendValidPeriodAfterAccess != null && that.extendValidPeriodAfterAccess != null) {
+            return Double.compare(that.fpp, fpp) == 0 &&
+                    expectedInsertions == that.expectedInsertions &&
+                    created.toInstant().getEpochSecond() == that.created.toInstant().getEpochSecond() &&
+                    created.getOffset() == that.created.getOffset() &&
+                    expiration.toInstant().getEpochSecond() == that.expiration.toInstant().getEpochSecond() &&
+                    expiration.getOffset() == that.expiration.getOffset() &&
+                    filter.equals(that.filter) &&
+                    (extendValidPeriodAfterAccess == null ||
+                            extendValidPeriodAfterAccess.getSeconds() ==
+                                    that.extendValidPeriodAfterAccess.getSeconds()) &&
+                    timer.equals(that.timer);
+
+        }
+        return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(created, filter, expiration, fpp, expectedInsertions);
+        return Objects.hash(created, filter, expiration, fpp, expectedInsertions, extendValidPeriodAfterAccess);
     }
 
     @Override
@@ -195,6 +202,7 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
                 ", expiration=" + expiration +
                 ", fpp=" + fpp +
                 ", expectedInsertions=" + expectedInsertions +
+                ", extendValidPeriodAfterAccess" + extendValidPeriodAfterAccess +
                 '}';
     }
 
