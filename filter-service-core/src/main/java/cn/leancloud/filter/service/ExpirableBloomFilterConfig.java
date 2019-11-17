@@ -1,5 +1,6 @@
 package cn.leancloud.filter.service;
 
+import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.Objects;
 
@@ -8,29 +9,48 @@ import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkPar
 final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<ExpirableBloomFilterConfig> {
     static final Duration DEFAULT_VALID_PERIOD = Duration.ofDays(1);
 
-    private Duration validPeriod;
+    private Duration validPeriodAfterWrite;
+    @Nullable
+    private Duration validPeriodAfterAccess;
 
     ExpirableBloomFilterConfig() {
-        this.validPeriod = DEFAULT_VALID_PERIOD;
+        this.validPeriodAfterWrite = DEFAULT_VALID_PERIOD;
     }
 
-    ExpirableBloomFilterConfig(int expectedInsertions, double fpp, long validPeriod) {
+    ExpirableBloomFilterConfig(int expectedInsertions, double fpp) {
         super(expectedInsertions, fpp);
-        this.validPeriod = Duration.ofSeconds(validPeriod);
+        this.validPeriodAfterWrite = DEFAULT_VALID_PERIOD;
     }
 
-    Duration validPeriod() {
-        return validPeriod;
+    Duration validPeriodAfterWrite() {
+        return validPeriodAfterWrite;
     }
 
-    ExpirableBloomFilterConfig setValidPeriod(int validPeriod) {
-        checkParameter("validPeriod",
+    ExpirableBloomFilterConfig setValidPeriodAfterWrite(int validPeriod) {
+        checkParameter("validPeriodAfterWrite",
                 validPeriod >= 0,
                 "expected: >= 0, actual: %s",
                 validPeriod);
 
         if (validPeriod > 0) {
-            this.validPeriod = Duration.ofSeconds(validPeriod);
+            this.validPeriodAfterWrite = Duration.ofSeconds(validPeriod);
+        }
+        return this;
+    }
+
+    @Nullable
+    Duration validPeriodAfterAccess() {
+        return validPeriodAfterAccess;
+    }
+
+    ExpirableBloomFilterConfig setValidPeriodAfterAccess(int validPeriod) {
+        checkParameter("validPeriodAfterAccess",
+                validPeriod >= 0,
+                "expected: >= 0, actual: %s",
+                validPeriod);
+
+        if (validPeriod > 0) {
+            this.validPeriodAfterAccess = Duration.ofSeconds(validPeriod);
         }
         return this;
     }
@@ -41,19 +61,21 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         final ExpirableBloomFilterConfig that = (ExpirableBloomFilterConfig) o;
-        return validPeriod().equals(that.validPeriod());
+        return (validPeriodAfterWrite == null || validPeriodAfterWrite.equals(that.validPeriodAfterWrite)) &&
+                (validPeriodAfterAccess == null || validPeriodAfterAccess.equals(that.validPeriodAfterAccess));
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), validPeriod());
+        return Objects.hash(super.hashCode(), validPeriodAfterWrite, validPeriodAfterAccess);
     }
 
     @Override
     public String toString() {
         return "ExpirableBloomFilterConfig{" +
                 super.toString() +
-                "validPeriod=" + validPeriod +
+                "validPeriodAfterWrite=" + validPeriodAfterWrite +
+                ", validPeriodAfterAccess=" + validPeriodAfterAccess +
                 '}';
     }
 }
