@@ -4,6 +4,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @Command(name = "filter-service",
+        sortOptions = false,
         showDefaultValues = true,
         version = "filter-service v1.3",
         description = "filter-service is a daemon network service which is used to expose bloom filters " +
@@ -11,7 +12,7 @@ import picocli.CommandLine.Option;
         mixinStandardHelpOptions = true)
 final class ServerOptions {
     @Option(names = {"-c", "--configuration-file"},
-            description = "The configuration file.")
+            description = "The path to a YAML configuration file.")
     private String configFilePath;
     @Option(names = {"-p", "--http-port"},
             defaultValue = "8080",

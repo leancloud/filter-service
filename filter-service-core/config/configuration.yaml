@@ -1,11 +1,13 @@
-#---
+---
+# the interval for the purge thread to scan all the filters to find and clean expired filters
 purgeFilterIntervalMillis: 300
+# maximum allowed http/https concurrent connections
 maxHttpConnections: 1000
-# 10 MB
+# maximum allowed length of the content decoded at the session layer. the default value is 10 MB
 maxHttpRequestLength: 10485760
-
+# the default timeout of a request
 defaultRequestTimeoutSeconds: 5
-
+# the configuration options for every underlying TCP socket
 channelOptions:
   SO_BACKLOG: 2048
   SO_RCVBUF: 2048
