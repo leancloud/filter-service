@@ -1,0 +1,13 @@
+#---
+purgeFilterIntervalMillis: 300
+maxHttpConnections: 1000
+# 10 MB
+maxHttpRequestLength: 10485760
+
+defaultRequestTimeoutSeconds: 5
+
+channelOptions:
+  SO_BACKLOG: 2048
+  SO_RCVBUF: 2048
+  SO_SNDBUF: 2048
+  TCP_NODELAY: True
