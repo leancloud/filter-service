@@ -3,6 +3,8 @@ package cn.leancloud.filter.service;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
+import javax.annotation.Nullable;
+
 @Command(name = "filter-service",
         sortOptions = false,
         showDefaultValues = true,
@@ -32,6 +34,7 @@ final class ServerOptions {
         return docService;
     }
 
+    @Nullable
     public String configFilePath() {
         return configFilePath;
     }

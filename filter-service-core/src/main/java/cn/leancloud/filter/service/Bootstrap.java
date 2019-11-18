@@ -34,7 +34,9 @@ public final class Bootstrap {
         final ServerOptions opts = ret.getOptions();
         assert opts != null;
 
-        Configuration.initConfiguration(opts.configFilePath());
+        if (opts.configFilePath() != null) {
+            Configuration.initConfiguration(opts.configFilePath());
+        }
 
         final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(10,
                 new ThreadFactoryBuilder().setNameFormat("scheduled-worker-%s").build());
