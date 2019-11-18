@@ -17,7 +17,6 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.UnmatchedArgumentException;
 
 import javax.annotation.Nullable;
-import java.time.Duration;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 import java.util.concurrent.*;
@@ -35,6 +34,8 @@ public final class Bootstrap {
         final ServerOptions opts = ret.getOptions();
         assert opts != null;
 
+        Configuration.initConfiguration(opts.configFilePath());
+
         final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(10,
                 new ThreadFactoryBuilder().setNameFormat("scheduled-worker-%s").build());
         final BloomFilterManagerImpl<GuavaBloomFilter> bloomFilterManager = newBloomFilterManager();
@@ -44,7 +45,7 @@ public final class Bootstrap {
             } catch (Exception ex) {
                 logger.error("Purge bloom filter service failed.", ex);
             }
-        }, 0, 300, TimeUnit.MILLISECONDS);
+        }, 0, Configuration.purgeFilterInterval().toMillis(), TimeUnit.MILLISECONDS);
         final MetricsService metricsService = loadMetricsService();
         final MeterRegistry registry = metricsService.createMeterRegistry();
         metricsService.start();
@@ -74,7 +75,8 @@ public final class Bootstrap {
 
         server.start().join();
 
-        logger.info("Filter server has been started at port {}", opts.getHttpPort());
+        logger.info("Filter server has been started at port {} with configurations: {}",
+                opts.getHttpPort(), Configuration.spec());
     }
 
     private static ParseCommandLineArgsResult parseCommandLineArgs(String[] args) {
@@ -129,11 +131,11 @@ public final class Bootstrap {
         final Iterator<MetricsService> iterator = loader.iterator();
         if (iterator.hasNext()) {
             final MetricsService service = iterator.next();
-            logger.info("Load {} as implementation for cn.leancloud.filter.service.metrics.MetricsService.",
-                    service.getClass().getName());
+            logger.info("Load {} as implementation for {}.",
+                    service.getClass().getName(), MetricsService.class.getName());
             return service;
         } else {
-            logger.info("Using cn.leancloud.filter.service.DefaultMetricsService to record metrics");
+            logger.info("Using {} to record metrics", DefaultMetricsService.class.getName());
             return new DefaultMetricsService();
         }
     }
@@ -142,14 +144,14 @@ public final class Bootstrap {
                                     ServerOptions opts,
                                     BloomFilterManager<?, ? super ExpirableBloomFilterConfig> bloomFilterManager) {
         final ServerBuilder sb = Server.builder()
-                .channelOption(ChannelOption.SO_BACKLOG, 2048)
-                .channelOption(ChannelOption.SO_RCVBUF, 2048)
-                .childChannelOption(ChannelOption.SO_SNDBUF, 2048)
-                .childChannelOption(ChannelOption.TCP_NODELAY, true)
+                .channelOption(ChannelOption.SO_BACKLOG, Configuration.channelOptions().SO_BACKLOG())
+                .channelOption(ChannelOption.SO_RCVBUF, Configuration.channelOptions().SO_RCVBUF())
+                .childChannelOption(ChannelOption.SO_SNDBUF, Configuration.channelOptions().SO_SNDBUF())
+                .childChannelOption(ChannelOption.TCP_NODELAY, Configuration.channelOptions().TCP_NODELAY())
                 .http(opts.getHttpPort())
-                .maxNumConnections(1000)
-                .maxRequestLength(10 * 1024 * 1024)  // 10 MB
-                .requestTimeout(Duration.ofSeconds(5))
+                .maxNumConnections(Configuration.maxHttpConnections())
+                .maxRequestLength(Configuration.maxHttpRequestLength())
+                .requestTimeout(Configuration.defaultRequestTimeout())
                 .meterRegistry(registry);
 
         sb.annotatedService("/v1/bloomfilter", new BloomFilterHttpService(bloomFilterManager))

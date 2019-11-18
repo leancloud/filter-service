@@ -6,7 +6,7 @@
         <format>dir</format>
         <format>tar.gz</format>
     </formats>
-    <includeBaseDirectory>false</includeBaseDirectory>
+    <includeBaseDirectory>true</includeBaseDirectory>
     <fileSets>
         <fileSet>
             <lineEnding>unix</lineEnding>
@@ -14,6 +14,7 @@
             <includes>
                 <include>bin/**</include>
                 <include>scripts/**</include>
+                <include>config/**</include>
             </includes>
             <excludes>
                 <exclude>**/src/**</exclude>
