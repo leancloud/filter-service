@@ -112,7 +112,7 @@ Transfer/sec:      8.92MB
 Filter: "check-set-bench" deleted.
 ```
 
-This is tested on my machine with java 1.8.0_181, 2.3 GHz Intel Core i5 cpu and 16G mem. Please remember to run several times to warm up JVM before beging your real test. You can see from the result above that Filter-Service can process more than 60k requests per seconds. I think it's good enough in most cases.
+This is tested on my machine with java 1.8.0_181, 2.3 GHz Intel Core i5 cpu and 16G mem. Please remember to run several times to warm up JVM before your real test. You can see from the result above that Filter-Service can process more than 60k requests per seconds. I think it's good enough in most cases.
 
 ## Doc service
 
