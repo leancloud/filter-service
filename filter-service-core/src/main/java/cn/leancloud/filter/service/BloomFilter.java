@@ -42,4 +42,6 @@ public interface BloomFilter {
      *         result to what {@code mightContain(String)} would have returned at the time it is called.
      */
     boolean set(String value);
+
+    boolean valid();
 }

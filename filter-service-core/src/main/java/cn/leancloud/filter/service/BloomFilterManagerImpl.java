@@ -11,7 +11,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
-public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
+public final class BloomFilterManagerImpl<T extends BloomFilter>
         implements BloomFilterManager<T, ExpirableBloomFilterConfig>,
         Listenable<BloomFilterManagerListener<T, ExpirableBloomFilterConfig>> {
     private static final FilterNotFoundException FILTER_NOT_FOUND_EXCEPTION = new FilterNotFoundException();
@@ -35,7 +35,7 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
         filterMapLock.lock();
         try {
             prevFilter = filterMap.get(name);
-            if (overwrite || prevFilter == null || prevFilter.expired()) {
+            if (overwrite || prevFilter == null || prevFilter.valid()) {
                 filter = factory.createFilter(config);
                 filterMap.put(name, filter);
                 created = true;

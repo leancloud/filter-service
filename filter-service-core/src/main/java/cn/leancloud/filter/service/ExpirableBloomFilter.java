@@ -19,4 +19,9 @@ public interface ExpirableBloomFilter extends BloomFilter {
      * @return true when this Bloom filter is already expired.
      */
     boolean expired();
+
+    @Override
+    default boolean valid() {
+        return expired();
+    }
 }
