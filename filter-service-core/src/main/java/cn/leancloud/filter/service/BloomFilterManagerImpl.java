@@ -108,6 +108,22 @@ public final class BloomFilterManagerImpl<T extends BloomFilter>
     }
 
     @Override
+    public void remove(String name, T filter) {
+        final boolean removed;
+
+        filterMapLock.lock();
+        try {
+            removed = filterMap.remove(name, filter);
+        } finally {
+            filterMapLock.unlock();
+        }
+
+        if (removed) {
+            notifyBloomFilterRemoved(name, filter);
+        }
+    }
+
+    @Override
     public Iterator<Entry<String, T>> iterator() {
         return filterMap.entrySet().iterator();
     }

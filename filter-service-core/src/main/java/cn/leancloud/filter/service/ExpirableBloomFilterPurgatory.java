@@ -16,7 +16,7 @@ public final class ExpirableBloomFilterPurgatory<F extends BloomFilter> implemen
             if (filter instanceof ExpirableBloomFilter) {
                 if (((ExpirableBloomFilter) filter).expired()) {
                     final String name = entry.getKey();
-                    manager.remove(name);
+                    manager.remove(name, filter);
                 }
             }
         }

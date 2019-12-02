@@ -122,4 +122,13 @@ public interface BloomFilterManager<F extends BloomFilter, C extends BloomFilter
      * @param name the name of the Bloom filter to remove.
      */
     void remove(String name);
+
+    /**
+     * Remove a Bloom filter with target name from this manager only
+     * if the target name currently mapped to a given filter.
+     *
+     * @param name the name of the Bloom filter to remove.
+     * @param filter the Bloom filter to remove.
+     */
+    void remove(String name, F filter);
 }
