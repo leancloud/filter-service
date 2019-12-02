@@ -100,7 +100,7 @@ public interface BloomFilterManager<F extends BloomFilter, C extends BloomFilter
      * @throws FilterNotFoundException when there's no Bloom filter with the target name
      *                                 exists in this manager
      */
-    F safeGetFilter(String name) throws FilterNotFoundException;
+    F ensureGetFilter(String name) throws FilterNotFoundException;
 
     /**
      * Returns all the names of the Bloom filters in this manager.

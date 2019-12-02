@@ -74,7 +74,7 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
     }
 
     @Override
-    public T safeGetFilter(String name) throws FilterNotFoundException {
+    public T ensureGetFilter(String name) throws FilterNotFoundException {
         final T filter = getFilter(name);
         if (filter == null) {
             throw FILTER_NOT_FOUND_EXCEPTION;
