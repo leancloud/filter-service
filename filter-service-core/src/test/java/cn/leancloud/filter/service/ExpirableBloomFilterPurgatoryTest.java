@@ -28,7 +28,7 @@ public class ExpirableBloomFilterPurgatoryTest {
 
         final BloomFilterManagerImpl<GuavaBloomFilter> manager = new BloomFilterManagerImpl<>(mockedFactory);
         final GuavaBloomFilter filter = manager.createFilter(testingFilterName, config).getFilter();
-        final ExpirableBloomFilterPurgatory<GuavaBloomFilter, ExpirableBloomFilterConfig> purgatory =
+        final ExpirableBloomFilterPurgatory<GuavaBloomFilter> purgatory =
                 new ExpirableBloomFilterPurgatory<>(manager);
 
         assertThat(filter.expired()).isTrue();
