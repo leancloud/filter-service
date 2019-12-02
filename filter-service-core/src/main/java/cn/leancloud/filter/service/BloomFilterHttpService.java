@@ -68,7 +68,7 @@ public final class BloomFilterHttpService {
 
     @Get("/{name}")
     public JsonNode getFilterInfo(@Param String name) throws FilterNotFoundException {
-        final BloomFilter filter = bloomFilterManager.safeGetFilter(name);
+        final BloomFilter filter = bloomFilterManager.ensureGetFilter(name);
         return MAPPER.valueToTree(filter);
     }
 
@@ -90,7 +90,7 @@ public final class BloomFilterHttpService {
         final JsonNode testingValue = checkNotNull("value", req.get("value"));
         checkParameter("value", testingValue.isTextual(), "expect string type");
 
-        final BloomFilter filter = bloomFilterManager.safeGetFilter(name);
+        final BloomFilter filter = bloomFilterManager.ensureGetFilter(name);
         final boolean contain = filter.mightContain(testingValue.textValue());
         return BooleanNode.valueOf(contain);
     }
@@ -102,7 +102,7 @@ public final class BloomFilterHttpService {
         final JsonNode values = checkNotNull("values", req.get("values"));
         checkParameter("values", values.isArray(), "expect Json array");
 
-        final BloomFilter filter = bloomFilterManager.safeGetFilter(name);
+        final BloomFilter filter = bloomFilterManager.ensureGetFilter(name);
         final ArrayNode response = MAPPER.createArrayNode();
         for (final JsonNode value : values) {
             response.add(value.isTextual() && filter.mightContain(value.textValue()));
@@ -117,7 +117,7 @@ public final class BloomFilterHttpService {
         final JsonNode testingValue = checkNotNull("value", req.get("value"));
         checkParameter("value", testingValue.isTextual(), "expect string type");
 
-        final BloomFilter filter = bloomFilterManager.safeGetFilter(name);
+        final BloomFilter filter = bloomFilterManager.ensureGetFilter(name);
         final boolean contain = !filter.set(testingValue.textValue());
         return BooleanNode.valueOf(contain);
     }
@@ -129,7 +129,7 @@ public final class BloomFilterHttpService {
         final JsonNode values = checkNotNull("values", req.get("values"));
         checkParameter("values", values.isArray(), "expect Json array");
 
-        final BloomFilter filter = bloomFilterManager.safeGetFilter(name);
+        final BloomFilter filter = bloomFilterManager.ensureGetFilter(name);
         final ArrayNode response = MAPPER.createArrayNode();
         for (final JsonNode value : values) {
             if (value.isTextual()) {

@@ -116,12 +116,12 @@ public class BloomFilterManagerImplTest {
     public void testSafeGetExistsFilter() throws Exception {
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
         final GuavaBloomFilter filter = manager.createFilter(testingFilterName, config).getFilter();
-        assertThat(manager.safeGetFilter(testingFilterName)).isSameAs(filter);
+        assertThat(manager.ensureGetFilter(testingFilterName)).isSameAs(filter);
     }
 
     @Test
     public void testSafeGetNonExistsFilter() {
-        assertThatThrownBy(() -> manager.safeGetFilter(testingFilterName))
+        assertThatThrownBy(() -> manager.ensureGetFilter(testingFilterName))
                 .isInstanceOf(FilterNotFoundException.class);
     }
 
