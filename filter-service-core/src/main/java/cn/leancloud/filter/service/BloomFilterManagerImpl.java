@@ -2,8 +2,9 @@ package cn.leancloud.filter.service;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
@@ -11,7 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
-        implements BloomFilterManager<T, ExpirableBloomFilterConfig>, Purgatory,
+        implements BloomFilterManager<T, ExpirableBloomFilterConfig>,
         Listenable<BloomFilterManagerListener<T, ExpirableBloomFilterConfig>> {
     private static final FilterNotFoundException FILTER_NOT_FOUND_EXCEPTION = new FilterNotFoundException();
 
@@ -107,24 +108,8 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
     }
 
     @Override
-    public void purge() {
-        for (Map.Entry<String, T> entry : filterMap.entrySet()) {
-            final T filter = entry.getValue();
-            if (filter.expired()) {
-                final String name = entry.getKey();
-                final boolean removed;
-                filterMapLock.lock();
-                try {
-                    removed = filterMap.remove(name, filter);
-                } finally {
-                    filterMapLock.unlock();
-                }
-
-                if (removed) {
-                    notifyBloomFilterRemoved(name, filter);
-                }
-            }
-        }
+    public Iterator<Entry<String, T>> iterator() {
+        return filterMap.entrySet().iterator();
     }
 
     private void notifyBloomFilterCreated(String name, ExpirableBloomFilterConfig config, T filter) {

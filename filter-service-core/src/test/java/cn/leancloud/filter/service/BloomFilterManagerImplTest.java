@@ -3,7 +3,6 @@ package cn.leancloud.filter.service;
 import cn.leancloud.filter.service.BloomFilterManager.CreateFilterResult;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.time.Duration;
 import java.time.ZoneOffset;
@@ -164,32 +163,6 @@ public class BloomFilterManagerImplTest {
     }
 
     @Test
-    public void testPurge() {
-        final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
-        final ZonedDateTime creationTime = ZonedDateTime.now(ZoneOffset.UTC).minus(Duration.ofSeconds(10));
-        final ZonedDateTime expirationTime = creationTime.plusSeconds(5);
-        final GuavaBloomFilterFactory mockedFactory = Mockito.mock(GuavaBloomFilterFactory.class);
-
-        Mockito.when(mockedFactory.createFilter(config))
-                .thenReturn(new GuavaBloomFilter(
-                        BloomFilterConfig.DEFAULT_EXPECTED_INSERTIONS,
-                        BloomFilterConfig.DEFAULT_FALSE_POSITIVE_PROBABILITY,
-                        creationTime,
-                        expirationTime,
-                        null));
-
-        final BloomFilterManagerImpl<GuavaBloomFilter> manager = new BloomFilterManagerImpl<>(mockedFactory);
-        final GuavaBloomFilter filter = manager.createFilter(testingFilterName, config).getFilter();
-
-        assertThat(filter.expired()).isTrue();
-        assertThat(manager.getFilter(testingFilterName)).isSameAs(filter);
-
-        manager.purge();
-
-        assertThat(manager.getFilter(testingFilterName)).isNull();
-    }
-
-    @Test
     public void testListenFilterCreated() {
         final TestingListener listener = new TestingListener();
 
@@ -284,34 +257,6 @@ public class BloomFilterManagerImplTest {
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
         final GuavaBloomFilter filter = manager.createFilter(testingFilterName, config).getFilter();
         manager.remove(testingFilterName);
-
-        final List<FilterEvent> events = listener.getReceivedEvents();
-        assertThat(events.size()).isEqualTo(2);
-        assertThat(((FilterRemovedEvent) events.get(1)).getFilter()).isSameAs(filter);
-        assertThat((events.get(1)).getName()).isSameAs(testingFilterName);
-    }
-
-    @Test
-    public void testListenFilterPurged() {
-        final TestingListener listener = new TestingListener();
-        final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
-        final ZonedDateTime creationTime = ZonedDateTime.now(ZoneOffset.UTC).minus(Duration.ofSeconds(10));
-        final ZonedDateTime expirationTime = creationTime.plusSeconds(5);
-        final GuavaBloomFilterFactory mockedFactory = Mockito.mock(GuavaBloomFilterFactory.class);
-
-        Mockito.when(mockedFactory.createFilter(config))
-                .thenReturn(new GuavaBloomFilter(
-                        BloomFilterConfig.DEFAULT_EXPECTED_INSERTIONS,
-                        BloomFilterConfig.DEFAULT_FALSE_POSITIVE_PROBABILITY,
-                        creationTime,
-                        expirationTime,
-                        null));
-
-        final BloomFilterManagerImpl<GuavaBloomFilter> manager = new BloomFilterManagerImpl<>(mockedFactory);
-        manager.addListener(listener);
-
-        final GuavaBloomFilter filter = manager.createFilter(testingFilterName, config).getFilter();
-        manager.purge();
 
         final List<FilterEvent> events = listener.getReceivedEvents();
         assertThat(events.size()).isEqualTo(2);

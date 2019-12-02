@@ -2,6 +2,7 @@ package cn.leancloud.filter.service;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A manager to manage {@link BloomFilter}s.
@@ -9,7 +10,7 @@ import java.util.List;
  * @param <F> the type of the managed {@link BloomFilter}s
  * @param <C> the type of the configuration used by the managed {@link BloomFilter}s
  */
-public interface BloomFilterManager<F extends BloomFilter, C extends BloomFilterConfig<? extends C>> {
+public interface BloomFilterManager<F extends BloomFilter, C extends BloomFilterConfig<? extends C>> extends Iterable<Map.Entry<String, F>> {
     /**
      * The result of the create filter operations.
      *

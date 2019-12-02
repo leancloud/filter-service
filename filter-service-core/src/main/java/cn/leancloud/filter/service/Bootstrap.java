@@ -41,9 +41,11 @@ public final class Bootstrap {
         final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(10,
                 new ThreadFactoryBuilder().setNameFormat("scheduled-worker-%s").build());
         final BloomFilterManagerImpl<GuavaBloomFilter> bloomFilterManager = newBloomFilterManager();
+        final ExpirableBloomFilterPurgatory<GuavaBloomFilter> purgatory
+                = new ExpirableBloomFilterPurgatory<>(bloomFilterManager);
         final ScheduledFuture<?> purgeFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
-                bloomFilterManager.purge();
+                purgatory.purge();
             } catch (Exception ex) {
                 logger.error("Purge bloom filter service failed.", ex);
             }
