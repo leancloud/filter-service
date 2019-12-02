@@ -13,9 +13,11 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.hash.Funnels;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
@@ -23,7 +25,6 @@ import java.util.Objects;
 @SuppressWarnings("UnstableApiUsage")
 public final class GuavaBloomFilter implements ExpirableBloomFilter {
     private static final DateTimeFormatter ISO_8601_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-
 
     public static class ZonedDateTimeSerializer extends JsonSerializer<ZonedDateTime> {
         @Override
@@ -58,6 +59,26 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
         }
     }
 
+    static GuavaBloomFilter readFrom(InputStream in) throws IOException {
+        final DataInputStream din = new DataInputStream(in);
+        final int expectedInsertions = din.readInt();
+        final double fpp = din.readDouble();
+        final long created = din.readLong();
+        final long expiration = din.readLong();
+        final com.google.common.hash.BloomFilter<CharSequence> filter =
+                com.google.common.hash.BloomFilter.readFrom(in, Funnels.stringFunnel(StandardCharsets.UTF_8));
+        final long validPeriodAfterAccess = din.readLong();
+
+        return new GuavaBloomFilter(
+                expectedInsertions,
+                fpp,
+                ZonedDateTime.ofInstant(Instant.ofEpochSecond(created), ZoneOffset.UTC),
+                ZonedDateTime.ofInstant(Instant.ofEpochSecond(expiration), ZoneOffset.UTC),
+                validPeriodAfterAccess == -1 ? null : Duration.ofNanos(validPeriodAfterAccess),
+                filter,
+                Timer.DEFAULT_TIMER);
+    }
+
     private final ZonedDateTime created;
     @JsonIgnore
     private final com.google.common.hash.BloomFilter<CharSequence> filter;
@@ -84,18 +105,18 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
      * Constructor for {@link GuavaBloomFilter}.
      * This constructor can set arbitrary creation and expiration time for the constructed {@code GuavaBloomFilter}.
      *
-     * @param expectedInsertions           the number of expected insertions to the constructed {@code GuavaBloomFilter};
-     *                                     must be positive
-     * @param fpp                          the desired false positive probability (must be positive and less than 1.0)
-     * @param created                      the creation time for the constructed {@code GuavaBloomFilter}
-     * @param expiration                   the expiration time of the constructed {@code GuavaBloomFilter}. When
-     *                                     time past this expiration time, the constructed {@code GuavaBloomFilter}
-     *                                     will be expired and can not be used any more.
-     * @param validPeriodAfterAccess the time duration to push the expiration of the filter forward after calling
-     *                                     {@link GuavaBloomFilter#set(String)} or {@link GuavaBloomFilter#mightContain(String)}
-     *                                     each time
-     * @param timer                        the {@link Timer} used to get current {@link ZonedDateTime} with UTC offset. This
-     *                                     argument is used under test to set an arbitrary current time.
+     * @param expectedInsertions     the number of expected insertions to the constructed {@code GuavaBloomFilter};
+     *                               must be positive
+     * @param fpp                    the desired false positive probability (must be positive and less than 1.0)
+     * @param created                the creation time for the constructed {@code GuavaBloomFilter}
+     * @param expiration             the expiration time of the constructed {@code GuavaBloomFilter}. When
+     *                               time past this expiration time, the constructed {@code GuavaBloomFilter}
+     *                               will be expired and can not be used any more.
+     * @param validPeriodAfterAccess the time duration to push off the expiration of the filter forward after calling
+     *                               {@link GuavaBloomFilter#set(String)} or {@link GuavaBloomFilter#mightContain(String)}
+     *                               each time
+     * @param timer                  the {@link Timer} used to get current {@link ZonedDateTime} with UTC offset. This
+     *                               argument is used under test to set an arbitrary current time.
      */
     GuavaBloomFilter(int expectedInsertions,
                      double fpp,
@@ -103,14 +124,30 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
                      ZonedDateTime expiration,
                      @Nullable Duration validPeriodAfterAccess,
                      Timer timer) {
+        this(expectedInsertions,
+                fpp,
+                created,
+                expiration,
+                validPeriodAfterAccess,
+                com.google.common.hash.BloomFilter.create(
+                        Funnels.stringFunnel(StandardCharsets.UTF_8),
+                        expectedInsertions,
+                        fpp),
+                timer);
+    }
+
+    private GuavaBloomFilter(int expectedInsertions,
+                             double fpp,
+                             ZonedDateTime created,
+                             ZonedDateTime expiration,
+                             @Nullable Duration validPeriodAfterAccess,
+                             com.google.common.hash.BloomFilter<CharSequence> filter,
+                             Timer timer) {
         this.fpp = fpp;
         this.expectedInsertions = expectedInsertions;
         this.created = created;
         this.expiration = expiration;
-        this.filter = com.google.common.hash.BloomFilter.create(
-                Funnels.stringFunnel(StandardCharsets.UTF_8),
-                expectedInsertions,
-                fpp);
+        this.filter = filter;
         this.validPeriodAfterAccess = validPeriodAfterAccess;
         this.timer = timer;
     }
@@ -165,6 +202,19 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
         return result;
     }
 
+    public void writeTo(OutputStream out) throws IOException {
+        final DataOutputStream dout = new DataOutputStream(out);
+        dout.writeInt(expectedInsertions);
+        dout.writeDouble(fpp);
+        dout.writeLong(created.toEpochSecond());
+        dout.writeLong(expiration.toEpochSecond());
+        filter.writeTo(out);
+        if (validPeriodAfterAccess != null) {
+            dout.writeLong(validPeriodAfterAccess.toNanos());
+        } else {
+            dout.writeLong(-1);
+        }
+    }
 
     @Override
     public boolean equals(Object o) {

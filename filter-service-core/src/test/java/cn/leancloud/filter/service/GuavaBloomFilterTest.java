@@ -3,6 +3,8 @@ package cn.leancloud.filter.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -116,5 +118,62 @@ public class GuavaBloomFilterTest {
         final String json = mapper.valueToTree(expectedFilter).toString();
         final GuavaBloomFilter filter = new ObjectMapper().readerFor(GuavaBloomFilter.class).readValue(json);
         assertThat(filter).isEqualTo(expectedFilter);
+    }
+
+    @Test
+    public void testSerializationWithoutValidPeriodAfterAccess() throws Exception {
+        final int expectedInsertions = 1000000;
+        final double fpp = 0.0001;
+        final ZonedDateTime creation = ZonedDateTime.now(ZoneOffset.UTC);
+        final ZonedDateTime expiration = creation.plus(Duration.ofSeconds(10));
+        final GuavaBloomFilter expect = new GuavaBloomFilter(
+                expectedInsertions,
+                fpp,
+                creation,
+                expiration,
+                null);
+
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        expect.writeTo(out);
+
+        final ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+        final GuavaBloomFilter actualFilter = GuavaBloomFilter.readFrom(in);
+
+        assertThat(actualFilter).isEqualTo(expect);
+        assertThat(actualFilter.fpp()).isEqualTo(fpp);
+        assertThat(actualFilter.expectedInsertions()).isEqualTo(expectedInsertions);
+        assertThat(actualFilter.expiration().toEpochSecond()).isEqualTo(expiration.toEpochSecond());
+        assertThat(actualFilter.validPeriodAfterAccess()).isNull();
+        assertThat(actualFilter.created().toEpochSecond()).isEqualTo(creation.toEpochSecond());
+        assertThat(actualFilter.expired()).isFalse();
+    }
+
+    @Test
+    public void testSerializationWithValidPeriodAfterAccess() throws Exception {
+        final Duration validPeriodAfterAccess = Duration.ofSeconds(3);
+        final int expectedInsertions = 1000000;
+        final double fpp = 0.0001;
+        final ZonedDateTime creation = ZonedDateTime.now(ZoneOffset.UTC);
+        final ZonedDateTime expiration = creation.plus(Duration.ofSeconds(10));
+        final GuavaBloomFilter expect = new GuavaBloomFilter(
+                expectedInsertions,
+                fpp,
+                creation,
+                expiration,
+                validPeriodAfterAccess);
+
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        expect.writeTo(out);
+
+        final ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+        final GuavaBloomFilter actualFilter = testingFactory.readFrom(in);
+
+        assertThat(actualFilter).isEqualTo(expect);
+        assertThat(actualFilter.fpp()).isEqualTo(fpp);
+        assertThat(actualFilter.expectedInsertions()).isEqualTo(expectedInsertions);
+        assertThat(actualFilter.expiration().toEpochSecond()).isEqualTo(expiration.toEpochSecond());
+        assertThat(actualFilter.validPeriodAfterAccess()).isEqualTo(validPeriodAfterAccess);
+        assertThat(actualFilter.created().toEpochSecond()).isEqualTo(creation.toEpochSecond());
+        assertThat(actualFilter.expired()).isFalse();
     }
 }
