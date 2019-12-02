@@ -6,14 +6,12 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 
 public final class Configuration {
-    @Nullable
-    private static Configuration instance;
+    private static Configuration instance = new Configuration();
 
     public static void initConfiguration(String configFilePath) throws IOException {
         final File configFile = new File(configFilePath);
@@ -30,32 +28,22 @@ public final class Configuration {
     }
 
     public static Duration purgeFilterInterval() {
-        ensureConfigurationInitialized();
-        assert instance != null;
         return Duration.ofMillis(instance.purgeFilterIntervalMillis);
     }
 
     public static int maxHttpConnections() {
-        ensureConfigurationInitialized();
-        assert instance != null;
         return instance.maxHttpConnections;
     }
 
     public static int maxHttpRequestLength() {
-        ensureConfigurationInitialized();
-        assert instance != null;
         return instance.maxHttpRequestLength;
     }
 
     public static Duration defaultRequestTimeout() {
-        ensureConfigurationInitialized();
-        assert instance != null;
         return Duration.ofSeconds(instance.defaultRequestTimeoutSeconds);
     }
 
     public static SupportedChannelOptions channelOptions() {
-        ensureConfigurationInitialized();
-        assert instance != null;
         return instance.channelOptions;
     }
 
@@ -67,19 +55,18 @@ public final class Configuration {
                 "channelOptions: " + channelOptions() + "\n";
     }
 
-    private static void ensureConfigurationInitialized() {
-        if (instance == null) {
-            throw new IllegalStateException("configuration is not initialized");
-        }
-    }
-
     private int purgeFilterIntervalMillis;
     private int maxHttpConnections;
     private int maxHttpRequestLength;
     private int defaultRequestTimeoutSeconds;
     private SupportedChannelOptions channelOptions;
 
-    private Configuration() { this.channelOptions = new SupportedChannelOptions();}
+    private Configuration() {
+        this.purgeFilterIntervalMillis = 300;
+        this.maxHttpConnections = 1000;
+        this.maxHttpRequestLength = 10485760;
+        this.defaultRequestTimeoutSeconds = 5;
+        this.channelOptions = new SupportedChannelOptions();}
 
     public void setPurgeFilterIntervalMillis(int purgeFilterIntervalMillis) {
         this.purgeFilterIntervalMillis = purgeFilterIntervalMillis;

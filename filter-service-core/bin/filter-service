@@ -3,30 +3,54 @@
 BASE_DIR=$(dirname $0)/..
 CLASSPATH=$(echo $BASE_DIR/*.jar | tr ' ' ':')
 
-JAVA="$JAVA_HOME/bin/java"
+# Which java to use
+if [ -z "$JAVA_HOME" ]; then
+  JAVA="java"
+else
+  JAVA="$JAVA_HOME/bin/java"
+fi
 
-LOG_DIR="$BASE_DIR/logs"
+JAVA_VERSION=$($JAVA -version 2>&1 >/dev/null | grep 'version' | awk '{print $3}')
+echo "Using java version:$JAVA_VERSION path:$JAVA"
+
+# Log directory to use
+if [ "x$LOG_DIR" = "x" ]; then
+    LOG_DIR="$BASE_DIR/logs"
+fi
 
 if [ ! -d "$LOG_DIR" ]; then
     mkdir -p $LOG_DIR
 fi
 
-JAVA_VERSION=$($JAVA -version 2>&1 | grep 'version' | awk '{print $3}')
-echo "Using java version:$JAVA_VERSION path:$JAVA"
+# Log4j settings
+if [ -z "$FILTER_SERVICE_LOG4J_OPTS" ]; then
+  # use the log4j2.xml in $BASE_DIR or internal log4j2.xml to log
+  FILTER_SERVICE_LOG4J_OPTS=""
+fi
 
-JVM_GC_LOG_CONFIGS="-XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=10M -XX:+PrintGCDetails -XX:+PrintReferenceGC -Xloggc:$LOG_DIR/gc.log"
-JAVA_VERSION=$($JAVA -version 2>&1 >/dev/null | grep 'version' | awk '{print $3}')
-if [[ $JAVA_VERSION =~ ^\"1[1-9]+.* ]]; then
-    JVM_GC_LOG_CONFIGS="-Xlog:gc+heap=info:file=$LOG_DIR/gc.log:time,level,tags:filecount=5,filesize=10240"
+# GC logs
+if [ -z "$FILTER_SERVICE_JVM_GC_LOG_CONFIGS" ]; then
+    if [[ $JAVA_VERSION =~ ^\"1[1-9]+.* ]]; then
+        FILTER_SERVICE_JVM_GC_LOG_CONFIGS="-Xlog:gc+heap=info:file=$LOG_DIR/gc.log:time,level,tags:filecount=5,filesize=10240"
+    else
+        FILTER_SERVICE_JVM_GC_LOG_CONFIGS="-XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=10M -XX:+PrintGCDetails -XX:+PrintReferenceGC -Xloggc:$LOG_DIR/gc.log"
+    fi
+fi
+
+# Memory options
+if [ -z "$FILTER_SERVICE_HEAP_OPTS" ]; then
+  FILTER_SERVICE_HEAP_OPTS="-Xmx1G -Xms1G"
+fi
+
+# JVM performance options
+if [ -z "$FILTER_SERVICE_JVM_PERFORMANCE_OPTS" ]; then
+  FILTER_SERVICE_JVM_PERFORMANCE_OPTS="-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:+ParallelRefProcEnabled -XX:+DisableExplicitGC"
 fi
 
 $JAVA \
-    -Xmx1G -Xms1G \
-    -XX:+UseG1GC \
-    -XX:+ParallelRefProcEnabled \
-    -XX:MaxGCPauseMillis=100 \
-    -server \
-    $JVM_GC_LOG_CONFIGS \
+    $FILTER_SERVICE_HEAP_OPTS \
+    $FILTER_SERVICE_JVM_PERFORMANCE_OPTS \
+    $FILTER_SERVICE_JVM_GC_LOG_CONFIGS \
     -DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector \
     -Dlog4j.logdir=$LOG_DIR \
     -cp $CLASSPATH \
