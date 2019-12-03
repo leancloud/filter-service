@@ -17,7 +17,9 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.UnmatchedArgumentException;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.*;
 
@@ -40,25 +42,25 @@ public final class Bootstrap {
 
         final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(10,
                 new ThreadFactoryBuilder().setNameFormat("scheduled-worker-%s").build());
-        final BloomFilterManagerImpl<GuavaBloomFilter> bloomFilterManager = newBloomFilterManager();
-        final ExpirableBloomFilterPurgatory<GuavaBloomFilter> purgatory
-                = new ExpirableBloomFilterPurgatory<>(bloomFilterManager);
-        final ScheduledFuture<?> purgeFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            try {
-                purgatory.purge();
-            } catch (Exception ex) {
-                logger.error("Purge bloom filter service failed.", ex);
-            }
-        }, 0, Configuration.purgeFilterInterval().toMillis(), TimeUnit.MILLISECONDS);
+        final GuavaBloomFilterFactory factory = new GuavaBloomFilterFactory();
+        final BloomFilterManagerImpl<GuavaBloomFilter> bloomFilterManager = newBloomFilterManager(factory);
+        final PersistentManager<GuavaBloomFilter> persistentManager = new PersistentManager<>(bloomFilterManager, new GuavaBloomFilterFactory());
+
+        recoverPreviousBloomFilters(persistentManager);
+
+        final List<ScheduledFuture<?>> scheduledFutures = schedulePeriodJobs(scheduledExecutorService, bloomFilterManager, persistentManager);
+
         final MetricsService metricsService = loadMetricsService();
         final MeterRegistry registry = metricsService.createMeterRegistry();
-        metricsService.start();
         final Server server = newServer(registry, opts, bloomFilterManager);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 server.stop().join();
-                purgeFuture.cancel(false);
+
+                for (ScheduledFuture<?> future : scheduledFutures) {
+                    future.cancel(false);
+                }
 
                 final CompletableFuture<Void> shutdownFuture = new CompletableFuture<>();
                 scheduledExecutorService.execute(() ->
@@ -66,7 +68,6 @@ public final class Bootstrap {
                 );
                 shutdownFuture.join();
                 scheduledExecutorService.shutdown();
-
 
                 metricsService.stop();
                 logger.info("Filter service has been stopped.");
@@ -77,6 +78,7 @@ public final class Bootstrap {
             }
         }));
 
+        metricsService.start();
         server.start().join();
 
         logger.info("Filter server has been started at port {} with configurations: {}",
@@ -109,8 +111,7 @@ public final class Bootstrap {
         return new ParseCommandLineArgsResult(opts);
     }
 
-    private static BloomFilterManagerImpl<GuavaBloomFilter> newBloomFilterManager() {
-        final GuavaBloomFilterFactory factory = new GuavaBloomFilterFactory();
+    private static BloomFilterManagerImpl<GuavaBloomFilter> newBloomFilterManager(GuavaBloomFilterFactory factory) {
         final BloomFilterManagerImpl<GuavaBloomFilter> bloomFilterManager = new BloomFilterManagerImpl<>(factory);
         bloomFilterManager.addListener(new BloomFilterManagerListener<GuavaBloomFilter, ExpirableBloomFilterConfig>() {
             @Override
@@ -128,6 +129,35 @@ public final class Bootstrap {
             }
         });
         return bloomFilterManager;
+    }
+
+    private static void recoverPreviousBloomFilters(PersistentManager<GuavaBloomFilter> persistentManager) {
+        persistentManager.recover();
+    }
+
+    private static List<ScheduledFuture<?>> schedulePeriodJobs(ScheduledExecutorService scheduledExecutorService,
+                                                               BloomFilterManagerImpl<GuavaBloomFilter> bloomFilterManager,
+                                                               PersistentManager<GuavaBloomFilter> persistentManager) {
+        final List<ScheduledFuture<?>> futures = new ArrayList<>();
+        final ExpirableBloomFilterPurgatory<GuavaBloomFilter> purgatory
+                = new ExpirableBloomFilterPurgatory<>(bloomFilterManager);
+        futures.add(scheduledExecutorService.scheduleWithFixedDelay(() -> {
+            try {
+                purgatory.purge();
+            } catch (Exception ex) {
+                logger.error("Purge bloom filter service failed.", ex);
+            }
+        }, 0, Configuration.purgeFilterInterval().toMillis(), TimeUnit.MILLISECONDS));
+
+        futures.add(scheduledExecutorService.scheduleWithFixedDelay(() -> {
+            try {
+                persistentManager.freezeAllFilters();
+            } catch (Exception ex) {
+                logger.error("Purge bloom filter service failed.", ex);
+            }
+        }, 0, Configuration.purgeFilterInterval().toMillis(), TimeUnit.MILLISECONDS));
+
+        return futures;
     }
 
     private static MetricsService loadMetricsService() {
