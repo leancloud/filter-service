@@ -19,6 +19,7 @@ public class GuavaBloomFilterFactory implements BloomFilterFactory<GuavaBloomFil
                 config.validPeriodAfterAccess());
     }
 
+    @Override
     public GuavaBloomFilter readFrom(InputStream stream) throws IOException {
         return GuavaBloomFilter.readFrom(stream);
     }

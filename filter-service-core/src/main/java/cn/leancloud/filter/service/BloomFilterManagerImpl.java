@@ -4,7 +4,6 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
@@ -58,13 +57,15 @@ public final class BloomFilterManagerImpl<T extends BloomFilter>
     }
 
     @Override
-    public void addListener(BloomFilterManagerListener<T, ExpirableBloomFilterConfig> listener) {
-        listeners.add(listener);
-    }
-
-    @Override
-    public boolean removeListener(BloomFilterManagerListener<T, ExpirableBloomFilterConfig> listener) {
-        return listeners.remove(listener);
+    public void addFilters(Iterable<FilterHolder<? extends T>> filters) {
+        filterMapLock.lock();
+        try {
+            for (FilterHolder<? extends T> holder : filters) {
+                filterMap.put(holder.name(), holder.filter());
+            }
+        } finally {
+            filterMapLock.unlock();
+        }
     }
 
     @Nullable
@@ -124,8 +125,18 @@ public final class BloomFilterManagerImpl<T extends BloomFilter>
     }
 
     @Override
-    public Iterator<Entry<String, T>> iterator() {
-        return filterMap.entrySet().iterator();
+    public Iterator<FilterHolder<T>> iterator() {
+        return filterMap.entrySet().stream().map(e -> new FilterHolder<>(e.getKey(), e.getValue())).iterator();
+    }
+
+    @Override
+    public void addListener(BloomFilterManagerListener<T, ExpirableBloomFilterConfig> listener) {
+        listeners.add(listener);
+    }
+
+    @Override
+    public boolean removeListener(BloomFilterManagerListener<T, ExpirableBloomFilterConfig> listener) {
+        return listeners.remove(listener);
     }
 
     private void notifyBloomFilterCreated(String name, ExpirableBloomFilterConfig config, T filter) {

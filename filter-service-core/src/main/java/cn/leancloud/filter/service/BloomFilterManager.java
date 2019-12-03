@@ -2,7 +2,6 @@ package cn.leancloud.filter.service;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A manager to manage {@link BloomFilter}s.
@@ -10,7 +9,7 @@ import java.util.Map;
  * @param <F> the type of the managed {@link BloomFilter}s
  * @param <C> the type of the configuration used by the managed {@link BloomFilter}s
  */
-public interface BloomFilterManager<F extends BloomFilter, C extends BloomFilterConfig<? extends C>> extends Iterable<Map.Entry<String, F>> {
+public interface BloomFilterManager<F extends BloomFilter, C extends BloomFilterConfig<? extends C>> extends Iterable<FilterHolder<F>> {
     /**
      * The result of the create filter operations.
      *
@@ -59,8 +58,8 @@ public interface BloomFilterManager<F extends BloomFilter, C extends BloomFilter
      * @param name   the name of the Bloom filter to create
      * @param config the configuration used to create a new Bloom filter
      * @return a {@link CreateFilterResult} instance contains a newly created filter if no Bloom filter
-     *         with the same {@code name} exists or the previous exists Bloom filter with the same
-     *         {@code name}
+     * with the same {@code name} exists or the previous exists Bloom filter with the same
+     * {@code name}
      */
     default CreateFilterResult<F> createFilter(String name, C config) {
         return createFilter(name, config, false);
@@ -75,17 +74,24 @@ public interface BloomFilterManager<F extends BloomFilter, C extends BloomFilter
      *                  no matter whether there's already an Bloom filter with the same {@code name} exits.
      *                  false have the same effect with {@link #createFilter(String, BloomFilterConfig)}
      * @return a {@link CreateFilterResult} instance contains a newly created filter if no Bloom filter
-     *         with the same {@code name} exists or {@code overwrite} is true, otherwise contains the
-     *         previous exists Bloom filter with the same {@code name}
+     * with the same {@code name} exists or {@code overwrite} is true, otherwise contains the
+     * previous exists Bloom filter with the same {@code name}
      */
     CreateFilterResult<F> createFilter(String name, C config, boolean overwrite);
+
+    /**
+     * Add existent Bloom filters to this manager.
+     *
+     * @param filters a {@link Iterable} of the filters to add
+     */
+    void addFilters(Iterable<FilterHolder<? extends F>> filters);
 
     /**
      * Get the Bloom filter with the input name.
      *
      * @param name the name of the target Bloom filter
      * @return the Bloom filter if it exists, or null if no Bloom filter with
-     *         the target name in this manager
+     * the target name in this manager
      */
     @Nullable
     F getFilter(String name);
@@ -127,7 +133,7 @@ public interface BloomFilterManager<F extends BloomFilter, C extends BloomFilter
      * Remove a Bloom filter with target name from this manager only
      * if the target name currently mapped to a given filter.
      *
-     * @param name the name of the Bloom filter to remove.
+     * @param name   the name of the Bloom filter to remove.
      * @param filter the Bloom filter to remove.
      */
     void remove(String name, F filter);

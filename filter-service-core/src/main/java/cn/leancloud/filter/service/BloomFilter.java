@@ -1,5 +1,8 @@
 package cn.leancloud.filter.service;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 /**
  * An abstract bloom filter interface used to decouple our service
  * with the actual bloom filter implementations.
@@ -44,4 +47,6 @@ public interface BloomFilter {
     boolean set(String value);
 
     boolean valid();
+
+    void writeTo(OutputStream out) throws IOException;
 }
