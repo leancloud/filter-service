@@ -1,6 +1,6 @@
 package cn.leancloud.filter.service;
 
-public class InvalidFilterException extends RuntimeException {
+public class InvalidFilterException extends PersistentStorageException {
     public InvalidFilterException() {
     }
 

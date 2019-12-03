@@ -71,6 +71,7 @@ public final class Bootstrap {
                 scheduledExecutorService.shutdown();
 
                 metricsService.stop();
+                persistentManager.close();
                 logger.info("Filter service has been stopped.");
             } catch (Exception ex) {
                 logger.info("Got unexpected exception during shutdown filter service, exit anyway.", ex);
@@ -154,9 +155,9 @@ public final class Bootstrap {
             try {
                 persistentManager.freezeAllFilters();
             } catch (Exception ex) {
-                logger.error("Purge bloom filter service failed.", ex);
+                logger.error("Persistent bloom filters failed.", ex);
             }
-        }, 0, Configuration.purgeFilterInterval().toMillis(), TimeUnit.MILLISECONDS));
+        }, 0, Configuration.persistentFiltersInterval().toMillis(), TimeUnit.MILLISECONDS));
 
         return futures;
     }

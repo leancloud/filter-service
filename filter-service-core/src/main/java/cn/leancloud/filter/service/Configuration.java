@@ -32,6 +32,10 @@ public final class Configuration {
         return Duration.ofMillis(instance.purgeFilterIntervalMillis);
     }
 
+    public static Duration persistentFiltersInterval() {
+        return Duration.ofMillis(instance.persistentFiltersIntervalMillis);
+    }
+
     public static int maxHttpConnections() {
         return instance.maxHttpConnections;
     }
@@ -56,18 +60,33 @@ public final class Configuration {
         return Duration.ofSeconds(instance.defaultValidSecondsAfterCreate);
     }
 
+    public static String persistentStorageDirectory() {
+        return instance.persistentStorageDirectory;
+    }
+
+    public static boolean allowRecoverFromCorruptedPersistentFile() {
+        return instance.allowRecoverFromCorruptedPersistentFile;
+    }
+
     public static SupportedChannelOptions channelOptions() {
         return instance.channelOptions;
     }
 
     public static String spec() {
         return "\npurgeFilterInterval: " + purgeFilterInterval() + "\n" +
+                "persistentFiltersInterval: " + persistentFiltersInterval() + "\n" +
                 "maxHttpConnections: " + maxHttpConnections() + "\n" +
                 "maxHttpRequestLength: " + maxHttpRequestLength() + "B\n" +
                 "defaultRequestTimeoutSeconds: " + defaultRequestTimeout() + "\n" +
+                "defaultExpectedInsertions: " + defaultExpectedInsertions() + "\n" +
+                "defaultFalsePositiveProbability: " + defaultFalsePositiveProbability() + "\n" +
+                "defaultValidPeriodAfterCreate: " + defaultValidPeriodAfterCreate() + "\n" +
+                "persistentStorageDirectory: " + persistentStorageDirectory() + "\n" +
+                "allowRecoverFromCorruptedPersistentFile: " + allowRecoverFromCorruptedPersistentFile() + "\n" +
                 "channelOptions: " + channelOptions() + "\n";
     }
 
+    private int persistentFiltersIntervalMillis;
     private int purgeFilterIntervalMillis;
     private int maxHttpConnections;
     private int maxHttpRequestLength;
@@ -75,9 +94,12 @@ public final class Configuration {
     private int defaultExpectedInsertions;
     private double defaultFalsePositiveProbability;
     private long defaultValidSecondsAfterCreate;
+    private String persistentStorageDirectory;
+    private boolean allowRecoverFromCorruptedPersistentFile;
     private SupportedChannelOptions channelOptions;
 
     private Configuration() {
+        this.persistentFiltersIntervalMillis = 1000;
         this.purgeFilterIntervalMillis = 300;
         this.maxHttpConnections = 1000;
         this.maxHttpRequestLength = 10485760;
@@ -85,7 +107,13 @@ public final class Configuration {
         this.defaultExpectedInsertions = 1000_000;
         this.defaultFalsePositiveProbability = 0.0001;
         this.defaultValidSecondsAfterCreate = TimeUnit.DAYS.toSeconds(1);
+        this.persistentStorageDirectory = System.getProperty("user.dir");
+        this.allowRecoverFromCorruptedPersistentFile = true;
         this.channelOptions = new SupportedChannelOptions();
+    }
+
+    public void setPersistentFiltersIntervalMillis(int persistentFiltersIntervalMillis) {
+        this.persistentFiltersIntervalMillis = persistentFiltersIntervalMillis;
     }
 
     public void setPurgeFilterIntervalMillis(int purgeFilterIntervalMillis) {
@@ -114,6 +142,14 @@ public final class Configuration {
 
     public void setDefaultValidSecondsAfterCreate(long defaultValidSecondsAfterCreate) {
         this.defaultValidSecondsAfterCreate = defaultValidSecondsAfterCreate;
+    }
+
+    public void setPersistentStorageDirectory(String persistentStorageDirectory) {
+        this.persistentStorageDirectory = persistentStorageDirectory;
+    }
+
+    public void setAllowRecoverFromCorruptedPersistentFile(boolean allowRecoverFromCorruptedPersistentFile) {
+        this.allowRecoverFromCorruptedPersistentFile = allowRecoverFromCorruptedPersistentFile;
     }
 
     public void setChannelOptions(SupportedChannelOptions channelOptions) {

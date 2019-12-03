@@ -1,5 +1,8 @@
 package cn.leancloud.filter.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -9,6 +12,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 
 /**
@@ -16,6 +20,8 @@ import java.nio.file.StandardOpenOption;
  * Internal use only, may change in the future.
  */
 public final class FileUtils {
+    private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
+
     /**
      * Makes a directory, including any necessary but nonexistent parent
      * directories. If a file already exists with specified name but it is
@@ -66,9 +72,9 @@ public final class FileUtils {
 
     /**
      * Deletes a file. If file is a directory, delete it and all sub-directories.
-     *
+     * <p>
      * The difference between File.delete() and this method are:
-     *
+     * <p>
      * A directory to be deleted does not have to be empty.
      * You get exceptions when a file or directory cannot be deleted. (java.io.File methods returns a boolean)
      *
@@ -198,6 +204,26 @@ public final class FileUtils {
                 if (channel.isOpen()) {
                     lock.release();
                 }
+            }
+        }
+    }
+
+    /**
+     * Attempts to move source to target atomically and falls back to a non-atomic move if it fails.
+     *
+     * @throws IOException if both atomic and non-atomic moves fail
+     */
+    public static void atomicMoveWithFallback(Path source, Path target) throws IOException {
+        try {
+            Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException outer) {
+            try {
+                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+                logger.debug("Non-atomic move of {} to {} succeeded after atomic move failed due to {}", source, target,
+                        outer.getMessage());
+            } catch (IOException inner) {
+                inner.addSuppressed(outer);
+                throw inner;
             }
         }
     }
