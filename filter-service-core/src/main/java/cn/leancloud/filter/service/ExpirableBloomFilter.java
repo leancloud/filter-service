@@ -22,6 +22,6 @@ public interface ExpirableBloomFilter extends BloomFilter {
 
     @Override
     default boolean valid() {
-        return expired();
+        return !expired();
     }
 }

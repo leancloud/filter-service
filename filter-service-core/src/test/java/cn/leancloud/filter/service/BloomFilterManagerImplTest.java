@@ -4,11 +4,7 @@ import cn.leancloud.filter.service.BloomFilterManager.CreateFilterResult;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -20,7 +16,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static cn.leancloud.filter.service.TestingUtils.numberString;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class BloomFilterManagerImplTest {
     private static final GuavaBloomFilterFactory factory = new GuavaBloomFilterFactory();

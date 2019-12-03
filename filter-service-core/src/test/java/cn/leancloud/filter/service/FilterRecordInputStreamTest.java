@@ -4,27 +4,22 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.GatheringByteChannel;
 import java.nio.file.StandardOpenOption;
-import java.time.Duration;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import static cn.leancloud.filter.service.FilterRecord.*;
+import static cn.leancloud.filter.service.TestingUtils.generateFilterRecords;
+import static cn.leancloud.filter.service.TestingUtils.generateSingleFilterRecord;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class FilterRecordInputStreamTest {
-    private final Duration validPeriodAfterAccess = Duration.ofSeconds(3);
-    private final int expectedInsertions = 1000000;
-    private final double fpp = 0.0001;
-    private final String testingFilterName = "testing_filter";
     private final GuavaBloomFilterFactory factory = new GuavaBloomFilterFactory();
 
     private FileChannel writeRecordChannel;
@@ -46,13 +41,13 @@ public class FilterRecordInputStreamTest {
 
     @Test
     public void testReadWriteMultiFilterRecord() throws Exception {
-        final List<FilterRecord<GuavaBloomFilter>> records = generateFilterRecords(100);
-        for (FilterRecord<GuavaBloomFilter> record : records) {
+        final List<FilterRecord<BloomFilter>> records = generateFilterRecords(100);
+        for (FilterRecord<BloomFilter> record : records) {
             record.writeFullyTo(writeRecordChannel);
         }
 
         try (FilterRecordInputStream<GuavaBloomFilter> stream = new FilterRecordInputStream<>(tempFile.toPath(), factory)) {
-            for (FilterRecord<GuavaBloomFilter> expectRecord : records) {
+            for (FilterRecord<BloomFilter> expectRecord : records) {
                 assertThat(stream.nextFilterRecord()).isEqualTo(expectRecord);
             }
 
@@ -62,7 +57,7 @@ public class FilterRecordInputStreamTest {
 
     @Test
     public void testShortReadFilterHeader() throws Exception {
-        final FilterRecord<GuavaBloomFilter> record = generateSingleFilterRecord();
+        final FilterRecord<BloomFilter> record = generateSingleFilterRecord();
         record.writeFullyTo(writeRecordChannel);
         writeRecordChannel.truncate(HEADER_OVERHEAD - 1);
 
@@ -73,7 +68,7 @@ public class FilterRecordInputStreamTest {
 
     @Test
     public void testShortReadFilterBody() throws Exception {
-        final FilterRecord<GuavaBloomFilter> record = generateSingleFilterRecord();
+        final FilterRecord<BloomFilter> record = generateSingleFilterRecord();
         record.writeFullyTo(writeRecordChannel);
         writeRecordChannel.truncate(writeRecordChannel.size() - 1);
 
@@ -84,7 +79,7 @@ public class FilterRecordInputStreamTest {
 
     @Test
     public void testBadMagic() throws Exception {
-        final FilterRecord<GuavaBloomFilter> record = generateSingleFilterRecord();
+        final FilterRecord<BloomFilter> record = generateSingleFilterRecord();
         record.writeFullyTo(writeRecordChannel);
 
         overwriteFirstFilterRecordMagic((byte) 101);
@@ -98,7 +93,7 @@ public class FilterRecordInputStreamTest {
 
     @Test
     public void testBadCrc() throws Exception {
-        final FilterRecord<GuavaBloomFilter> record = generateSingleFilterRecord();
+        final FilterRecord<BloomFilter> record = generateSingleFilterRecord();
         record.writeFullyTo(writeRecordChannel);
 
         overwriteFirstFilterRecordCrc(101);
@@ -107,6 +102,19 @@ public class FilterRecordInputStreamTest {
             assertThatThrownBy(stream::nextFilterRecord)
                     .isInstanceOf(InvalidFilterException.class)
                     .hasMessageContaining("got unmatched crc when read filter from position");
+        }
+    }
+
+    @Test
+    public void testEOF() throws Exception {
+        final FilterRecord<BloomFilter> record = generateSingleFilterRecord();
+        record.writeFullyTo(writeRecordChannel);
+
+        try (FilterRecordInputStream<GuavaBloomFilter> stream = new FilterRecordInputStream<>(tempFile.toPath(), factory)) {
+            writeRecordChannel.truncate(writeRecordChannel.size() - 1);
+            assertThatThrownBy(stream::nextFilterRecord)
+                    .isInstanceOf(EOFException.class)
+                    .hasMessageContaining("Failed to read `FilterRecord` from file channel");
         }
     }
 
@@ -140,27 +148,5 @@ public class FilterRecordInputStreamTest {
         ByteBuffer buffer = ByteBuffer.allocate(HEADER_OVERHEAD);
         FilterRecordInputStream.readFullyOrFail(writeRecordChannel, buffer, 0);
         return buffer;
-    }
-
-    private FilterRecord<GuavaBloomFilter> generateSingleFilterRecord() {
-        return generateFilterRecords(1).get(0);
-    }
-
-    private List<FilterRecord<GuavaBloomFilter>> generateFilterRecords(int size) {
-        List<FilterRecord<GuavaBloomFilter>> records = new ArrayList<>(size);
-        for (int i = 0; i < size; ++i) {
-            final ZonedDateTime creation = ZonedDateTime.now(ZoneOffset.UTC);
-            final ZonedDateTime expiration = creation.plus(Duration.ofSeconds(10));
-            final GuavaBloomFilter filter = new GuavaBloomFilter(
-                    expectedInsertions + i,
-                    fpp,
-                    creation,
-                    expiration,
-                    validPeriodAfterAccess);
-            final FilterRecord<GuavaBloomFilter> record = new FilterRecord<>(testingFilterName + "_" + i, filter);
-            records.add(record);
-        }
-
-        return records;
     }
 }

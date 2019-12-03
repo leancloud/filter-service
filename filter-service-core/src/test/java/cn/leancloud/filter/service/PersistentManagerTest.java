@@ -1,11 +1,8 @@
 package cn.leancloud.filter.service;
 
-import net.bytebuddy.dynamic.ClassFileLocator.Resolution.Illegal;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,37 +11,32 @@ import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.time.Duration;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import static cn.leancloud.filter.service.PersistentManager.PERSISTENT_FILE_NAME;
+import static cn.leancloud.filter.service.TestingUtils.generateFilterRecords;
+import static cn.leancloud.filter.service.TestingUtils.generateInvalidFilter;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.Mockito.*;
 
+@SuppressWarnings("unchecked")
 public class PersistentManagerTest {
-    private final Duration validPeriodAfterAccess = Duration.ofSeconds(3);
-    private final int expectedInsertions = 1000000;
-    private final double fpp = 0.0001;
-    private final String testingFilterName = "testing_filter";
-
+    private BloomFilterFactory factory;
     private Path tempDirPath;
     private BloomFilterManager filterManager;
-    private BloomFilterFactory factory;
     private PersistentManager<BloomFilter> manager;
 
-    @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws Exception {
         final String tempDir = System.getProperty("java.io.tmpdir", "/tmp") +
                 File.separator + "filter_service_" + System.nanoTime();
         tempDirPath = Paths.get(tempDir);
         FileUtils.forceMkdir(tempDirPath.toFile());
-        filterManager = Mockito.mock(BloomFilterManager.class);
-        factory = Mockito.mock(BloomFilterFactory.class);
+        filterManager = mock(BloomFilterManager.class);
+        factory = mock(GuavaBloomFilterFactory.class);
+        when(factory.readFrom(any())).thenCallRealMethod();
         manager = new PersistentManager<>(
                 filterManager,
                 factory,
@@ -57,7 +49,6 @@ public class PersistentManagerTest {
         manager.close();
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testPersistentDirIsFile() throws Exception {
         FileChannel.open(tempDirPath.resolve("plain_file"), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
@@ -69,7 +60,6 @@ public class PersistentManagerTest {
                 .hasMessageContaining("invalid persistent directory path, it's a regular file");
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testLockAndReleaseLock() throws Exception {
         final Path lockPath = tempDirPath.resolve("lock_path");
@@ -94,7 +84,6 @@ public class PersistentManagerTest {
         );
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testMakeBaseDir() throws Exception {
         final Path newPath = tempDirPath.resolve("base_dir");
@@ -109,15 +98,15 @@ public class PersistentManagerTest {
 
     @Test
     public void freezeAllFilters() throws IOException {
-        final List<FilterRecord<GuavaBloomFilter>> records = generateFilterRecords(10);
-        Mockito.when(filterManager.iterator()).thenReturn(records.iterator());
+        final List<FilterRecord<BloomFilter>> records = generateFilterRecords(10);
+        when(filterManager.iterator()).thenReturn(records.iterator());
 
         manager.freezeAllFilters();
 
         try (FilterRecordInputStream<GuavaBloomFilter> stream = new FilterRecordInputStream<>(
                 tempDirPath.resolve(PERSISTENT_FILE_NAME),
                 new GuavaBloomFilterFactory())) {
-            for (FilterRecord<GuavaBloomFilter> expectRecord : records) {
+            for (FilterRecord<BloomFilter> expectRecord : records) {
                 assertThat(stream.nextFilterRecord()).isEqualTo(expectRecord);
             }
 
@@ -125,28 +114,61 @@ public class PersistentManagerTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    public void testByPassRecovery() throws IOException{
+    public void testByPassRecovery() throws IOException {
         manager.recoverFiltersFromFile(true);
-        Mockito.verify(filterManager, Mockito.never()).addFilters(anyCollection());
+        verify(filterManager, never()).addFilters(anyCollection());
     }
 
-    private List<FilterRecord<GuavaBloomFilter>> generateFilterRecords(int size) {
-        List<FilterRecord<GuavaBloomFilter>> records = new ArrayList<>(size);
-        for (int i = 0; i < size; ++i) {
-            final ZonedDateTime creation = ZonedDateTime.now(ZoneOffset.UTC);
-            final ZonedDateTime expiration = creation.plus(Duration.ofSeconds(10));
-            final GuavaBloomFilter filter = new GuavaBloomFilter(
-                    expectedInsertions + i,
-                    fpp,
-                    creation,
-                    expiration,
-                    validPeriodAfterAccess);
-            final FilterRecord<GuavaBloomFilter> record = new FilterRecord<>(testingFilterName + "_" + i, filter);
-            records.add(record);
-        }
+    @Test
+    public void testRecoverFiltersFromFileNormalCase() throws IOException {
+        final List<FilterRecord<BloomFilter>> records = generateFilterRecords(10);
+        when(filterManager.iterator()).thenReturn(records.iterator());
 
-        return records;
+        manager.freezeAllFilters();
+        manager.recoverFiltersFromFile(false);
+
+        verify(filterManager, times(1)).addFilters(records);
+    }
+
+    @Test
+    public void testRecoverOnlyValidFiltersFromFile() throws IOException {
+        final List<FilterRecord<BloomFilter>> records = generateFilterRecords(10);
+        final BloomFilter invalidFilter = generateInvalidFilter();
+        records.add(new FilterRecord("Invalid_Filter", invalidFilter));
+        when(filterManager.iterator()).thenReturn(records.iterator());
+
+        manager.freezeAllFilters();
+        manager.recoverFiltersFromFile(false);
+
+        verify(filterManager, times(1)).addFilters(records.subList(0, records.size() - 1));
+    }
+
+    @Test
+    public void testDoNotAllowRecoverFromCorruptedFile() throws IOException {
+        final List<FilterRecord<BloomFilter>> records = generateFilterRecords(10);
+        when(filterManager.iterator()).thenReturn(records.iterator());
+        manager.freezeAllFilters();
+        try (FileChannel channel = FileChannel.open(tempDirPath.resolve(PERSISTENT_FILE_NAME), StandardOpenOption.WRITE)) {
+            channel.truncate(channel.size() - 1);
+
+            assertThatThrownBy(() -> manager.recoverFiltersFromFile(false))
+                    .isInstanceOf(PersistentStorageException.class)
+                    .hasMessageContaining("failed to recover filters from:");
+        }
+    }
+
+    @Test
+    public void testAllowRecoverFromCorruptedFile() throws IOException {
+        final List<FilterRecord<BloomFilter>> records = generateFilterRecords(10);
+        when(filterManager.iterator()).thenReturn(records.iterator());
+        manager.freezeAllFilters();
+        try (FileChannel channel = FileChannel.open(tempDirPath.resolve(PERSISTENT_FILE_NAME), StandardOpenOption.WRITE)) {
+            channel.truncate(channel.size() - 1);
+
+            manager.recoverFiltersFromFile(true);
+
+            verify(filterManager, times(1)).addFilters(records.subList(0, records.size() - 1));
+        }
     }
 }

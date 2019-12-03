@@ -34,7 +34,7 @@ public final class BloomFilterManagerImpl<T extends BloomFilter>
         filterMapLock.lock();
         try {
             prevFilter = filterMap.get(name);
-            if (overwrite || prevFilter == null || prevFilter.valid()) {
+            if (overwrite || prevFilter == null || !prevFilter.valid()) {
                 filter = factory.createFilter(config);
                 filterMap.put(name, filter);
                 created = true;

@@ -58,7 +58,7 @@ public final class FilterRecordInputStream<F extends BloomFilter> implements Clo
     }
 
     @Nullable
-    public FilterRecord<F> nextFilterRecord() throws IOException {
+    public FilterRecord<? extends F> nextFilterRecord() throws IOException {
         if (end - position <= HEADER_OVERHEAD) {
             if (end == position) {
                 return null;
