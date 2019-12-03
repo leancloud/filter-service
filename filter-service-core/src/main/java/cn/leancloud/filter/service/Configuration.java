@@ -9,6 +9,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 public final class Configuration {
     private static Configuration instance = new Configuration();
@@ -43,6 +44,18 @@ public final class Configuration {
         return Duration.ofSeconds(instance.defaultRequestTimeoutSeconds);
     }
 
+    public static int defaultExpectedInsertions() {
+        return instance.defaultExpectedInsertions;
+    }
+
+    public static double defaultFalsePositiveProbability() {
+        return instance.defaultFalsePositiveProbability;
+    }
+
+    public static Duration defaultValidPeriodAfterCreate() {
+        return Duration.ofSeconds(instance.defaultValidSecondsAfterCreate);
+    }
+
     public static SupportedChannelOptions channelOptions() {
         return instance.channelOptions;
     }
@@ -59,6 +72,9 @@ public final class Configuration {
     private int maxHttpConnections;
     private int maxHttpRequestLength;
     private int defaultRequestTimeoutSeconds;
+    private int defaultExpectedInsertions;
+    private double defaultFalsePositiveProbability;
+    private long defaultValidSecondsAfterCreate;
     private SupportedChannelOptions channelOptions;
 
     private Configuration() {
@@ -66,7 +82,11 @@ public final class Configuration {
         this.maxHttpConnections = 1000;
         this.maxHttpRequestLength = 10485760;
         this.defaultRequestTimeoutSeconds = 5;
-        this.channelOptions = new SupportedChannelOptions();}
+        this.defaultExpectedInsertions = 1000_000;
+        this.defaultFalsePositiveProbability = 0.0001;
+        this.defaultValidSecondsAfterCreate = TimeUnit.DAYS.toSeconds(1);
+        this.channelOptions = new SupportedChannelOptions();
+    }
 
     public void setPurgeFilterIntervalMillis(int purgeFilterIntervalMillis) {
         this.purgeFilterIntervalMillis = purgeFilterIntervalMillis;
@@ -82,6 +102,18 @@ public final class Configuration {
 
     public void setDefaultRequestTimeoutSeconds(int defaultRequestTimeoutSeconds) {
         this.defaultRequestTimeoutSeconds = defaultRequestTimeoutSeconds;
+    }
+
+    public void setDefaultExpectedInsertions(int defaultExpectedInsertions) {
+        this.defaultExpectedInsertions = defaultExpectedInsertions;
+    }
+
+    public void setDefaultFalsePositiveProbability(double defaultFalsePositiveProbability) {
+        this.defaultFalsePositiveProbability = defaultFalsePositiveProbability;
+    }
+
+    public void setDefaultValidSecondsAfterCreate(long defaultValidSecondsAfterCreate) {
+        this.defaultValidSecondsAfterCreate = defaultValidSecondsAfterCreate;
     }
 
     public void setChannelOptions(SupportedChannelOptions channelOptions) {

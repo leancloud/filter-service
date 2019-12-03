@@ -20,8 +20,8 @@ public class ExpirableBloomFilterPurgatoryTest {
 
         Mockito.when(mockedFactory.createFilter(config))
                 .thenReturn(new GuavaBloomFilter(
-                        BloomFilterConfig.DEFAULT_EXPECTED_INSERTIONS,
-                        BloomFilterConfig.DEFAULT_FALSE_POSITIVE_PROBABILITY,
+                        Configuration.defaultExpectedInsertions(),
+                        Configuration.defaultFalsePositiveProbability(),
                         creationTime,
                         expirationTime,
                         null));

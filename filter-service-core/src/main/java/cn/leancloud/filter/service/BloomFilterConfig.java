@@ -6,9 +6,6 @@ package cn.leancloud.filter.service;
  * @param <T> The actual subtype of this {@link BloomFilterConfig}
  */
 public interface BloomFilterConfig<T extends BloomFilterConfig<T>> {
-    int DEFAULT_EXPECTED_INSERTIONS = 1000_000;
-    double DEFAULT_FALSE_POSITIVE_PROBABILITY = 0.0001;
-
     /**
      * Get the number of expected insertions to a {@link BloomFilter}.
      *

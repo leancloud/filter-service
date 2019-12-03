@@ -12,7 +12,7 @@ public class AbstractBloomFilterConfigTest {
     public void testGetAndSetExpectedInsertions() {
         final int expectedEInsertions = ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE);
         final TestingBloomFilterConfig config = new TestingBloomFilterConfig();
-        assertThat(config.expectedInsertions()).isEqualTo(BloomFilterConfig.DEFAULT_EXPECTED_INSERTIONS);
+        assertThat(config.expectedInsertions()).isEqualTo(Configuration.defaultExpectedInsertions());
         assertThat(config.setExpectedInsertions(expectedEInsertions)).isSameAs(config);
         assertThat(config.expectedInsertions()).isEqualTo(expectedEInsertions);
     }
@@ -21,7 +21,7 @@ public class AbstractBloomFilterConfigTest {
     public void testGetAndSetFpp() {
         final double expectedFpp = ThreadLocalRandom.current().nextDouble(0.0001, 1);
         final TestingBloomFilterConfig config = new TestingBloomFilterConfig();
-        assertThat(config.fpp()).isEqualTo(BloomFilterConfig.DEFAULT_FALSE_POSITIVE_PROBABILITY);
+        assertThat(config.fpp()).isEqualTo(Configuration.defaultFalsePositiveProbability());
         assertThat(config.setFpp(expectedFpp)).isSameAs(config);
         assertThat(config.fpp()).isEqualTo(expectedFpp);
     }
