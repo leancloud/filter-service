@@ -57,10 +57,10 @@ public final class BloomFilterManagerImpl<T extends BloomFilter>
     }
 
     @Override
-    public void addFilters(Iterable<FilterHolder<? extends T>> filters) {
+    public void addFilters(Iterable<FilterRecord<? extends T>> filters) {
         filterMapLock.lock();
         try {
-            for (FilterHolder<? extends T> holder : filters) {
+            for (FilterRecord<? extends T> holder : filters) {
                 filterMap.put(holder.name(), holder.filter());
             }
         } finally {
@@ -125,8 +125,8 @@ public final class BloomFilterManagerImpl<T extends BloomFilter>
     }
 
     @Override
-    public Iterator<FilterHolder<T>> iterator() {
-        return filterMap.entrySet().stream().map(e -> new FilterHolder<>(e.getKey(), e.getValue())).iterator();
+    public Iterator<FilterRecord<T>> iterator() {
+        return filterMap.entrySet().stream().map(e -> new FilterRecord<>(e.getKey(), e.getValue())).iterator();
     }
 
     @Override

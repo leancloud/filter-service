@@ -132,7 +132,7 @@ public final class Bootstrap {
     }
 
     private static void recoverPreviousBloomFilters(PersistentManager<GuavaBloomFilter> persistentManager) {
-        persistentManager.recover();
+        persistentManager.recoverFiltersFromFile();
     }
 
     private static List<ScheduledFuture<?>> schedulePeriodJobs(ScheduledExecutorService scheduledExecutorService,

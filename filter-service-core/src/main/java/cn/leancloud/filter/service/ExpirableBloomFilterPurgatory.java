@@ -9,7 +9,7 @@ public final class ExpirableBloomFilterPurgatory<F extends BloomFilter> implemen
 
     @Override
     public void purge() {
-        for (FilterHolder<F> holder : manager) {
+        for (FilterRecord<F> holder : manager) {
             final F filter = holder.filter();
             if (filter instanceof ExpirableBloomFilter) {
                 if (((ExpirableBloomFilter) filter).expired()) {

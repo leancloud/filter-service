@@ -9,7 +9,7 @@ import java.util.List;
  * @param <F> the type of the managed {@link BloomFilter}s
  * @param <C> the type of the configuration used by the managed {@link BloomFilter}s
  */
-public interface BloomFilterManager<F extends BloomFilter, C extends BloomFilterConfig<? extends C>> extends Iterable<FilterHolder<F>> {
+public interface BloomFilterManager<F extends BloomFilter, C extends BloomFilterConfig<? extends C>> extends Iterable<FilterRecord<F>> {
     /**
      * The result of the create filter operations.
      *
@@ -84,7 +84,7 @@ public interface BloomFilterManager<F extends BloomFilter, C extends BloomFilter
      *
      * @param filters a {@link Iterable} of the filters to add
      */
-    void addFilters(Iterable<FilterHolder<? extends F>> filters);
+    void addFilters(Iterable<FilterRecord<? extends F>> filters);
 
     /**
      * Get the Bloom filter with the input name.
