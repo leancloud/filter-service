@@ -18,6 +18,7 @@ import picocli.CommandLine.UnmatchedArgumentException;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -45,7 +46,10 @@ public final class Bootstrap {
                 new ThreadFactoryBuilder().setNameFormat("scheduled-worker-%s").build());
         final GuavaBloomFilterFactory factory = new GuavaBloomFilterFactory();
         final BloomFilterManagerImpl<GuavaBloomFilter> bloomFilterManager = newBloomFilterManager(factory);
-        final PersistentManager<GuavaBloomFilter> persistentManager = new PersistentManager<>(bloomFilterManager, new GuavaBloomFilterFactory());
+        final PersistentManager<GuavaBloomFilter> persistentManager = new PersistentManager<>(
+                bloomFilterManager,
+                new GuavaBloomFilterFactory(),
+                Paths.get(Configuration.persistentStorageDirectory()));
 
         recoverPreviousBloomFilters(persistentManager);
 
@@ -134,7 +138,7 @@ public final class Bootstrap {
     }
 
     private static void recoverPreviousBloomFilters(PersistentManager<GuavaBloomFilter> persistentManager) throws IOException {
-        persistentManager.recoverFiltersFromFile();
+        persistentManager.recoverFiltersFromFile(Configuration.allowRecoverFromCorruptedPersistentFile());
     }
 
     private static List<ScheduledFuture<?>> schedulePeriodJobs(ScheduledExecutorService scheduledExecutorService,

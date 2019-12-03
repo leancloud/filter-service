@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,24 +17,26 @@ import java.util.List;
 public class PersistentManager<F extends BloomFilter> implements Closeable {
     private static final Logger logger = LoggerFactory.getLogger(PersistentManager.class);
     private static final String LOCK_FILE_NAME = "lock";
-    private static final String PERSISTENT_FILE_NAME = "dump.db";
+    static final String PERSISTENT_FILE_NAME = "dump.db";
 
     private final BloomFilterManager<F, ?> manager;
     private final BloomFilterFactory<F, ?> factory;
     private final Path basePath;
     private final FileLock fileLock;
 
-    public PersistentManager(BloomFilterManager<F, ?> manager, BloomFilterFactory<F, ?> factory) throws IOException {
-        final Path basePath = Paths.get(Configuration.persistentStorageDirectory());
-        final File dir = basePath.toFile();
+    public PersistentManager(BloomFilterManager<F, ?> manager,
+                             BloomFilterFactory<F, ?> factory,
+                             Path persistentPath)
+            throws IOException {
+        final File dir = persistentPath.toFile();
         if (dir.exists() && !dir.isDirectory()) {
-            throw new IllegalStateException("invalid persistent directory path, it's a regular file: " + basePath);
+            throw new IllegalStateException("invalid persistent directory path, it's a regular file: " + persistentPath);
         }
 
-        FileUtils.forceMkdir(basePath.toFile());
+        FileUtils.forceMkdir(persistentPath.toFile());
 
-        this.fileLock = FileUtils.lockDirectory(basePath, LOCK_FILE_NAME);
-        this.basePath = basePath;
+        this.fileLock = FileUtils.lockDirectory(persistentPath, LOCK_FILE_NAME);
+        this.basePath = persistentPath;
         this.manager = manager;
         this.factory = factory;
     }
@@ -51,7 +52,7 @@ public class PersistentManager<F extends BloomFilter> implements Closeable {
         FileUtils.atomicMoveWithFallback(tempPath, persistentFilePath());
     }
 
-    public void recoverFiltersFromFile() throws IOException {
+    public void recoverFiltersFromFile(boolean allowRecoverFromCorruptedFile) throws IOException {
         if (persistentFilePath().toFile().exists()) {
             final List<FilterRecord<? extends F>> records = new ArrayList<>();
             try {
@@ -60,7 +61,7 @@ public class PersistentManager<F extends BloomFilter> implements Closeable {
                 }
                 manager.addFilters(records);
             } catch (InvalidFilterException ex) {
-                if (Configuration.allowRecoverFromCorruptedPersistentFile()) {
+                if (allowRecoverFromCorruptedFile) {
                     logger.warn("Recover " + records.size() + " filters from corrupted file:" + persistentFilePath() +
                             ". The exception captured as follows:", ex);
                     manager.addFilters(records);
@@ -69,7 +70,7 @@ public class PersistentManager<F extends BloomFilter> implements Closeable {
                 }
             }
         } else {
-            logger.info("By pass recover filters from persistent file due to no persistent file exists under path: " + persistentFilePath());
+            logger.info("By pass recover filters from persistent file due to no persistent file exists under path: " + basePath);
         }
     }
 
@@ -97,7 +98,7 @@ public class PersistentManager<F extends BloomFilter> implements Closeable {
     }
 
     private Path temporaryPersistentFilePath() {
-        return basePath.resolve(PERSISTENT_FILE_NAME).resolve(".tmp");
+        return basePath.resolve(PERSISTENT_FILE_NAME + ".tmp");
     }
 
     private Path persistentFilePath() {
