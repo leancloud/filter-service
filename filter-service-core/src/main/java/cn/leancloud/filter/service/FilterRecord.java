@@ -5,27 +5,31 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.GatheringByteChannel;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * The schema is:
- * Length => Int32
- * MAGIC => Byte
- * CRC => Uint32
- * NameLength => Int32
- * Name => Bytes
- * Filter => Bytes
+ * Length: Int32
+ * MAGIC: Byte
+ * CRC: Uint32
+ * NameLength: Int32
+ * Name: Bytes
+ * Filter: Bytes
  */
 public final class FilterRecord<F extends BloomFilter> {
-    static final int LENGTH_OFFSET = 0;
-    static final int LENGTH_LENGTH = 4;
-    static final int MAGIC_OFFSET = LENGTH_OFFSET + LENGTH_LENGTH;
+    static final int BODY_LENGTH_OFFSET = 0;
+    static final int BODY_LENGTH_LENGTH = 4;
+    static final int MAGIC_OFFSET = BODY_LENGTH_OFFSET + BODY_LENGTH_LENGTH;
     static final int MAGIC_LENGTH = 1;
     static final int CRC_OFFSET = MAGIC_OFFSET + MAGIC_LENGTH;
     static final int CRC_LENGTH = 4;
     static final int HEADER_OVERHEAD = CRC_OFFSET + CRC_LENGTH;
 
-    private String name;
-    private F filter;
+    static final byte DEFAULT_MAGIC = (byte) 0;
+
+    private final String name;
+    private final F filter;
 
     public FilterRecord(String name, F filter) {
         this.name = name;
@@ -50,18 +54,41 @@ public final class FilterRecord<F extends BloomFilter> {
         buffer.reset();
 
         // write header
-        buffer.putInt(HEADER_OVERHEAD + body.length);
-        buffer.put((byte) 0);
+        buffer.putInt(BODY_LENGTH_OFFSET, body.length);
+        buffer.put(MAGIC_OFFSET, DEFAULT_MAGIC);
         final long crc = Crc32C.compute(buffer, HEADER_OVERHEAD, body.length);
-        buffer.putInt((int)crc);
+        buffer.putInt(CRC_OFFSET, (int) crc);
         return writeFullyTo(channel, buffer);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final FilterRecord<?> that = (FilterRecord<?>) o;
+        return name.equals(that.name) &&
+                filter.equals(that.filter);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, filter);
+    }
+
+    @Override
+    public String toString() {
+        return "FilterRecord{" +
+                "name='" + name + '\'' +
+                ", filter=" + filter +
+                '}';
     }
 
     private byte[] serializeBody() throws IOException {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         final DataOutputStream dout = new DataOutputStream(out);
-        dout.writeInt(name.length());
-        dout.writeChars(name);
+        final byte[] nameInBytes = name.getBytes(StandardCharsets.UTF_8);
+        dout.writeInt(nameInBytes.length);
+        dout.write(nameInBytes);
         filter.writeTo(out);
         return out.toByteArray();
     }
@@ -75,6 +102,5 @@ public final class FilterRecord<F extends BloomFilter> {
         buffer.reset();
         return written;
     }
-
 }
 

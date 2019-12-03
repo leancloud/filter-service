@@ -17,6 +17,7 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.UnmatchedArgumentException;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -131,7 +132,7 @@ public final class Bootstrap {
         return bloomFilterManager;
     }
 
-    private static void recoverPreviousBloomFilters(PersistentManager<GuavaBloomFilter> persistentManager) {
+    private static void recoverPreviousBloomFilters(PersistentManager<GuavaBloomFilter> persistentManager) throws IOException {
         persistentManager.recoverFiltersFromFile();
     }
 

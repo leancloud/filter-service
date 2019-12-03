@@ -18,12 +18,9 @@ public class PersistentManager<F extends BloomFilter> {
                 File.separator + "filter_service_" + System.nanoTime();
         FileUtils.forceMkdir(new File(tempDir));
         this.basePath = Paths.get(tempDir);
-
-
         this.manager = manager;
         this.factory = factory;
     }
-
 
     public void freezeAllFilters() throws Exception {
         final Path tempPath = basePath.resolve("serialization_manager.tmp");
@@ -33,28 +30,28 @@ public class PersistentManager<F extends BloomFilter> {
         }
     }
 
-    public void recoverFiltersFromFile() {
-        Iterable<FilterRecord<? extends F>> filters = readFiltersFromFile();
+    public void recoverFiltersFromFile() throws IOException {
+        final Iterable<FilterRecord<? extends F>> filters = readFiltersFromFile();
         manager.addFilters(filters);
     }
 
-    public Iterable<FilterRecord<? extends F>> readFiltersFromFile() {
+    public Iterable<FilterRecord<? extends F>> readFiltersFromFile() throws IOException {
+        final Path tempPath = basePath.resolve("serialization_manager.tmp");
+        final FilterRecordInputStream<F> filterStream = new FilterRecordInputStream<>(tempPath, factory);
         return () -> new AbstractIterator<FilterRecord<? extends F>>() {
             @Nullable
             @Override
             protected FilterRecord<? extends F> makeNext() {
                 try {
-
-                    F filter = factory.readFrom(null);
-                    return new FilterRecord<>("name", filter);
+                    final FilterRecord<F> record = filterStream.nextFilterRecord();
+                    if (record == null) {
+                        allDone();
+                    }
+                    return record;
                 } catch (IOException ex) {
-                    ex.printStackTrace();
+                    throw new InvalidFilterException("read filter from file:" + tempPath + " failed", ex);
                 }
-                return null;
             }
         };
     }
-
-
-
 }
