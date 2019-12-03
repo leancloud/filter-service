@@ -24,9 +24,10 @@ public class PersistentManager<F extends BloomFilter> {
 
     public void freezeAllFilters() throws Exception {
         final Path tempPath = basePath.resolve("serialization_manager.tmp");
-        final FileChannel channel = FileChannel.open(tempPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ);
-        for (FilterRecord<F> record : manager) {
-            record.writeFullyTo(channel);
+        try (FileChannel channel = FileChannel.open(tempPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
+            for (FilterRecord<F> record : manager) {
+                record.writeFullyTo(channel);
+            }
         }
     }
 
@@ -37,6 +38,7 @@ public class PersistentManager<F extends BloomFilter> {
 
     public Iterable<FilterRecord<? extends F>> readFiltersFromFile() throws IOException {
         final Path tempPath = basePath.resolve("serialization_manager.tmp");
+        // Todo: close this stream
         final FilterRecordInputStream<F> filterStream = new FilterRecordInputStream<>(tempPath, factory);
         return () -> new AbstractIterator<FilterRecord<? extends F>>() {
             @Nullable

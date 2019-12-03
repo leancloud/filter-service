@@ -2,6 +2,7 @@ package cn.leancloud.filter.service;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -11,8 +12,10 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 import static cn.leancloud.filter.service.FilterRecord.*;
+import static cn.leancloud.filter.service.UnfinishedFilterException.shortReadFilterBody;
+import static cn.leancloud.filter.service.UnfinishedFilterException.shortReadFilterHeader;
 
-public final class FilterRecordInputStream<F extends BloomFilter> {
+public final class FilterRecordInputStream<F extends BloomFilter> implements Closeable {
     private static void readFully(FileChannel channel, ByteBuffer destinationBuffer, long position) throws IOException {
         if (position < 0) {
             throw new IllegalArgumentException("position:" + position + " (expected: >=0)");
@@ -25,7 +28,7 @@ public final class FilterRecordInputStream<F extends BloomFilter> {
         } while (bytesRead != -1 && destinationBuffer.hasRemaining());
     }
 
-    private static void readFullyOrFail(FileChannel channel, ByteBuffer destinationBuffer, long position) throws IOException {
+    static void readFullyOrFail(FileChannel channel, ByteBuffer destinationBuffer, long position) throws IOException {
         if (position < 0) {
             throw new IllegalArgumentException("position:" + position + " (expected: >=0)");
         }
@@ -39,12 +42,14 @@ public final class FilterRecordInputStream<F extends BloomFilter> {
     }
 
     private final FileChannel channel;
+    private final Path recordFilePath;
     private final long end;
     private final ByteBuffer headerBuffer;
     private final BloomFilterFactory<F, ?> factory;
     private long position;
 
     public FilterRecordInputStream(Path recordFilePath, BloomFilterFactory<F, ?> factory) throws IOException {
+        this.recordFilePath = recordFilePath;
         this.channel = FileChannel.open(recordFilePath, StandardOpenOption.READ);
         this.position = channel.position();
         this.headerBuffer = ByteBuffer.allocate(HEADER_OVERHEAD);
@@ -55,7 +60,11 @@ public final class FilterRecordInputStream<F extends BloomFilter> {
     @Nullable
     public FilterRecord<F> nextFilterRecord() throws IOException {
         if (end - position <= HEADER_OVERHEAD) {
-            return null;
+            if (end == position) {
+                return null;
+            }
+
+            throw shortReadFilterHeader(recordFilePath.toString(), (int) (HEADER_OVERHEAD - (end - position)));
         }
 
         headerBuffer.rewind();
@@ -64,7 +73,7 @@ public final class FilterRecordInputStream<F extends BloomFilter> {
 
         int bodyLen = headerBuffer.getInt(BODY_LENGTH_OFFSET);
         if (end - position < HEADER_OVERHEAD + bodyLen) {
-            return null;
+            throw shortReadFilterBody(recordFilePath.toString(), (int) ((bodyLen + HEADER_OVERHEAD) - (end - position)));
         }
 
         checkMagic(headerBuffer);
@@ -85,11 +94,16 @@ public final class FilterRecordInputStream<F extends BloomFilter> {
         return new FilterRecord<>(name, filter);
     }
 
+    @Override
+    public void close() throws IOException {
+        channel.close();
+    }
+
     private void checkMagic(ByteBuffer headerBuffer) {
         byte magic = headerBuffer.get(MAGIC_OFFSET);
         if (magic != DEFAULT_MAGIC) {
             throw new InvalidFilterException("read unknown Magic: " + magic + " from position: "
-                    + position + " from file channel: " + channel);
+                    + position + " from file: " + recordFilePath);
         }
     }
 
@@ -98,7 +112,7 @@ public final class FilterRecordInputStream<F extends BloomFilter> {
         long actualCrc = Crc32C.compute(bodyBuffer, 0, bodyBuffer.limit());
         if (actualCrc != expectCrc) {
             throw new InvalidFilterException("got unmatched crc when read filter from position: "
-                    + position + " from file channel: " + channel + ". expect: " + expectCrc + ", actual: " + actualCrc);
+                    + position + " from file: " + recordFilePath + ". expect: " + expectCrc + ", actual: " + actualCrc);
         }
     }
 
