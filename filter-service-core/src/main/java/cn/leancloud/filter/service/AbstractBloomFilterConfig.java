@@ -10,7 +10,7 @@ public abstract class AbstractBloomFilterConfig<T extends AbstractBloomFilterCon
     private double fpp;
 
     AbstractBloomFilterConfig() {
-        this(DEFAULT_EXPECTED_INSERTIONS, DEFAULT_FALSE_POSITIVE_PROBABILITY);
+        this(Configuration.defaultExpectedInsertions(), Configuration.defaultFalsePositiveProbability());
     }
 
     AbstractBloomFilterConfig(int expectedInsertions, double fpp) {

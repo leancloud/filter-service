@@ -14,7 +14,7 @@ public class ExpirableBloomFilterConfigTest {
     public void testGetAndSetValidPeriodAfterCreate() {
         final int expectedValidPeriod = ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
-        assertThat(config.validPeriodAfterCreate()).isEqualTo(ExpirableBloomFilterConfig.DEFAULT_VALID_PERIOD);
+        assertThat(config.validPeriodAfterCreate()).isEqualTo(Configuration.defaultValidPeriodAfterCreate());
         assertThat(config.setValidPeriodAfterCreate(Duration.ofSeconds(expectedValidPeriod))).isSameAs(config);
         assertThat(config.validPeriodAfterCreate()).isEqualTo(Duration.ofSeconds(expectedValidPeriod));
     }
@@ -44,7 +44,7 @@ public class ExpirableBloomFilterConfigTest {
     @Test
     public void testDefaultValidPeriodAfterAccess() {
         final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
-        assertThat(config.validPeriodAfterCreate()).isEqualTo(ExpirableBloomFilterConfig.DEFAULT_VALID_PERIOD);
+        assertThat(config.validPeriodAfterCreate()).isEqualTo(Configuration.defaultValidPeriodAfterCreate());
         assertThat(config.validPeriodAfterAccess()).isNull();
     }
 

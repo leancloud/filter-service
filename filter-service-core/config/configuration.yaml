@@ -7,6 +7,12 @@ maxHttpConnections: 1000
 maxHttpRequestLength: 10485760
 # the default timeout of a request
 defaultRequestTimeoutSeconds: 5
+# the default expected insertions to filter. If no value provided on creating filter, this value will be used
+defaultExpectedInsertions: 1000000
+# the default desired false positive probability for a filter. If no value provided on creating filter, this value will be used
+defaultFalsePositiveProbability: 0.0001
+# the default valid seconds after create for a filter. If no value provided on creating filter, this value will be used
+defaultValidSecondsAfterCreate: 86400
 # the configuration options for every underlying TCP socket
 channelOptions:
   SO_BACKLOG: 2048

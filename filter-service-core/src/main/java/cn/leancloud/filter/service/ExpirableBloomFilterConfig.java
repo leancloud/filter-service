@@ -9,19 +9,17 @@ import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkNot
 import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkParameter;
 
 final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<ExpirableBloomFilterConfig> {
-    static final Duration DEFAULT_VALID_PERIOD = Duration.ofDays(1);
-
     private Duration validPeriodAfterCreate;
     @Nullable
     private Duration validPeriodAfterAccess;
 
     ExpirableBloomFilterConfig() {
-        this.validPeriodAfterCreate = DEFAULT_VALID_PERIOD;
+        this.validPeriodAfterCreate = Configuration.defaultValidPeriodAfterCreate();
     }
 
     ExpirableBloomFilterConfig(int expectedInsertions, double fpp) {
         super(expectedInsertions, fpp);
-        this.validPeriodAfterCreate = DEFAULT_VALID_PERIOD;
+        this.validPeriodAfterCreate = Configuration.defaultValidPeriodAfterCreate();
     }
 
     Duration validPeriodAfterCreate() {
