@@ -17,7 +17,11 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.UnmatchedArgumentException;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.*;
 
@@ -40,25 +44,28 @@ public final class Bootstrap {
 
         final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(10,
                 new ThreadFactoryBuilder().setNameFormat("scheduled-worker-%s").build());
-        final BloomFilterManagerImpl<GuavaBloomFilter> bloomFilterManager = newBloomFilterManager();
-        final ExpirableBloomFilterPurgatory<GuavaBloomFilter> purgatory
-                = new ExpirableBloomFilterPurgatory<>(bloomFilterManager);
-        final ScheduledFuture<?> purgeFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            try {
-                purgatory.purge();
-            } catch (Exception ex) {
-                logger.error("Purge bloom filter service failed.", ex);
-            }
-        }, 0, Configuration.purgeFilterInterval().toMillis(), TimeUnit.MILLISECONDS);
+        final GuavaBloomFilterFactory factory = new GuavaBloomFilterFactory();
+        final BloomFilterManagerImpl<GuavaBloomFilter> bloomFilterManager = newBloomFilterManager(factory);
+        final PersistentManager<GuavaBloomFilter> persistentManager = new PersistentManager<>(
+                bloomFilterManager,
+                new GuavaBloomFilterFactory(),
+                Paths.get(Configuration.persistentStorageDirectory()));
+
+        recoverPreviousBloomFilters(persistentManager);
+
+        final List<ScheduledFuture<?>> scheduledFutures = schedulePeriodJobs(scheduledExecutorService, bloomFilterManager, persistentManager);
+
         final MetricsService metricsService = loadMetricsService();
         final MeterRegistry registry = metricsService.createMeterRegistry();
-        metricsService.start();
         final Server server = newServer(registry, opts, bloomFilterManager);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 server.stop().join();
-                purgeFuture.cancel(false);
+
+                for (ScheduledFuture<?> future : scheduledFutures) {
+                    future.cancel(false);
+                }
 
                 final CompletableFuture<Void> shutdownFuture = new CompletableFuture<>();
                 scheduledExecutorService.execute(() ->
@@ -67,8 +74,8 @@ public final class Bootstrap {
                 shutdownFuture.join();
                 scheduledExecutorService.shutdown();
 
-
                 metricsService.stop();
+                persistentManager.close();
                 logger.info("Filter service has been stopped.");
             } catch (Exception ex) {
                 logger.info("Got unexpected exception during shutdown filter service, exit anyway.", ex);
@@ -77,10 +84,11 @@ public final class Bootstrap {
             }
         }));
 
+        metricsService.start();
         server.start().join();
 
         logger.info("Filter server has been started at port {} with configurations: {}",
-                opts.getHttpPort(), Configuration.spec());
+                opts.getPort(), Configuration.spec());
     }
 
     private static ParseCommandLineArgsResult parseCommandLineArgs(String[] args) {
@@ -109,8 +117,7 @@ public final class Bootstrap {
         return new ParseCommandLineArgsResult(opts);
     }
 
-    private static BloomFilterManagerImpl<GuavaBloomFilter> newBloomFilterManager() {
-        final GuavaBloomFilterFactory factory = new GuavaBloomFilterFactory();
+    private static BloomFilterManagerImpl<GuavaBloomFilter> newBloomFilterManager(GuavaBloomFilterFactory factory) {
         final BloomFilterManagerImpl<GuavaBloomFilter> bloomFilterManager = new BloomFilterManagerImpl<>(factory);
         bloomFilterManager.addListener(new BloomFilterManagerListener<GuavaBloomFilter, ExpirableBloomFilterConfig>() {
             @Override
@@ -128,6 +135,35 @@ public final class Bootstrap {
             }
         });
         return bloomFilterManager;
+    }
+
+    private static void recoverPreviousBloomFilters(PersistentManager<GuavaBloomFilter> persistentManager) throws IOException {
+        persistentManager.recoverFiltersFromFile(Configuration.allowRecoverFromCorruptedPersistentFile());
+    }
+
+    private static List<ScheduledFuture<?>> schedulePeriodJobs(ScheduledExecutorService scheduledExecutorService,
+                                                               BloomFilterManagerImpl<GuavaBloomFilter> bloomFilterManager,
+                                                               PersistentManager<GuavaBloomFilter> persistentManager) {
+        final List<ScheduledFuture<?>> futures = new ArrayList<>();
+        final ExpirableBloomFilterPurgatory<GuavaBloomFilter> purgatory
+                = new ExpirableBloomFilterPurgatory<>(bloomFilterManager);
+        futures.add(scheduledExecutorService.scheduleWithFixedDelay(() -> {
+            try {
+                purgatory.purge();
+            } catch (Exception ex) {
+                logger.error("Purge bloom filter service failed.", ex);
+            }
+        }, 0, Configuration.purgeFilterInterval().toMillis(), TimeUnit.MILLISECONDS));
+
+        futures.add(scheduledExecutorService.scheduleWithFixedDelay(() -> {
+            try {
+                persistentManager.freezeAllFilters();
+            } catch (Exception ex) {
+                logger.error("Persistent bloom filters failed.", ex);
+            }
+        }, 0, Configuration.persistentFiltersInterval().toMillis(), TimeUnit.MILLISECONDS));
+
+        return futures;
     }
 
     private static MetricsService loadMetricsService() {
@@ -152,7 +188,7 @@ public final class Bootstrap {
                 .channelOption(ChannelOption.SO_RCVBUF, Configuration.channelOptions().SO_RCVBUF())
                 .childChannelOption(ChannelOption.SO_SNDBUF, Configuration.channelOptions().SO_SNDBUF())
                 .childChannelOption(ChannelOption.TCP_NODELAY, Configuration.channelOptions().TCP_NODELAY())
-                .http(opts.getHttpPort())
+                .http(opts.getPort())
                 .maxNumConnections(Configuration.maxHttpConnections())
                 .maxRequestLength(Configuration.maxHttpRequestLength())
                 .requestTimeout(Configuration.defaultRequestTimeout())

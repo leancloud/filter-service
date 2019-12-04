@@ -1,5 +1,7 @@
 package cn.leancloud.filter.service;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
@@ -15,5 +17,10 @@ public class GuavaBloomFilterFactory implements BloomFilterFactory<GuavaBloomFil
                 creation,
                 expiration,
                 config.validPeriodAfterAccess());
+    }
+
+    @Override
+    public GuavaBloomFilter readFrom(InputStream stream) throws IOException {
+        return GuavaBloomFilter.readFrom(stream);
     }
 }

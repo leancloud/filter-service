@@ -224,14 +224,12 @@ public class BloomFilterHttpServiceTest {
 
     @Test
     public void testMultiCheckAndSet() throws Exception {
-        final List<String> testingValues = new ArrayList<>();
-        testingValues.add("testing-value1");
-        testingValues.add("testing-value2");
-        testingValues.add("testing-value3");
         final GuavaBloomFilter testingFilter = factory.createFilter(new ExpirableBloomFilterConfig());
         when(mockedManager.ensureGetFilter(testingFilterName)).thenReturn(testingFilter);
         final ArrayNode values = mapper.createArrayNode();
-        testingValues.forEach(values::add);
+        values.add("testing-value1");
+        values.add("testing-value2");
+        values.add("testing-value2");
         final ObjectNode param = mapper.createObjectNode();
         param.set("values", values);
         final JsonNode res = service.multiCheck(testingFilterName, param);

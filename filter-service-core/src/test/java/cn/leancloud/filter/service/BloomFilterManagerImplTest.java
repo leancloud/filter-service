@@ -3,6 +3,7 @@ package cn.leancloud.filter.service;
 import cn.leancloud.filter.service.BloomFilterManager.CreateFilterResult;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.time.Duration;
 import java.time.ZoneOffset;
@@ -59,32 +60,30 @@ public class BloomFilterManagerImplTest {
         assertThat(filter).isSameAs(existsFilter);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testOverwriteExpiredFilter() {
+        final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
         final ZonedDateTime created = ZonedDateTime.now(ZoneOffset.UTC);
         final ZonedDateTime expiration = created.minus(Duration.ofSeconds(10));
         // a filter factory only to produce expired bloom filters
-        final BloomFilterFactory<GuavaBloomFilter, ExpirableBloomFilterConfig> expiredFilterFactory = (config ->
-                new GuavaBloomFilter(
+        final BloomFilterFactory<GuavaBloomFilter, ExpirableBloomFilterConfig> mockedFactory = Mockito.mock(BloomFilterFactory.class);
+        Mockito.when(mockedFactory.createFilter(config))
+                .thenReturn(new GuavaBloomFilter(
                         config.expectedInsertions(),
                         config.fpp(),
                         created,
                         expiration,
-                        null)
-        );
+                        null));
 
-        final BloomFilterManagerImpl<GuavaBloomFilter> manager = new BloomFilterManagerImpl<>(expiredFilterFactory);
-
-        final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
+        final BloomFilterManagerImpl<GuavaBloomFilter> manager = new BloomFilterManagerImpl<>(mockedFactory);
         final CreateFilterResult<GuavaBloomFilter> firstCreateFilterResult = manager.createFilter(testingFilterName, config);
-        final GuavaBloomFilter existsFilter = firstCreateFilterResult.getFilter();
         assertThat(firstCreateFilterResult.isCreated()).isTrue();
 
         // overwrite mark is not set, but the exists filter still was overwritten
         final CreateFilterResult<GuavaBloomFilter> secondCreateFilterResult = manager.createFilter(testingFilterName, config);
-        final GuavaBloomFilter filter = secondCreateFilterResult.getFilter();
         assertThat(secondCreateFilterResult.isCreated()).isTrue();
-        assertThat(filter).isNotSameAs(existsFilter);
+        Mockito.verify(mockedFactory, Mockito.times(2)).createFilter(config);
     }
 
     @Test
@@ -198,24 +197,25 @@ public class BloomFilterManagerImplTest {
         assertThat(newFilterCreatedEvent.getFilter()).isSameAs(newFilter);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testListenOverwriteExpiredFilter() {
+        final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
         final TestingListener listener = new TestingListener();
         final ZonedDateTime created = ZonedDateTime.now(ZoneOffset.UTC);
         final ZonedDateTime expiration = created.minus(Duration.ofSeconds(10));
         // a filter factory only to produce expired bloom filters
-        final BloomFilterFactory<GuavaBloomFilter, ExpirableBloomFilterConfig> expiredFilterFactory = (config ->
-                new GuavaBloomFilter(
-                        config.expectedInsertions(),
-                        config.fpp(),
-                        created,
-                        expiration,
-                        null)
-        );
+        final BloomFilterFactory<GuavaBloomFilter, ExpirableBloomFilterConfig> expiredFilterFactory = Mockito.mock(BloomFilterFactory.class);
+        Mockito.when(expiredFilterFactory.createFilter(config))
+                .thenAnswer(invocation ->
+                        new GuavaBloomFilter(
+                                config.expectedInsertions(),
+                                config.fpp(),
+                                created,
+                                expiration,
+                                null));
 
         final BloomFilterManagerImpl<GuavaBloomFilter> manager = new BloomFilterManagerImpl<>(expiredFilterFactory);
-
-        final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig();
         final GuavaBloomFilter prevFilter = manager.createFilter(testingFilterName, config).getFilter();
 
         manager.addListener(listener);
@@ -233,6 +233,7 @@ public class BloomFilterManagerImplTest {
         assertThat(newFilterCreatedEvent.getName()).isSameAs(testingFilterName);
         assertThat(newFilterCreatedEvent.getConfig()).isSameAs(config);
         assertThat(newFilterCreatedEvent.getFilter()).isSameAs(newFilter);
+        Mockito.verify(expiredFilterFactory, Mockito.times(2)).createFilter(config);
     }
 
     @Test

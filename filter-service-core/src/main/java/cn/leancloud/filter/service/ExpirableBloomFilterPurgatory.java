@@ -1,7 +1,5 @@
 package cn.leancloud.filter.service;
 
-import java.util.Map;
-
 public final class ExpirableBloomFilterPurgatory<F extends BloomFilter> implements Purgatory {
     private BloomFilterManager<F, ?> manager;
 
@@ -11,11 +9,11 @@ public final class ExpirableBloomFilterPurgatory<F extends BloomFilter> implemen
 
     @Override
     public void purge() {
-        for (Map.Entry<String, F> entry : manager) {
-            final F filter = entry.getValue();
+        for (FilterRecord<F> holder : manager) {
+            final F filter = holder.filter();
             if (filter instanceof ExpirableBloomFilter) {
                 if (((ExpirableBloomFilter) filter).expired()) {
-                    final String name = entry.getKey();
+                    final String name = holder.name();
                     manager.remove(name, filter);
                 }
             }

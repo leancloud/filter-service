@@ -4,14 +4,13 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
-public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
+public final class BloomFilterManagerImpl<T extends BloomFilter>
         implements BloomFilterManager<T, ExpirableBloomFilterConfig>,
         Listenable<BloomFilterManagerListener<T, ExpirableBloomFilterConfig>> {
     private static final FilterNotFoundException FILTER_NOT_FOUND_EXCEPTION = new FilterNotFoundException();
@@ -35,7 +34,7 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
         filterMapLock.lock();
         try {
             prevFilter = filterMap.get(name);
-            if (overwrite || prevFilter == null || prevFilter.expired()) {
+            if (overwrite || prevFilter == null || !prevFilter.valid()) {
                 filter = factory.createFilter(config);
                 filterMap.put(name, filter);
                 created = true;
@@ -58,13 +57,15 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
     }
 
     @Override
-    public void addListener(BloomFilterManagerListener<T, ExpirableBloomFilterConfig> listener) {
-        listeners.add(listener);
-    }
-
-    @Override
-    public boolean removeListener(BloomFilterManagerListener<T, ExpirableBloomFilterConfig> listener) {
-        return listeners.remove(listener);
+    public void addFilters(Iterable<FilterRecord<? extends T>> filters) {
+        filterMapLock.lock();
+        try {
+            for (FilterRecord<? extends T> holder : filters) {
+                filterMap.put(holder.name(), holder.filter());
+            }
+        } finally {
+            filterMapLock.unlock();
+        }
     }
 
     @Nullable
@@ -82,6 +83,7 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
         return filter;
     }
 
+    @Override
     public List<String> getAllFilterNames() {
         return new ArrayList<>(filterMap.keySet());
     }
@@ -124,8 +126,18 @@ public final class BloomFilterManagerImpl<T extends ExpirableBloomFilter>
     }
 
     @Override
-    public Iterator<Entry<String, T>> iterator() {
-        return filterMap.entrySet().iterator();
+    public Iterator<FilterRecord<T>> iterator() {
+        return filterMap.entrySet().stream().map(e -> new FilterRecord<>(e.getKey(), e.getValue())).iterator();
+    }
+
+    @Override
+    public void addListener(BloomFilterManagerListener<T, ExpirableBloomFilterConfig> listener) {
+        listeners.add(listener);
+    }
+
+    @Override
+    public boolean removeListener(BloomFilterManagerListener<T, ExpirableBloomFilterConfig> listener) {
+        return listeners.remove(listener);
     }
 
     private void notifyBloomFilterCreated(String name, ExpirableBloomFilterConfig config, T filter) {
