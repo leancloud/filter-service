@@ -13,7 +13,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
-import static cn.leancloud.filter.service.PersistentManager.PERSISTENT_FILE_NAME;
 import static cn.leancloud.filter.service.TestingUtils.generateFilterRecords;
 import static cn.leancloud.filter.service.TestingUtils.generateInvalidFilter;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -104,7 +103,7 @@ public class PersistentManagerTest {
         manager.freezeAllFilters();
 
         try (FilterRecordInputStream<GuavaBloomFilter> stream = new FilterRecordInputStream<>(
-                tempDirPath.resolve(PERSISTENT_FILE_NAME),
+                manager.persistentFilePath(),
                 new GuavaBloomFilterFactory())) {
             for (FilterRecord<BloomFilter> expectRecord : records) {
                 assertThat(stream.nextFilterRecord()).isEqualTo(expectRecord);
@@ -149,7 +148,7 @@ public class PersistentManagerTest {
         final List<FilterRecord<BloomFilter>> records = generateFilterRecords(10);
         when(filterManager.iterator()).thenReturn(records.iterator());
         manager.freezeAllFilters();
-        try (FileChannel channel = FileChannel.open(tempDirPath.resolve(PERSISTENT_FILE_NAME), StandardOpenOption.WRITE)) {
+        try (FileChannel channel = FileChannel.open(manager.persistentFilePath(), StandardOpenOption.WRITE)) {
             channel.truncate(channel.size() - 1);
 
             assertThatThrownBy(() -> manager.recoverFiltersFromFile(false))
@@ -163,7 +162,7 @@ public class PersistentManagerTest {
         final List<FilterRecord<BloomFilter>> records = generateFilterRecords(10);
         when(filterManager.iterator()).thenReturn(records.iterator());
         manager.freezeAllFilters();
-        try (FileChannel channel = FileChannel.open(tempDirPath.resolve(PERSISTENT_FILE_NAME), StandardOpenOption.WRITE)) {
+        try (FileChannel channel = FileChannel.open(manager.persistentFilePath(), StandardOpenOption.WRITE)) {
             channel.truncate(channel.size() - 1);
 
             manager.recoverFiltersFromFile(true);

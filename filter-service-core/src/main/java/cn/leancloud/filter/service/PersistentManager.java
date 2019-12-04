@@ -17,7 +17,9 @@ import java.util.List;
 public final class PersistentManager<F extends BloomFilter> implements Closeable {
     private static final Logger logger = LoggerFactory.getLogger(PersistentManager.class);
     private static final String LOCK_FILE_NAME = "lock";
-    static final String PERSISTENT_FILE_NAME = "snapshot.db";
+    private static final String TEMPORARY_PERSISTENT_FILE_SUFFIX = ".tmp";
+    private static final String PERSISTENT_FILE_SUFFIX = ".db";
+    private static final String PERSISTENT_FILE_NAME = "snapshot";
 
     private final BloomFilterManager<F, ?> manager;
     private final BloomFilterFactory<F, ?> factory;
@@ -88,11 +90,12 @@ public final class PersistentManager<F extends BloomFilter> implements Closeable
     }
 
     private Path temporaryPersistentFilePath() {
-        return basePath.resolve(PERSISTENT_FILE_NAME + ".tmp");
+        return basePath.resolve(PERSISTENT_FILE_NAME + TEMPORARY_PERSISTENT_FILE_SUFFIX);
     }
 
-    private Path persistentFilePath() {
-        return basePath.resolve(PERSISTENT_FILE_NAME);
+    // Package private for testing
+    Path persistentFilePath() {
+        return basePath.resolve(PERSISTENT_FILE_NAME + PERSISTENT_FILE_SUFFIX);
     }
 
     private Iterable<FilterRecord<? extends F>> readFiltersFromFile(FilterRecordInputStream<F> filterStream) {
