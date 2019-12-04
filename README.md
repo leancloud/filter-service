@@ -9,7 +9,8 @@ Filter-Service is a daemon network service which is used to expose bloom filters
 
 * Scalable non-blocking core allows for many connected clients and concurrent operations
 * Implements scalable bloom filters, allowing dynamic filter sizes
-* All the bloom filter can have a expiration time and can be removed automatically after expire
+* All the bloom filters are persistent on local disk periodically and can be recovered on process rebooting
+* All the bloom filters can have a expiration time and can be removed automatically after expire
 * Spit metrics by [micrometer](https://github.com/micrometer-metrics/micrometer) which can bridge to many popular monitoring tools
 * Provide RESTFul API, which is convient to use and test
 
@@ -19,7 +20,7 @@ Filter-Service requires Java 8 or  newer  to build and run. So please ensure tha
 
 1. Download the latest `filter-service.tar.gz` file from the releases list [here](https://github.com/leancloud/filter-service/releases), and uncompressed this package to your local directory;
 2. Under the extracted directory `filter-service`, execute `./bin/filter-service` to run Filter-Service on port 8080 by default;
-3. Please using the `-h` option to browse other configurable options for Filter-Service;
+3. Please using the `-h` option and checking `configuration.xml` file to browse all the available configurable options for Filter-Service;
 4. The doc for all the available API is written in [Swagger](https://swagger.io/) and is put under the `doc` directory [at here](https://github.com/leancloud/filter-service/blob/master/doc/bloom-filter-swagger.yaml). Please use a swagger rendering tool to check those API. If you don't have a swagger rendering tool available, please consider import the [bloom-filter-swagger.yaml](https://github.com/leancloud/filter-service/blob/master/doc/bloom-filter-swagger.yaml) file to [Swagger Editor](https://editor.swagger.io/) to browse.
 
 ## Metrics
@@ -31,6 +32,7 @@ For simplicity, we are taking [DefaultMetricsService](https://github.com/leanclo
 For example, assume that you are using [Prometheus](https://prometheus.io/) to collect metrcis and we are taking [the codes from Micrometer](https://micrometer.io/docs/registry/prometheus) as an example.
 
 1. You can implement `MetricsService` like this:
+
 ```java
 package cn.leancloud.example;
 
@@ -61,11 +63,13 @@ public final class PrometheusMetricsService implements MetricsService {
 ```
 
 2. Write a file with name `cn.leancloud.filter.service.metrics.MetricsService` and with content:
+
 ```
 cn.leancloud.example.PrometheusMetricsService
 ```
 
 and put this file in path `resources/META-INFO/services`.  So your project structure would be like:
+
 ```
 src
  `-- main.
@@ -89,11 +93,13 @@ When you uncompress the `filter-service.tar.gz` file from the release list, the 
 At first, you need to install [wrk](https://github.com/wg/wrk) which is used by all our benchmark tools.
 
 Then, taking `check-and-set` benchmark as example, you can run the benchmark like this:
+
 ```
  ./bin/check-and-set-benchmark.sh
 ```
 
 The test results will show after 30s like:
+
 ```
 Filter: "check-set-bench" created.
 Running 30s test @ http://127.0.0.1:8080/
@@ -119,6 +125,7 @@ This is tested on my machine with java 1.8.0_181, 2.3 GHz Intel Core i5 cpu and 
 `DocService` is a feature powered by [Armeria](https://line.github.io/armeria/index.html). It is a single-page web application by which we can browse or invoke any of the available operations on Filter-Service. It's a convienent tool for testing.
 
 By default, the `DocService` is disabled. To enable it, please run Filter-Service with `-d` option. Asume we are running Filter-Service on port 8080:
+
 ```
 ./bin/filter-service -d -p 8080
 ```
@@ -131,5 +138,5 @@ On the left side of the screen shows all the available operations of Filter-Serv
 
 ## License
 
-Copyright 2019 LeanCloud. Released under the  [MIT License](https://github.com/leancloud/filter-service/blob/master/LICENSE.md) .
+Copyright 2019 LeanCloud. Released under the [MIT License](https://github.com/leancloud/filter-service/blob/master/LICENSE.md) .
 

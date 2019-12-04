@@ -47,6 +47,8 @@ public final class PersistentManager<F extends BloomFilter> implements Closeable
             for (FilterRecord<F> record : manager) {
                 record.writeFullyTo(channel);
             }
+
+            channel.force(true);
         }
 
         FileUtils.atomicMoveWithFallback(tempPath, persistentFilePath());
