@@ -20,7 +20,7 @@ Filter-Service requires Java 8 or  newer  to build and run. So please ensure tha
 
 1. Download the latest `filter-service.tar.gz` file from the releases list [here](https://github.com/leancloud/filter-service/releases), and uncompressed this package to your local directory;
 2. Under the extracted directory `filter-service`, execute `./bin/filter-service` to run Filter-Service on port 8080 by default;
-3. Please using the `-h` option and checking `configuration.xml` file to browse all the available configurable options for Filter-Service;
+3. Please using the `-h` option and checking `./config/configuration.xml` file to browse all the available configurable options for Filter-Service;
 4. The doc for all the available API is written in [Swagger](https://swagger.io/) and is put under the `doc` directory [at here](https://github.com/leancloud/filter-service/blob/master/doc/bloom-filter-swagger.yaml). Please use a swagger rendering tool to check those API. If you don't have a swagger rendering tool available, please consider import the [bloom-filter-swagger.yaml](https://github.com/leancloud/filter-service/blob/master/doc/bloom-filter-swagger.yaml) file to [Swagger Editor](https://editor.swagger.io/) to browse.
 
 ## Metrics
