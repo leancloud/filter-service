@@ -43,20 +43,23 @@ public final class PersistentManager<F extends BloomFilter> implements Closeable
         this.factory = factory;
     }
 
-    public void freezeAllFilters() throws IOException {
+    public synchronized void freezeAllFilters() throws IOException {
         final Path tempPath = temporaryPersistentFilePath();
+        int counter = 0;
         try (FileChannel channel = FileChannel.open(tempPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
             for (FilterRecord<F> record : manager) {
                 record.writeFullyTo(channel);
+                counter++;
             }
 
             channel.force(true);
         }
 
         FileUtils.atomicMoveWithFallback(tempPath, persistentFilePath());
+        logger.debug("Persistent " + counter + " filters.");
     }
 
-    public void recoverFiltersFromFile(boolean allowRecoverFromCorruptedFile) throws IOException {
+    public synchronized void recoverFiltersFromFile(boolean allowRecoverFromCorruptedFile) throws IOException {
         if (persistentFilePath().toFile().exists()) {
             final List<FilterRecord<? extends F>> records = new ArrayList<>();
             try {
@@ -85,7 +88,7 @@ public final class PersistentManager<F extends BloomFilter> implements Closeable
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         FileUtils.releaseDirectoryLock(fileLock);
     }
 

@@ -37,9 +37,13 @@ if [ -z "$FILTER_SERVICE_JVM_GC_LOG_CONFIGS" ]; then
     fi
 fi
 
-# Memory options
+# Memory options.
+# Please set a large MaxDirectMemorySize if you need to create a big Bloom filter with lots of expected insertions and
+# a very low false positive possibility, otherwise you might got direct buffer OOM.
+# Please set a reasonable value for jdk.nio.maxCachedBufferSize to prevent the thread doing IO operations try to cache
+# too many big direct buffer which might cause direct buffer OOM too.
 if [ -z "$FILTER_SERVICE_HEAP_OPTS" ]; then
-  FILTER_SERVICE_HEAP_OPTS="-Xmx1G -Xms1G"
+  FILTER_SERVICE_HEAP_OPTS="-Xmx1G -Xms1G -XX:MaxDirectMemorySize=512M -Djdk.nio.maxCachedBufferSize=16777216"
 fi
 
 # JVM performance options
