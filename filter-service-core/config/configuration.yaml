@@ -1,25 +1,35 @@
 ---
 # the interval for the purge thread to scan all the filters to find and clean expired filters
 purgeFilterIntervalMillis: 300
+
 # the interval for the persistent thread to scan all the filters and persistent them on disk
 persistentFiltersIntervalMillis: 5000
+
 # maximum allowed http/https concurrent connections
 maxHttpConnections: 1000
+
 # maximum allowed length of the content decoded at the session layer. the default value is 10 MB
 maxHttpRequestLength: 10485760
+
 # the default timeout of a request
 defaultRequestTimeoutSeconds: 5
+
 # the default expected insertions to filter. If no value provided on creating filter, this value will be used
 defaultExpectedInsertions: 1000000
+
 # the default desired false positive probability for a filter. If no value provided on creating filter, this value will be used
 defaultFalsePositiveProbability: 0.01
+
 # the default valid seconds after create for a filter. If no value provided on creating filter, this value will be used
 defaultValidSecondsAfterCreate: 86400
+
 # the path to a directory to store persistent file. Leave it empty to use the path to "user.dir" system property
 persistentStorageDirectory:
+
 # when this switch is on, we try to recover filters from a corrupted or unfinished persistent file as many filters as we can;
 # otherwise, we will throw an exception when we make sure that the persistent file is corrupted or unfinished.
 allowRecoverFromCorruptedPersistentFile: True
+
 # the configuration options for every underlying TCP socket
 channelOptions:
   SO_BACKLOG: 2048
