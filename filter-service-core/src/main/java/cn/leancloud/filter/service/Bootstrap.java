@@ -88,7 +88,7 @@ public final class Bootstrap {
         server.start().join();
 
         logger.info("Filter server has been started at port {} with configurations: {}",
-                opts.getHttpPort(), Configuration.spec());
+                opts.getPort(), Configuration.spec());
     }
 
     private static ParseCommandLineArgsResult parseCommandLineArgs(String[] args) {
@@ -188,7 +188,7 @@ public final class Bootstrap {
                 .channelOption(ChannelOption.SO_RCVBUF, Configuration.channelOptions().SO_RCVBUF())
                 .childChannelOption(ChannelOption.SO_SNDBUF, Configuration.channelOptions().SO_SNDBUF())
                 .childChannelOption(ChannelOption.TCP_NODELAY, Configuration.channelOptions().TCP_NODELAY())
-                .http(opts.getHttpPort())
+                .http(opts.getPort())
                 .maxNumConnections(Configuration.maxHttpConnections())
                 .maxRequestLength(Configuration.maxHttpRequestLength())
                 .requestTimeout(Configuration.defaultRequestTimeout())

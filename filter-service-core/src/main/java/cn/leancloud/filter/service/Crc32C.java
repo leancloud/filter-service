@@ -13,7 +13,7 @@ import java.util.zip.Checksum;
  * java.util.zip.CRC32C is significantly faster on reasonably modern CPUs as it uses the CRC32 instruction introduced
  * in SSE4.2.
  *
- * NOTE: This class is intended for INTERNAL usage only within Kafka.
+ * NOTE: This class is copied from Kafka.
  */
 public final class Crc32C {
 
@@ -52,12 +52,22 @@ public final class Crc32C {
      */
     public static long compute(ByteBuffer buffer, int offset, int size) {
         Checksum crc = create();
-        Checksums.update(crc, buffer, offset, size);
+        updateChecksums(crc, buffer, offset, size);
         return crc.getValue();
     }
 
     public static Checksum create() {
         return CHECKSUM_FACTORY.create();
+    }
+
+    private static void updateChecksums(Checksum checksum, ByteBuffer buffer, int offset, int length) {
+        if (buffer.hasArray()) {
+            checksum.update(buffer.array(), buffer.position() + buffer.arrayOffset() + offset, length);
+        } else {
+            int start = buffer.position() + offset;
+            for (int i = start; i < start + length; i++)
+                checksum.update(buffer.get(i));
+        }
     }
 
     private interface ChecksumFactory {

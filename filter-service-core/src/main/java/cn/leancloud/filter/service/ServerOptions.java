@@ -16,18 +16,18 @@ final class ServerOptions {
     @Option(names = {"-c", "--configuration-file"},
             description = "The path to a YAML configuration file.")
     private String configFilePath;
-    @Option(names = {"-p", "--http-port"},
+    @Option(names = {"-p", "--port"},
             defaultValue = "8080",
-            description = "The http port on which filter-service is running.")
-    private int httpPort;
+            description = "The http/https port on which filter-service is running.")
+    private int port;
 
     @Option(names = {"-d", "--enable-doc-service"},
             defaultValue = "false",
             description = "true when you want to serve the testing document service under path \"/docs\".")
     private boolean docService;
 
-    public int getHttpPort() {
-        return httpPort;
+    public int getPort() {
+        return port;
     }
 
     public boolean isDocServiceEnabled() {
