@@ -12,7 +12,7 @@ defaultRequestTimeoutSeconds: 5
 # the default expected insertions to filter. If no value provided on creating filter, this value will be used
 defaultExpectedInsertions: 1000000
 # the default desired false positive probability for a filter. If no value provided on creating filter, this value will be used
-defaultFalsePositiveProbability: 0.0001
+defaultFalsePositiveProbability: 0.001
 # the default valid seconds after create for a filter. If no value provided on creating filter, this value will be used
 defaultValidSecondsAfterCreate: 86400
 # the path to a directory to store persistent file. Leave it empty to use the path to "user.dir" system property

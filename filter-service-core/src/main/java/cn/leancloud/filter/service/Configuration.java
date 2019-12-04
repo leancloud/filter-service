@@ -81,7 +81,7 @@ public final class Configuration {
                 "defaultRequestTimeoutSeconds: " + defaultRequestTimeout().getSeconds() + "\n" +
                 "defaultExpectedInsertions: " + defaultExpectedInsertions() + "\n" +
                 "defaultFalsePositiveProbability: " + defaultFalsePositiveProbability() + "\n" +
-                "defaultValidPeriodAfterCreate: " + defaultValidPeriodAfterCreate() + "\n" +
+                "defaultValidSecondsAfterCreate: " + defaultValidPeriodAfterCreate().getSeconds() + "\n" +
                 "persistentStorageDirectory: " + persistentStorageDirectory() + "\n" +
                 "allowRecoverFromCorruptedPersistentFile: " + allowRecoverFromCorruptedPersistentFile() + "\n" +
                 "channelOptions: " + channelOptions() + "\n";
