@@ -13,12 +13,12 @@ import java.time.ZonedDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class FilterRecordTest {
-    private final Duration validPeriodAfterAccess = Duration.ofSeconds(3);
-    private final int expectedInsertions = 1000000;
-    private final double fpp = 0.0001;
-    private final ZonedDateTime creation = ZonedDateTime.now(ZoneOffset.UTC);
-    private final ZonedDateTime expiration = creation.plus(Duration.ofSeconds(10));
-    private final String testingFilterName = "testing_filter";
+    private static final Duration validPeriodAfterAccess = Duration.ofSeconds(3);
+    private static final int expectedInsertions = 1000000;
+    private static final double fpp = 0.0001;
+    private static final ZonedDateTime creation = ZonedDateTime.now(ZoneOffset.UTC);
+    private static final ZonedDateTime expiration = creation.plus(Duration.ofSeconds(10));
+    private static final String testingFilterName = "testing_filter";
 
     private File tempFile;
 
