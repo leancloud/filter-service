@@ -10,7 +10,7 @@ import java.util.Objects;
 
 /**
  * The schema is:
- * Length: Int32
+ * BodyLength: Int32
  * MAGIC: Byte
  * CRC: Uint32
  * NameLength: Int32

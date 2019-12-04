@@ -5,6 +5,8 @@ package cn.leancloud.filter.service;
  * do not meet the contract.
  */
 final class BadParameterException extends IllegalArgumentException {
+    private static final long serialVersionUID = -1L;
+
     /**
      * Create a {@code BadParameterException} with the name of an invalid parameter.
      *

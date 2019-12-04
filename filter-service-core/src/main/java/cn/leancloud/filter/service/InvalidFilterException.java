@@ -1,6 +1,8 @@
 package cn.leancloud.filter.service;
 
 public class InvalidFilterException extends PersistentStorageException {
+    private static final long serialVersionUID = -1L;
+
     public InvalidFilterException() {
     }
 

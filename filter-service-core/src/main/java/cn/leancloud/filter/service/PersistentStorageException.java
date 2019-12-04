@@ -1,6 +1,8 @@
 package cn.leancloud.filter.service;
 
 public class PersistentStorageException extends RuntimeException  {
+    private static final long serialVersionUID = -1L;
+
     public PersistentStorageException() {
     }
 

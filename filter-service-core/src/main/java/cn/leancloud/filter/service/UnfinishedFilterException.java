@@ -1,6 +1,8 @@
 package cn.leancloud.filter.service;
 
 public class UnfinishedFilterException extends InvalidFilterException {
+    private static final long serialVersionUID = -1L;
+
     public UnfinishedFilterException() {
     }
 

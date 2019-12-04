@@ -17,7 +17,7 @@ import java.util.List;
 public final class PersistentManager<F extends BloomFilter> implements Closeable {
     private static final Logger logger = LoggerFactory.getLogger(PersistentManager.class);
     private static final String LOCK_FILE_NAME = "lock";
-    static final String PERSISTENT_FILE_NAME = "dump.db";
+    static final String PERSISTENT_FILE_NAME = "snapshot.db";
 
     private final BloomFilterManager<F, ?> manager;
     private final BloomFilterFactory<F, ?> factory;
