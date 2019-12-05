@@ -52,7 +52,7 @@ public final class Bootstrap {
                                 logger.error("Scheduled worker thread: " + t.getName() + " got uncaught exception.", e))
                         .build());
         final GuavaBloomFilterFactory factory = new GuavaBloomFilterFactory();
-        final BloomFilterManagerImpl<GuavaBloomFilter> bloomFilterManager = newBloomFilterManager(factory);
+        final BloomFilterManagerImpl<GuavaBloomFilter, ExpirableBloomFilterConfig> bloomFilterManager = newBloomFilterManager(factory);
         final PersistentManager<GuavaBloomFilter> persistentManager = new PersistentManager<>(
                 bloomFilterManager,
                 new GuavaBloomFilterFactory(),
@@ -125,8 +125,8 @@ public final class Bootstrap {
         return new ParseCommandLineArgsResult(opts);
     }
 
-    private static BloomFilterManagerImpl<GuavaBloomFilter> newBloomFilterManager(GuavaBloomFilterFactory factory) {
-        final BloomFilterManagerImpl<GuavaBloomFilter> bloomFilterManager = new BloomFilterManagerImpl<>(factory);
+    private static BloomFilterManagerImpl<GuavaBloomFilter, ExpirableBloomFilterConfig> newBloomFilterManager(GuavaBloomFilterFactory factory) {
+        final BloomFilterManagerImpl<GuavaBloomFilter, ExpirableBloomFilterConfig> bloomFilterManager = new BloomFilterManagerImpl<>(factory);
         bloomFilterManager.addListener(new BloomFilterManagerListener<GuavaBloomFilter, ExpirableBloomFilterConfig>() {
             @Override
             public void onBloomFilterCreated(String name, ExpirableBloomFilterConfig config, GuavaBloomFilter filter) {
@@ -151,7 +151,7 @@ public final class Bootstrap {
 
     private static List<ScheduledFuture<?>> schedulePeriodJobs(MeterRegistry registry,
                                                                ScheduledExecutorService scheduledExecutorService,
-                                                               BloomFilterManagerImpl<GuavaBloomFilter> bloomFilterManager,
+                                                               BloomFilterManagerImpl<GuavaBloomFilter, ExpirableBloomFilterConfig> bloomFilterManager,
                                                                PersistentManager<GuavaBloomFilter> persistentManager) {
         final Timer persistentFiltersTimer = registry.timer("filter-service.persistentFilters");
         final Timer purgeExpiredFiltersTimer = registry.timer("filter-service.purgeExpiredFilters");
