@@ -107,18 +107,95 @@ public final class Bootstrap {
         }
     }
 
-    private final ServerOptions opts;
+    private interface Job {
+        void start(ScheduledExecutorService scheduledExecutorService);
+
+        void stop();
+    }
+
+    private static class PurgeInvalidFiltersJob<F extends BloomFilter> implements Job {
+        private final Timer purgeExpiredFiltersTimer;
+        private final BloomFilterManager<F, ?> manager;
+        @Nullable
+        private ScheduledFuture<?> future;
+
+        private PurgeInvalidFiltersJob(MeterRegistry registry,
+                                       BloomFilterManager<F, ?> manager) {
+            this.purgeExpiredFiltersTimer = registry.timer("filter-service.purgeExpiredFilters");
+            this.manager = manager;
+        }
+
+        @Override
+        public void start(ScheduledExecutorService scheduledExecutorService) {
+            final InvalidBloomFilterPurgatory<F> purgatory
+                    = new InvalidBloomFilterPurgatory<>(manager);
+            future = scheduledExecutorService.scheduleWithFixedDelay(purgeExpiredFiltersTimer.wrap(() -> {
+                try {
+                    purgatory.purge();
+                } catch (Throwable ex) {
+                    logger.error("Purge bloom filter service failed.", ex);
+                    throw ex;
+                }
+            }), 0, Configuration.purgeFilterInterval().toMillis(), TimeUnit.MILLISECONDS);
+        }
+
+        @Override
+        public void stop() {
+            if (future != null) {
+                future.cancel(false);
+            }
+        }
+    }
+
+    private static class PersistentFiltersJob<F extends BloomFilter> implements Job {
+        private final Timer persistentFiltersTimer;
+        private final BloomFilterManager<F, ?> bloomFilterManager;
+        private final PersistentManager<F> persistentManager;
+        @Nullable
+        private ScheduledFuture<?> future;
+
+        private PersistentFiltersJob(MeterRegistry registry,
+                                     BloomFilterManager<F, ?> bloomFilterManager,
+                                     PersistentManager<F> persistentManager) {
+            this.persistentFiltersTimer = registry.timer("filter-service.persistentFilters");
+            this.bloomFilterManager = bloomFilterManager;
+            this.persistentManager = persistentManager;
+        }
+
+        @Override
+        public void start(ScheduledExecutorService scheduledExecutorService) {
+            future = scheduledExecutorService.scheduleWithFixedDelay(persistentFiltersTimer.wrap(() -> {
+                try {
+                    persistentManager.freezeAllFilters(bloomFilterManager);
+                } catch (IOException ex) {
+                    logger.error("Persistent bloom filters failed.", ex);
+                } catch (Throwable t) {
+                    // sorry for the duplication, but currently I don't figure out another way
+                    // to catch the direct buffer OOM when freeze filters to file
+                    logger.error("Persistent bloom filters failed.", t);
+                    throw t;
+                }
+
+            }), 0, Configuration.persistentFiltersInterval().toMillis(), TimeUnit.MILLISECONDS);
+        }
+
+        @Override
+        public void stop() {
+            if (future != null) {
+                future.cancel(false);
+            }
+        }
+    }
+
     private final MetricsService metricsService;
-    private final MeterRegistry registry;
     private final ScheduledExecutorService scheduledExecutorService;
     private final GuavaBloomFilterFactory factory;
     private final BloomFilterManagerImpl<GuavaBloomFilter, ExpirableBloomFilterConfig> bloomFilterManager;
     private final PersistentManager<GuavaBloomFilter> persistentManager;
     private final Server server;
-    private List<ScheduledFuture<?>> scheduledFutures;
+    private final List<Job> jobs;
 
     public Bootstrap(ServerOptions opts) throws Exception {
-        this.opts = opts;
         this.metricsService = loadMetricsService();
         this.scheduledExecutorService = Executors.newScheduledThreadPool(10,
                 new ThreadFactoryBuilder()
@@ -126,30 +203,30 @@ public final class Bootstrap {
                         .setUncaughtExceptionHandler((t, e) ->
                                 logger.error("Scheduled worker thread: " + t.getName() + " got uncaught exception.", e))
                         .build());
-        this.registry = metricsService.createMeterRegistry();
+        final MeterRegistry registry = metricsService.createMeterRegistry();
         this.factory = new GuavaBloomFilterFactory();
         this.bloomFilterManager = newBloomFilterManager(factory);
         this.persistentManager = new PersistentManager<>(Paths.get(Configuration.persistentStorageDirectory()));
         this.server = newServer(registry, opts, bloomFilterManager);
+        this.jobs = new ArrayList<>();
+        this.jobs.add(new PurgeInvalidFiltersJob<>(registry, bloomFilterManager));
+        this.jobs.add(new PersistentFiltersJob<>(registry, bloomFilterManager, persistentManager));
     }
 
     private void start() throws Exception {
         recoverPreviousBloomFilters();
 
-        scheduledFutures = schedulePeriodJobs();
+        jobs.forEach(j -> j.start(scheduledExecutorService));
         metricsService.start();
         server.start().join();
-        logger.info("Filter server has been started at port {} with configurations: {}",
-                opts.getPort(), Configuration.spec());
+        logger.info("Filter server has been started with configurations: {}", Configuration.spec());
     }
 
     private void stop() {
         try {
             server.stop().join();
 
-            for (ScheduledFuture<?> future : scheduledFutures) {
-                future.cancel(false);
-            }
+            jobs.forEach(Job::stop);
 
             final CompletableFuture<Void> shutdownFuture = new CompletableFuture<>();
             scheduledExecutorService.execute(() ->
@@ -186,38 +263,6 @@ public final class Bootstrap {
         final List<FilterRecord<? extends GuavaBloomFilter>> records =
                 persistentManager.recoverFiltersFromFile(factory, Configuration.allowRecoverFromCorruptedPersistentFile());
         bloomFilterManager.addFilters(records);
-    }
-
-    private List<ScheduledFuture<?>> schedulePeriodJobs() {
-        final Timer persistentFiltersTimer = registry.timer("filter-service.persistentFilters");
-        final Timer purgeExpiredFiltersTimer = registry.timer("filter-service.purgeExpiredFilters");
-        final List<ScheduledFuture<?>> futures = new ArrayList<>();
-        final InvalidBloomFilterPurgatory<GuavaBloomFilter> purgatory
-                = new InvalidBloomFilterPurgatory<>(bloomFilterManager);
-        futures.add(scheduledExecutorService.scheduleWithFixedDelay(purgeExpiredFiltersTimer.wrap(() -> {
-            try {
-                purgatory.purge();
-            } catch (Throwable ex) {
-                logger.error("Purge bloom filter service failed.", ex);
-                throw ex;
-            }
-        }), 0, Configuration.purgeFilterInterval().toMillis(), TimeUnit.MILLISECONDS));
-
-        futures.add(scheduledExecutorService.scheduleWithFixedDelay(persistentFiltersTimer.wrap(() -> {
-            try {
-                persistentManager.freezeAllFilters(bloomFilterManager);
-            } catch (IOException ex) {
-                logger.error("Persistent bloom filters failed.", ex);
-            } catch (Throwable t) {
-                // sorry for the duplication, but currently I don't figure out another way
-                // to catch the direct buffer OOM when freeze filters to file
-                logger.error("Persistent bloom filters failed.", t);
-                throw t;
-            }
-
-        }), 0, Configuration.persistentFiltersInterval().toMillis(), TimeUnit.MILLISECONDS));
-
-        return futures;
     }
 
     private Server newServer(MeterRegistry registry,
