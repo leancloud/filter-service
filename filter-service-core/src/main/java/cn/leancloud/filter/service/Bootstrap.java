@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.LongAdder;
 
 public final class Bootstrap {
     private static final Logger logger = LoggerFactory.getLogger(Bootstrap.class);
@@ -151,15 +152,18 @@ public final class Bootstrap {
         private final Timer persistentFiltersTimer;
         private final BloomFilterManager<F, ?> bloomFilterManager;
         private final PersistentManager<F> persistentManager;
+        private final LongAdder adder;
         @Nullable
         private ScheduledFuture<?> future;
 
         private PersistentFiltersJob(MeterRegistry registry,
                                      BloomFilterManager<F, ?> bloomFilterManager,
-                                     PersistentManager<F> persistentManager) {
+                                     PersistentManager<F> persistentManager,
+                                     LongAdder adder) {
             this.persistentFiltersTimer = registry.timer("filter-service.persistentFilters");
             this.bloomFilterManager = bloomFilterManager;
             this.persistentManager = persistentManager;
+            this.adder = adder;
         }
 
         @Override
@@ -189,14 +193,15 @@ public final class Bootstrap {
 
     private final MetricsService metricsService;
     private final ScheduledExecutorService scheduledExecutorService;
-    private final GuavaBloomFilterFactory factory;
-    private final BloomFilterManagerImpl<GuavaBloomFilter, ExpirableBloomFilterConfig> bloomFilterManager;
-    private final PersistentManager<GuavaBloomFilter> persistentManager;
+    private final CountUpdateBloomFilterFactory<ExpirableBloomFilterConfig> factory;
+    private final BloomFilterManagerImpl<BloomFilter, ExpirableBloomFilterConfig> bloomFilterManager;
+    private final PersistentManager<BloomFilter> persistentManager;
     private final Server server;
     private final List<Job> jobs;
 
     public Bootstrap(ServerOptions opts) throws Exception {
         this.metricsService = loadMetricsService();
+        LongAdder adder = new LongAdder();
         this.scheduledExecutorService = Executors.newScheduledThreadPool(10,
                 new ThreadFactoryBuilder()
                         .setNameFormat("scheduled-worker-%s")
@@ -204,13 +209,13 @@ public final class Bootstrap {
                                 logger.error("Scheduled worker thread: " + t.getName() + " got uncaught exception.", e))
                         .build());
         final MeterRegistry registry = metricsService.createMeterRegistry();
-        this.factory = new GuavaBloomFilterFactory();
+        this.factory = new CountUpdateBloomFilterFactory<>(new GuavaBloomFilterFactory(), adder);
         this.bloomFilterManager = newBloomFilterManager(factory);
         this.persistentManager = new PersistentManager<>(Paths.get(Configuration.persistentStorageDirectory()));
         this.server = newServer(registry, opts, bloomFilterManager);
         this.jobs = new ArrayList<>();
         this.jobs.add(new PurgeInvalidFiltersJob<>(registry, bloomFilterManager));
-        this.jobs.add(new PersistentFiltersJob<>(registry, bloomFilterManager, persistentManager));
+        this.jobs.add(new PersistentFiltersJob<>(registry, bloomFilterManager, persistentManager, adder));
     }
 
     private void start() throws Exception {
@@ -260,7 +265,7 @@ public final class Bootstrap {
     }
 
     private void recoverPreviousBloomFilters() throws IOException {
-        final List<FilterRecord<? extends GuavaBloomFilter>> records =
+        final List<FilterRecord<? extends BloomFilter>> records =
                 persistentManager.recoverFiltersFromFile(factory, Configuration.allowRecoverFromCorruptedPersistentFile());
         bloomFilterManager.addFilters(records);
     }
@@ -287,17 +292,18 @@ public final class Bootstrap {
         return sb.build();
     }
 
-    private BloomFilterManagerImpl<GuavaBloomFilter, ExpirableBloomFilterConfig> newBloomFilterManager(GuavaBloomFilterFactory factory) {
-        final BloomFilterManagerImpl<GuavaBloomFilter, ExpirableBloomFilterConfig> bloomFilterManager = new BloomFilterManagerImpl<>(factory);
-        bloomFilterManager.addListener(new BloomFilterManagerListener<GuavaBloomFilter, ExpirableBloomFilterConfig>() {
+    private BloomFilterManagerImpl<BloomFilter, ExpirableBloomFilterConfig> newBloomFilterManager(
+            CountUpdateBloomFilterFactory<ExpirableBloomFilterConfig> factory) {
+        final BloomFilterManagerImpl<BloomFilter, ExpirableBloomFilterConfig> bloomFilterManager = new BloomFilterManagerImpl<>(factory);
+        bloomFilterManager.addListener(new BloomFilterManagerListener<BloomFilter, ExpirableBloomFilterConfig>() {
             @Override
-            public void onBloomFilterCreated(String name, ExpirableBloomFilterConfig config, GuavaBloomFilter filter) {
+            public void onBloomFilterCreated(String name, ExpirableBloomFilterConfig config, BloomFilter filter) {
                 logger.info("Bloom filter with name: {} was created.", name);
             }
 
             @Override
-            public void onBloomFilterRemoved(String name, GuavaBloomFilter filter) {
-                if (filter.expired()) {
+            public void onBloomFilterRemoved(String name, BloomFilter filter) {
+                if (filter.valid()) {
                     logger.info("Bloom filter with name: {} was purged due to expiration.", name);
                 } else {
                     logger.info("Bloom filter with name: {} was removed.", name);

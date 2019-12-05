@@ -54,13 +54,13 @@ public final class PersistentManager<F extends BloomFilter> implements Closeable
         logger.debug("Persistent " + counter + " filters.");
     }
 
-    public synchronized List<FilterRecord<? extends F>> recoverFiltersFromFile(BloomFilterFactory<F, ?> factory,
+    public synchronized List<FilterRecord<? extends F>> recoverFiltersFromFile(BloomFilterFactory<? extends F, ?> factory,
                                                                                boolean allowRecoverFromCorruptedFile)
             throws IOException {
         if (persistentFilePath().toFile().exists()) {
             final List<FilterRecord<? extends F>> records = new ArrayList<>();
             try {
-                try (FilterRecordInputStream<F> filterStream = new FilterRecordInputStream<>(persistentFilePath(), factory)) {
+                try (FilterRecordInputStream<? extends F> filterStream = new FilterRecordInputStream<>(persistentFilePath(), factory)) {
                     readFiltersFromFile(filterStream)
                             .forEach(r -> {
                                 if (r.filter().valid()) {
@@ -99,7 +99,7 @@ public final class PersistentManager<F extends BloomFilter> implements Closeable
         return basePath.resolve(PERSISTENT_FILE_NAME + PERSISTENT_FILE_SUFFIX);
     }
 
-    private Iterable<FilterRecord<? extends F>> readFiltersFromFile(FilterRecordInputStream<F> filterStream) {
+    private Iterable<FilterRecord<? extends F>> readFiltersFromFile(FilterRecordInputStream<? extends F> filterStream) {
         return () -> new AbstractIterator<FilterRecord<? extends F>>() {
             @Nullable
             @Override

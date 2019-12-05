@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.LongAdder;
 
-public class CountUpdateBloomFilterWrapper<T extends BloomFilter> implements BloomFilter {
+public final class CountUpdateBloomFilterWrapper implements BloomFilter {
     private final LongAdder counter;
-    private final T filter;
+    private final BloomFilter filter;
 
-    public CountUpdateBloomFilterWrapper(LongAdder counter, T filter) {
+    public CountUpdateBloomFilterWrapper(LongAdder counter, BloomFilter filter) {
         this.counter = counter;
         this.filter = filter;
     }
