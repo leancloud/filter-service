@@ -38,7 +38,7 @@ public final class TestingUtils {
         return records;
     }
 
-    public static BloomFilter generateInvalidFilter() {
+    public static GuavaBloomFilter generateInvalidFilter() {
         final ZonedDateTime creation = ZonedDateTime.now(ZoneOffset.UTC);
         final ZonedDateTime expiration = creation.minus(Duration.ofSeconds(10));
         return new GuavaBloomFilter(

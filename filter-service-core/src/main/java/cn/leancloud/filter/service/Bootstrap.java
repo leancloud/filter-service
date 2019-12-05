@@ -156,8 +156,8 @@ public final class Bootstrap {
         final Timer persistentFiltersTimer = registry.timer("filter-service.persistentFilters");
         final Timer purgeExpiredFiltersTimer = registry.timer("filter-service.purgeExpiredFilters");
         final List<ScheduledFuture<?>> futures = new ArrayList<>();
-        final ExpirableBloomFilterPurgatory<GuavaBloomFilter> purgatory
-                = new ExpirableBloomFilterPurgatory<>(bloomFilterManager);
+        final InvalidBloomFilterPurgatory<GuavaBloomFilter> purgatory
+                = new InvalidBloomFilterPurgatory<>(bloomFilterManager);
         futures.add(scheduledExecutorService.scheduleWithFixedDelay(purgeExpiredFiltersTimer.wrap(() -> {
             try {
                 purgatory.purge();

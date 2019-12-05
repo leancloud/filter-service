@@ -12,10 +12,10 @@ import java.util.function.Consumer;
 
 public final class BloomFilterManagerImpl<T extends BloomFilter>
         implements BloomFilterManager<T, ExpirableBloomFilterConfig>,
-        Listenable<BloomFilterManagerListener<T, ExpirableBloomFilterConfig>> {
+        Listenable<BloomFilterManagerListener<? super T, ExpirableBloomFilterConfig>> {
     private static final FilterNotFoundException FILTER_NOT_FOUND_EXCEPTION = new FilterNotFoundException();
 
-    private final List<BloomFilterManagerListener<T, ExpirableBloomFilterConfig>> listeners;
+    private final List<BloomFilterManagerListener<? super T, ExpirableBloomFilterConfig>> listeners;
     private final ConcurrentHashMap<String, T> filterMap;
     private final BloomFilterFactory<? extends T, ? super ExpirableBloomFilterConfig> factory;
     private final Lock filterMapLock = new ReentrantLock();
@@ -75,9 +75,9 @@ public final class BloomFilterManagerImpl<T extends BloomFilter>
     }
 
     @Override
-    public T ensureGetFilter(String name) throws FilterNotFoundException {
+    public T ensureGetValidFilter(String name) throws FilterNotFoundException {
         final T filter = getFilter(name);
-        if (filter == null) {
+        if (filter == null || !filter.valid()) {
             throw FILTER_NOT_FOUND_EXCEPTION;
         }
         return filter;
@@ -131,12 +131,12 @@ public final class BloomFilterManagerImpl<T extends BloomFilter>
     }
 
     @Override
-    public void addListener(BloomFilterManagerListener<T, ExpirableBloomFilterConfig> listener) {
+    public void addListener(BloomFilterManagerListener<? super T, ExpirableBloomFilterConfig> listener) {
         listeners.add(listener);
     }
 
     @Override
-    public boolean removeListener(BloomFilterManagerListener<T, ExpirableBloomFilterConfig> listener) {
+    public boolean removeListener(BloomFilterManagerListener<? super T, ExpirableBloomFilterConfig> listener) {
         return listeners.remove(listener);
     }
 
@@ -148,8 +148,8 @@ public final class BloomFilterManagerImpl<T extends BloomFilter>
         notifyListeners(l -> l.onBloomFilterRemoved(name, filter));
     }
 
-    private void notifyListeners(Consumer<BloomFilterManagerListener<T, ExpirableBloomFilterConfig>> consumer) {
-        for (BloomFilterManagerListener<T, ExpirableBloomFilterConfig> listener : listeners) {
+    private void notifyListeners(Consumer<BloomFilterManagerListener<? super T, ExpirableBloomFilterConfig>> consumer) {
+        for (BloomFilterManagerListener<? super T, ExpirableBloomFilterConfig> listener : listeners) {
             consumer.accept(listener);
         }
     }
