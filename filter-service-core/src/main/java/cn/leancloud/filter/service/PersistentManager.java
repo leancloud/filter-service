@@ -71,8 +71,8 @@ public final class PersistentManager<F extends BloomFilter> implements Closeable
                                 }
                             });
                 }
-
                 manager.addFilters(records);
+                logger.info("Recovered " + records.size() + " filters from: " + persistentFilePath());
             } catch (InvalidFilterException ex) {
                 if (allowRecoverFromCorruptedFile) {
                     logger.warn("Recover " + records.size() + " filters from corrupted file:" + persistentFilePath() +
