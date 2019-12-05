@@ -54,10 +54,9 @@ public final class Bootstrap {
         final GuavaBloomFilterFactory factory = new GuavaBloomFilterFactory();
         final BloomFilterManagerImpl<GuavaBloomFilter, ExpirableBloomFilterConfig> bloomFilterManager = newBloomFilterManager(factory);
         final PersistentManager<GuavaBloomFilter> persistentManager = new PersistentManager<>(
-                bloomFilterManager,
                 Paths.get(Configuration.persistentStorageDirectory()));
 
-        recoverPreviousBloomFilters(factory, persistentManager);
+        recoverPreviousBloomFilters(persistentManager, bloomFilterManager, factory);
 
         final List<ScheduledFuture<?>> scheduledFutures = schedulePeriodJobs(
                 registry,
@@ -144,8 +143,10 @@ public final class Bootstrap {
         return bloomFilterManager;
     }
 
-    private static void recoverPreviousBloomFilters(GuavaBloomFilterFactory factory, PersistentManager<GuavaBloomFilter> persistentManager) throws IOException {
-        persistentManager.recoverFiltersFromFile(factory, Configuration.allowRecoverFromCorruptedPersistentFile());
+    private static void recoverPreviousBloomFilters(PersistentManager<GuavaBloomFilter> persistentManager,
+                                                    BloomFilterManagerImpl<GuavaBloomFilter, ExpirableBloomFilterConfig> bloomFilterManager,
+                                                    GuavaBloomFilterFactory factory) throws IOException {
+        bloomFilterManager.addFilters(persistentManager.recoverFiltersFromFile(factory, Configuration.allowRecoverFromCorruptedPersistentFile()));
     }
 
     private static List<ScheduledFuture<?>> schedulePeriodJobs(MeterRegistry registry,
@@ -168,7 +169,7 @@ public final class Bootstrap {
 
         futures.add(scheduledExecutorService.scheduleWithFixedDelay(persistentFiltersTimer.wrap(() -> {
             try {
-                persistentManager.freezeAllFilters();
+                persistentManager.freezeAllFilters(bloomFilterManager);
             } catch (IOException ex) {
                 logger.error("Persistent bloom filters failed.", ex);
             } catch (Throwable t) {

@@ -24,7 +24,7 @@ public class BloomFilterManagerImplTest {
     private static final GuavaBloomFilterFactory factory = new GuavaBloomFilterFactory();
     private static final String testingFilterName = "TestingFilterName";
 
-    private BloomFilterManagerImpl<BloomFilter> manager;
+    private BloomFilterManagerImpl<BloomFilter, ExpirableBloomFilterConfig> manager;
 
     @Before
     public void setUp() {
@@ -75,7 +75,7 @@ public class BloomFilterManagerImplTest {
                         expiration,
                         null));
 
-        final BloomFilterManagerImpl<GuavaBloomFilter> manager = new BloomFilterManagerImpl<>(mockedFactory);
+        final BloomFilterManagerImpl<GuavaBloomFilter, ExpirableBloomFilterConfig> manager = new BloomFilterManagerImpl<>(mockedFactory);
         final CreateFilterResult<GuavaBloomFilter> firstCreateFilterResult = manager.createFilter(testingFilterName, config);
         assertThat(firstCreateFilterResult.isCreated()).isTrue();
 
@@ -229,7 +229,7 @@ public class BloomFilterManagerImplTest {
                                 expiration,
                                 null));
 
-        final BloomFilterManagerImpl<GuavaBloomFilter> manager = new BloomFilterManagerImpl<>(expiredFilterFactory);
+        final BloomFilterManagerImpl<GuavaBloomFilter, ExpirableBloomFilterConfig> manager = new BloomFilterManagerImpl<>(expiredFilterFactory);
         final GuavaBloomFilter prevFilter = manager.createFilter(testingFilterName, config).getFilter();
 
         manager.addListener(listener);
