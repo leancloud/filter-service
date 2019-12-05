@@ -55,10 +55,9 @@ public final class Bootstrap {
         final BloomFilterManagerImpl<GuavaBloomFilter, ExpirableBloomFilterConfig> bloomFilterManager = newBloomFilterManager(factory);
         final PersistentManager<GuavaBloomFilter> persistentManager = new PersistentManager<>(
                 bloomFilterManager,
-                new GuavaBloomFilterFactory(),
                 Paths.get(Configuration.persistentStorageDirectory()));
 
-        recoverPreviousBloomFilters(persistentManager);
+        recoverPreviousBloomFilters(factory, persistentManager);
 
         final List<ScheduledFuture<?>> scheduledFutures = schedulePeriodJobs(
                 registry,
@@ -145,8 +144,8 @@ public final class Bootstrap {
         return bloomFilterManager;
     }
 
-    private static void recoverPreviousBloomFilters(PersistentManager<GuavaBloomFilter> persistentManager) throws IOException {
-        persistentManager.recoverFiltersFromFile(Configuration.allowRecoverFromCorruptedPersistentFile());
+    private static void recoverPreviousBloomFilters(GuavaBloomFilterFactory factory, PersistentManager<GuavaBloomFilter> persistentManager) throws IOException {
+        persistentManager.recoverFiltersFromFile(factory, Configuration.allowRecoverFromCorruptedPersistentFile());
     }
 
     private static List<ScheduledFuture<?>> schedulePeriodJobs(MeterRegistry registry,

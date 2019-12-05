@@ -22,12 +22,10 @@ public final class PersistentManager<F extends BloomFilter> implements Closeable
     private static final String PERSISTENT_FILE_NAME = "snapshot";
 
     private final BloomFilterManager<F, ?> manager;
-    private final BloomFilterFactory<F, ?> factory;
     private final Path basePath;
     private final FileLock fileLock;
 
     public PersistentManager(BloomFilterManager<F, ?> manager,
-                             BloomFilterFactory<F, ?> factory,
                              Path persistentPath)
             throws IOException {
         final File dir = persistentPath.toFile();
@@ -40,7 +38,6 @@ public final class PersistentManager<F extends BloomFilter> implements Closeable
         this.fileLock = FileUtils.lockDirectory(persistentPath, LOCK_FILE_NAME);
         this.basePath = persistentPath;
         this.manager = manager;
-        this.factory = factory;
     }
 
     public synchronized void freezeAllFilters() throws IOException {
@@ -59,7 +56,7 @@ public final class PersistentManager<F extends BloomFilter> implements Closeable
         logger.debug("Persistent " + counter + " filters.");
     }
 
-    public synchronized void recoverFiltersFromFile(boolean allowRecoverFromCorruptedFile) throws IOException {
+    public synchronized void recoverFiltersFromFile(BloomFilterFactory<F, ?> factory, boolean allowRecoverFromCorruptedFile) throws IOException {
         if (persistentFilePath().toFile().exists()) {
             final List<FilterRecord<? extends F>> records = new ArrayList<>();
             try {
