@@ -132,9 +132,9 @@ public final class Bootstrap {
         this.persistentManager = new PersistentManager<>(Paths.get(Configuration.persistentStorageDirectory()));
         this.server = newServer(registry, opts, bloomFilterManager);
         this.jobs = new ArrayList<>();
-        this.jobs.add(new PurgeInvalidFiltersBackgroundJob<>(
+        this.jobs.add(new PurgeFiltersBackgroundJob<>(
                 registry,
-                bloomFilterManager,
+                new InvalidBloomFilterPurgatory<>(bloomFilterManager),
                 Configuration.purgeFilterInterval()));
         this.jobs.add(new PersistentFiltersBackgroundJob<>(
                 registry,

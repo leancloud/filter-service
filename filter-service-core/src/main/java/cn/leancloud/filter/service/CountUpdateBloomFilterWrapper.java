@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Objects;
 import java.util.concurrent.atomic.LongAdder;
 
 public final class CountUpdateBloomFilterWrapper implements BloomFilter {
@@ -45,5 +46,19 @@ public final class CountUpdateBloomFilterWrapper implements BloomFilter {
     @Override
     public void writeTo(OutputStream out) throws IOException {
         filter.writeTo(out);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final CountUpdateBloomFilterWrapper wrapper = (CountUpdateBloomFilterWrapper) o;
+        return filterUpdateTimesCounter.equals(wrapper.filterUpdateTimesCounter) &&
+                filter.equals(wrapper.filter);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(filterUpdateTimesCounter, filter);
     }
 }
