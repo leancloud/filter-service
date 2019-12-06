@@ -1,15 +1,19 @@
 package cn.leancloud.filter.service;
 
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Objects;
 import java.util.concurrent.atomic.LongAdder;
 
 public final class CountUpdateBloomFilterWrapper implements BloomFilter {
-    private final LongAdder filterUpdateCounter;
+    private final LongAdder filterUpdateTimesCounter;
+    @JsonUnwrapped
     private final BloomFilter filter;
 
-    CountUpdateBloomFilterWrapper(BloomFilter filter, LongAdder filterUpdateCounter) {
-        this.filterUpdateCounter = filterUpdateCounter;
+    CountUpdateBloomFilterWrapper(BloomFilter filter, LongAdder filterUpdateTimesCounter) {
+        this.filterUpdateTimesCounter = filterUpdateTimesCounter;
         this.filter = filter;
     }
 
@@ -30,7 +34,7 @@ public final class CountUpdateBloomFilterWrapper implements BloomFilter {
 
     @Override
     public boolean set(String value) {
-        filterUpdateCounter.increment();
+        filterUpdateTimesCounter.increment();
         return filter.set(value);
     }
 
@@ -42,5 +46,19 @@ public final class CountUpdateBloomFilterWrapper implements BloomFilter {
     @Override
     public void writeTo(OutputStream out) throws IOException {
         filter.writeTo(out);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final CountUpdateBloomFilterWrapper wrapper = (CountUpdateBloomFilterWrapper) o;
+        return filterUpdateTimesCounter.equals(wrapper.filterUpdateTimesCounter) &&
+                filter.equals(wrapper.filter);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(filterUpdateTimesCounter, filter);
     }
 }

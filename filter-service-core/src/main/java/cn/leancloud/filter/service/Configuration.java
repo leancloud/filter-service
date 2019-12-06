@@ -11,6 +11,10 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 public final class Configuration {
     private static Configuration instance = new Configuration();
@@ -31,10 +35,6 @@ public final class Configuration {
 
     static Duration purgeFilterInterval() {
         return instance.purgeFilterInterval;
-    }
-
-    static Duration persistentFiltersInterval() {
-        return instance.persistentFiltersInterval;
     }
 
     static int maxHttpConnections() {
@@ -73,9 +73,12 @@ public final class Configuration {
         return instance.channelOptions;
     }
 
+    static List<TriggerPersistenceCriteria> persistenceCriteria() {
+        return instance.persistenceCriteria;
+    }
+
     static String spec() {
         return "\npurgeFilterIntervalMillis: " + purgeFilterInterval().toMillis() + "\n" +
-                "persistentFiltersIntervalMillis: " + persistentFiltersInterval().toMillis() + "\n" +
                 "maxHttpConnections: " + maxHttpConnections() + "\n" +
                 "maxHttpRequestLength: " + maxHttpRequestLength() + "B\n" +
                 "defaultRequestTimeoutSeconds: " + defaultRequestTimeout().getSeconds() + "\n" +
@@ -84,10 +87,10 @@ public final class Configuration {
                 "defaultValidSecondsAfterCreate: " + defaultValidPeriodAfterCreate().getSeconds() + "\n" +
                 "persistentStorageDirectory: " + persistentStorageDirectory() + "\n" +
                 "allowRecoverFromCorruptedPersistentFile: " + allowRecoverFromCorruptedPersistentFile() + "\n" +
-                "channelOptions: " + channelOptions() + "\n";
+                "channelOptions: " + channelOptions() + "\n" +
+                "triggerPersistenceCriteria: " + persistenceCriteria() + "\n";
     }
 
-    private Duration persistentFiltersInterval;
     private Duration purgeFilterInterval;
     private int maxHttpConnections;
     private int maxHttpRequestLength;
@@ -98,9 +101,9 @@ public final class Configuration {
     private String persistentStorageDirectory;
     private boolean allowRecoverFromCorruptedPersistentFile;
     private SupportedChannelOptions channelOptions;
+    private List<TriggerPersistenceCriteria> persistenceCriteria;
 
     private Configuration() {
-        this.persistentFiltersInterval = Duration.ofSeconds(1);
         this.purgeFilterInterval = Duration.ofMillis(300);
         this.maxHttpConnections = 1000;
         this.maxHttpRequestLength = 10485760;
@@ -111,16 +114,7 @@ public final class Configuration {
         this.persistentStorageDirectory = System.getProperty("user.dir");
         this.allowRecoverFromCorruptedPersistentFile = true;
         this.channelOptions = new SupportedChannelOptions();
-    }
-
-    @JsonSetter("persistentFiltersIntervalMillis")
-    public void setPersistentFiltersInterval(int persistentFiltersIntervalMillis) {
-        if (persistentFiltersIntervalMillis <= 0) {
-            throw new IllegalArgumentException("persistentFiltersIntervalMillis: "
-                    + persistentFiltersIntervalMillis + " (expected: > 0)");
-        }
-
-        this.persistentFiltersInterval = Duration.ofMillis(persistentFiltersIntervalMillis);
+        this.persistenceCriteria = Collections.singletonList(new TriggerPersistenceCriteria(Duration.ofMinutes(5), 100));
     }
 
     @JsonSetter("purgeFilterIntervalMillis")
@@ -201,13 +195,23 @@ public final class Configuration {
         this.channelOptions = channelOptions;
     }
 
+    @JsonProperty("triggerPersistenceCriteria")
+    public void setPersistenceCriteria(@Nullable List<TriggerPersistenceCriteria> criteriaList) {
+        System.out.println("sd " + criteriaList);
+        if (criteriaList == null) {
+            criteriaList = Collections.emptyList();
+        }
+
+        this.persistenceCriteria = criteriaList;
+    }
+
     public static class SupportedChannelOptions {
         private int SO_RCVBUF = 2048;
         private int SO_SNDBUF = 2048;
         private int SO_BACKLOG = 2048;
         private boolean TCP_NODELAY = true;
 
-        @JsonProperty("SO_RCVBUF")
+        @JsonSetter("SO_RCVBUF")
         public void setSoRcvBuf(int SO_RCVBUF) {
             if (SO_RCVBUF <= 0) {
                 throw new IllegalArgumentException("SO_RCVBUF: "
@@ -216,7 +220,7 @@ public final class Configuration {
             this.SO_RCVBUF = SO_RCVBUF;
         }
 
-        @JsonProperty("SO_SNDBUF")
+        @JsonSetter("SO_SNDBUF")
         public void setSoSndbuf(int SO_SNDBUF) {
             if (SO_SNDBUF <= 0) {
                 throw new IllegalArgumentException("SO_SNDBUF: "
@@ -225,7 +229,7 @@ public final class Configuration {
             this.SO_SNDBUF = SO_SNDBUF;
         }
 
-        @JsonProperty("SO_BACKLOG")
+        @JsonSetter("SO_BACKLOG")
         public void setSoBacklog(int SO_BACKLOG) {
             if (SO_BACKLOG <= 0) {
                 throw new IllegalArgumentException("SO_BACKLOG: "
@@ -234,7 +238,7 @@ public final class Configuration {
             this.SO_BACKLOG = SO_BACKLOG;
         }
 
-        @JsonProperty("TCP_NODELAY")
+        @JsonSetter("TCP_NODELAY")
         public void setTcpNodelay(boolean TCP_NODELAY) {
             this.TCP_NODELAY = TCP_NODELAY;
         }
@@ -256,12 +260,89 @@ public final class Configuration {
         }
 
         @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final SupportedChannelOptions that = (SupportedChannelOptions) o;
+            return SO_RCVBUF == that.SO_RCVBUF &&
+                    SO_SNDBUF == that.SO_SNDBUF &&
+                    SO_BACKLOG == that.SO_BACKLOG &&
+                    TCP_NODELAY == that.TCP_NODELAY;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(SO_RCVBUF, SO_SNDBUF, SO_BACKLOG, TCP_NODELAY);
+        }
+
+        @Override
         public String toString() {
             return "{" +
                     "SO_RCVBUF=" + SO_RCVBUF() +
                     ", SO_SNDBUF=" + SO_SNDBUF() +
                     ", SO_BACKLOG=" + SO_BACKLOG() +
                     ", TCP_NODELAY=" + TCP_NODELAY() +
+                    '}';
+        }
+    }
+
+    public static class TriggerPersistenceCriteria {
+        private Duration checkingPeriod;
+        private int updatesThreshold;
+
+        private TriggerPersistenceCriteria() {}
+
+        public TriggerPersistenceCriteria(Duration checkingPeriod, int updatesThreshold) {
+            this.checkingPeriod = checkingPeriod;
+            this.updatesThreshold = updatesThreshold;
+        }
+
+        @JsonSetter("periodInSeconds")
+        public void setCheckingPeriod(long periodInSeconds) {
+            if (periodInSeconds <= 0) {
+                throw new IllegalArgumentException("periodInSeconds: "
+                        + periodInSeconds + " (expected: > 0)");
+            }
+            this.checkingPeriod = Duration.ofSeconds(periodInSeconds);
+        }
+
+        @JsonSetter("updatesMoreThan")
+        public void setUpdatesThreshold(int updatesMoreThan) {
+            if (updatesMoreThan <= 0) {
+                throw new IllegalArgumentException("updatesMoreThan: "
+                        + updatesMoreThan + " (expected: > 0)");
+            }
+
+            this.updatesThreshold = updatesMoreThan;
+        }
+
+        public Duration checkingPeriod() {
+            return checkingPeriod;
+        }
+
+        public int updatesThreshold() {
+            return updatesThreshold;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final TriggerPersistenceCriteria that = (TriggerPersistenceCriteria) o;
+            return updatesThreshold == that.updatesThreshold &&
+                    checkingPeriod.equals(that.checkingPeriod);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(checkingPeriod, updatesThreshold);
+        }
+
+        @Override
+        public String toString() {
+            return "{" +
+                    "periodInSeconds=" + checkingPeriod.getSeconds() +
+                    ", updatesMoreThan=" + updatesThreshold +
                     '}';
         }
     }
