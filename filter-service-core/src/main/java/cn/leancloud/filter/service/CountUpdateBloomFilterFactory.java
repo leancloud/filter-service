@@ -7,20 +7,21 @@ import java.util.concurrent.atomic.LongAdder;
 public final class CountUpdateBloomFilterFactory<C extends BloomFilterConfig<? extends C>>
         implements BloomFilterFactory<CountUpdateBloomFilterWrapper, C> {
     private final BloomFilterFactory<?, C> factory;
-    private final LongAdder filterUpdateCounter;
+    private final LongAdder filterUpdateTimesCounter;
 
-    public CountUpdateBloomFilterFactory(BloomFilterFactory<?, C> factory, LongAdder filterUpdateCounter) {
+    public CountUpdateBloomFilterFactory(BloomFilterFactory<?, C> factory, LongAdder filterUpdateTimesCounter) {
         this.factory = factory;
-        this.filterUpdateCounter = filterUpdateCounter;
+        this.filterUpdateTimesCounter = filterUpdateTimesCounter;
     }
 
     @Override
     public CountUpdateBloomFilterWrapper createFilter(C config) {
-        return new CountUpdateBloomFilterWrapper(factory.createFilter(config), filterUpdateCounter);
+        filterUpdateTimesCounter.increment();
+        return new CountUpdateBloomFilterWrapper(factory.createFilter(config), filterUpdateTimesCounter);
     }
 
     @Override
     public CountUpdateBloomFilterWrapper readFrom(InputStream stream) throws IOException {
-        return new CountUpdateBloomFilterWrapper(factory.readFrom(stream), filterUpdateCounter);
+        return new CountUpdateBloomFilterWrapper(factory.readFrom(stream), filterUpdateTimesCounter);
     }
 }

@@ -5,11 +5,17 @@ purgeFilterIntervalMillis: 300
 # the interval for the persistent thread to scan all the filters and persistent them on disk
 persistentFiltersIntervalMillis: 5000
 
+# config when to save all the filters on disk. Will save the filters if both the given number of seconds and the given
+# number of update operations against the service occurred.
+# In the example below the behaviour will be to save:
+# after 900 sec if at least 1 filter update operation occurred
+# after 300 sec if at least 100 filter update operation occurred
+# after 60 sec if at least 10000 filter update operation occurred
 triggerPersistenceCriteria:
   - periodInSeconds: 900
     updatesMoreThan: 1
   - periodInSeconds: 300
-    updatesMoreThan: 10
+    updatesMoreThan: 100
   - periodInSeconds: 60
     updatesMoreThan: 10000
 

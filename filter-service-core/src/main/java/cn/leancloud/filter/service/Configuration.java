@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 public final class Configuration {
     private static Configuration instance = new Configuration();
@@ -34,10 +35,6 @@ public final class Configuration {
 
     static Duration purgeFilterInterval() {
         return instance.purgeFilterInterval;
-    }
-
-    static Duration persistentFiltersInterval() {
-        return instance.persistentFiltersInterval;
     }
 
     static int maxHttpConnections() {
@@ -82,7 +79,6 @@ public final class Configuration {
 
     static String spec() {
         return "\npurgeFilterIntervalMillis: " + purgeFilterInterval().toMillis() + "\n" +
-                "persistentFiltersIntervalMillis: " + persistentFiltersInterval().toMillis() + "\n" +
                 "maxHttpConnections: " + maxHttpConnections() + "\n" +
                 "maxHttpRequestLength: " + maxHttpRequestLength() + "B\n" +
                 "defaultRequestTimeoutSeconds: " + defaultRequestTimeout().getSeconds() + "\n" +
@@ -95,7 +91,6 @@ public final class Configuration {
                 "triggerPersistenceCriteria: " + persistenceCriteria() + "\n";
     }
 
-    private Duration persistentFiltersInterval;
     private Duration purgeFilterInterval;
     private int maxHttpConnections;
     private int maxHttpRequestLength;
@@ -109,7 +104,6 @@ public final class Configuration {
     private List<TriggerPersistenceCriteria> persistenceCriteria;
 
     private Configuration() {
-        this.persistentFiltersInterval = Duration.ofSeconds(1);
         this.purgeFilterInterval = Duration.ofMillis(300);
         this.maxHttpConnections = 1000;
         this.maxHttpRequestLength = 10485760;
@@ -120,17 +114,7 @@ public final class Configuration {
         this.persistentStorageDirectory = System.getProperty("user.dir");
         this.allowRecoverFromCorruptedPersistentFile = true;
         this.channelOptions = new SupportedChannelOptions();
-        this.persistenceCriteria = Collections.emptyList();
-    }
-
-    @JsonSetter("persistentFiltersIntervalMillis")
-    public void setPersistentFiltersInterval(int persistentFiltersIntervalMillis) {
-        if (persistentFiltersIntervalMillis <= 0) {
-            throw new IllegalArgumentException("persistentFiltersIntervalMillis: "
-                    + persistentFiltersIntervalMillis + " (expected: > 0)");
-        }
-
-        this.persistentFiltersInterval = Duration.ofMillis(persistentFiltersIntervalMillis);
+        this.persistenceCriteria = Collections.singletonList(new TriggerPersistenceCriteria(Duration.ofMinutes(5), 100));
     }
 
     @JsonSetter("purgeFilterIntervalMillis")
@@ -213,6 +197,7 @@ public final class Configuration {
 
     @JsonProperty("triggerPersistenceCriteria")
     public void setPersistenceCriteria(@Nullable List<TriggerPersistenceCriteria> criteriaList) {
+        System.out.println("sd " + criteriaList);
         if (criteriaList == null) {
             criteriaList = Collections.emptyList();
         }
