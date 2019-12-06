@@ -49,6 +49,7 @@ public final class FilterRecord<F extends BloomFilter> {
         // write body first then we can know how large the body is
         channel.position(startPos + HEADER_OVERHEAD);
 
+        // we don't need to close this stream. it'll be effectively closed when the underlying channel closed
         final ChecksumedBufferedOutputStream stream = new ChecksumedBufferedOutputStream(
                 Channels.newOutputStream(channel),
                 Configuration.defaultChannelBufferSizeForFilterPersistence());

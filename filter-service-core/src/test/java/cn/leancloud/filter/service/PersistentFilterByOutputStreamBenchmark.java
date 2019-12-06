@@ -21,8 +21,8 @@ import java.time.ZonedDateTime;
 import java.util.concurrent.TimeUnit;
 
 @State(Scope.Thread)
-@BenchmarkMode({Mode.SampleTime})
-@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@BenchmarkMode({Mode.Throughput})
+@OutputTimeUnit(TimeUnit.SECONDS)
 public class PersistentFilterByOutputStreamBenchmark {
     GuavaBloomFilter filter;
     FileChannel fileChannel;
@@ -69,17 +69,19 @@ public class PersistentFilterByOutputStreamBenchmark {
 
     @Benchmark
     public int testBufferedOutputStream() throws Exception {
-        long pos = fileChannel.position();
-        BufferedOutputStream bout = new BufferedOutputStream(Channels.newOutputStream(fileChannel), 102400);
+        final long pos = fileChannel.position();
+        final BufferedOutputStream bout = new BufferedOutputStream(Channels.newOutputStream(fileChannel), 102400);
         filter.writeTo(bout);
+        bout.flush();
         return (int) (fileChannel.position() - pos);
     }
 
     @Benchmark
     public int testChecksumedBufferedOutputStream() throws Exception {
-        long pos = fileChannel.position();
-        ChecksumedBufferedOutputStream bout = new ChecksumedBufferedOutputStream(Channels.newOutputStream(fileChannel), 102400);
+        final long pos = fileChannel.position();
+        final ChecksumedBufferedOutputStream bout = new ChecksumedBufferedOutputStream(Channels.newOutputStream(fileChannel), 102400);
         filter.writeTo(bout);
+        bout.flush();
         return (int) (fileChannel.position() - pos);
     }
 

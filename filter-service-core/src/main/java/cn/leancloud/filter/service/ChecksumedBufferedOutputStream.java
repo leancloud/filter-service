@@ -119,7 +119,7 @@ public final class ChecksumedBufferedOutputStream extends FilterOutputStream {
         out.flush();
     }
 
-    public synchronized long checksum() {
+    synchronized long checksum() {
         return crc.getValue();
     }
 }
