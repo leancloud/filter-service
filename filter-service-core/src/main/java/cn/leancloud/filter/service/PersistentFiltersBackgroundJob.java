@@ -24,10 +24,10 @@ final class PersistentFiltersBackgroundJob<F extends BloomFilter> implements Bac
     private final List<TriggerPersistenceCriteria> persistenceCriteria;
 
     PersistentFiltersBackgroundJob(MeterRegistry registry,
-                                           BloomFilterManager<F, ?> bloomFilterManager,
-                                           PersistentManager<F> persistentManager,
-                                           LongAdder filterUpdateCounter,
-                                           List<TriggerPersistenceCriteria> persistenceCriteria) {
+                                   BloomFilterManager<F, ?> bloomFilterManager,
+                                   PersistentManager<F> persistentManager,
+                                   LongAdder filterUpdateCounter,
+                                   List<TriggerPersistenceCriteria> persistenceCriteria) {
         this.persistentFiltersTimer = registry.timer("filter-service.persistentFilters");
         this.bloomFilterManager = bloomFilterManager;
         this.persistentManager = persistentManager;
@@ -43,7 +43,12 @@ final class PersistentFiltersBackgroundJob<F extends BloomFilter> implements Bac
             futures.add(scheduledExecutorService.scheduleWithFixedDelay(() -> {
                 persistenceLock.lock();
                 try {
-                    if (filterUpdateCounter.sum() > c.updatesThreshold()) {
+                    final long sum = filterUpdateCounter.sum();
+                    if (sum > c.updatesThreshold()) {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Updated {} times in last {} seconds meets threshold {} to persistence filters",
+                                    sum, c.checkingPeriod().getSeconds(), c.updatesThreshold());
+                        }
                         filterUpdateCounter.reset();
                         doPersistence();
                     }
@@ -62,17 +67,18 @@ final class PersistentFiltersBackgroundJob<F extends BloomFilter> implements Bac
     }
 
     private void doPersistence() {
-        persistentFiltersTimer.wrap(() -> {
-            try {
-                persistentManager.freezeAllFilters(bloomFilterManager);
-            } catch (IOException ex) {
-                logger.error("Persistent bloom filters failed.", ex);
-            } catch (Throwable t) {
-                // sorry for the duplication, but currently I don't figure out another way
-                // to catch the direct buffer OOM when freeze filters to file
-                logger.error("Persistent bloom filters failed.", t);
-                throw t;
-            }
-        });
+        final long start = System.nanoTime();
+        try {
+            persistentManager.freezeAllFilters(bloomFilterManager);
+        } catch (IOException ex) {
+            logger.error("Persistent bloom filters failed.", ex);
+        } catch (Throwable t) {
+            // sorry for the duplication, but currently I don't figure out another way
+            // to catch the direct buffer OOM when freeze filters to file
+            logger.error("Persistent bloom filters failed.", t);
+            throw t;
+        } finally {
+            persistentFiltersTimer.record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+        }
     }
 }

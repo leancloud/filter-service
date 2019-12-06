@@ -1,11 +1,14 @@
 package cn.leancloud.filter.service;
 
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.LongAdder;
 
 public final class CountUpdateBloomFilterWrapper implements BloomFilter {
     private final LongAdder filterUpdateTimesCounter;
+    @JsonUnwrapped
     private final BloomFilter filter;
 
     CountUpdateBloomFilterWrapper(BloomFilter filter, LongAdder filterUpdateTimesCounter) {

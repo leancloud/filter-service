@@ -2,9 +2,6 @@
 # the interval for the purge thread to scan all the filters to find and clean expired filters
 purgeFilterIntervalMillis: 300
 
-# the interval for the persistent thread to scan all the filters and persistent them on disk
-persistentFiltersIntervalMillis: 5000
-
 # config when to save all the filters on disk. Will save the filters if both the given number of seconds and the given
 # number of update operations against the service occurred.
 # In the example below the behaviour will be to save:
