@@ -9,9 +9,13 @@ public final class CountUpdateBloomFilterFactory<C extends BloomFilterConfig<? e
     private final BloomFilterFactory<?, C> factory;
     private final LongAdder filterUpdateTimesCounter;
 
-    public CountUpdateBloomFilterFactory(BloomFilterFactory<?, C> factory, LongAdder filterUpdateTimesCounter) {
+    CountUpdateBloomFilterFactory(BloomFilterFactory<?, C> factory, LongAdder filterUpdateTimesCounter) {
         this.factory = factory;
         this.filterUpdateTimesCounter = filterUpdateTimesCounter;
+    }
+
+    LongAdder filterUpdateTimesCounter() {
+        return filterUpdateTimesCounter;
     }
 
     @Override
