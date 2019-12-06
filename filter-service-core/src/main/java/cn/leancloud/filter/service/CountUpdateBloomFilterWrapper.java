@@ -5,11 +5,11 @@ import java.io.OutputStream;
 import java.util.concurrent.atomic.LongAdder;
 
 public final class CountUpdateBloomFilterWrapper implements BloomFilter {
-    private final LongAdder counter;
+    private final LongAdder filterUpdateCounter;
     private final BloomFilter filter;
 
-    public CountUpdateBloomFilterWrapper(LongAdder counter, BloomFilter filter) {
-        this.counter = counter;
+    CountUpdateBloomFilterWrapper(BloomFilter filter, LongAdder filterUpdateCounter) {
+        this.filterUpdateCounter = filterUpdateCounter;
         this.filter = filter;
     }
 
@@ -30,7 +30,7 @@ public final class CountUpdateBloomFilterWrapper implements BloomFilter {
 
     @Override
     public boolean set(String value) {
-        counter.increment();
+        filterUpdateCounter.increment();
         return filter.set(value);
     }
 

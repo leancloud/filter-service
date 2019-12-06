@@ -152,35 +152,38 @@ public final class Bootstrap {
         private final Timer persistentFiltersTimer;
         private final BloomFilterManager<F, ?> bloomFilterManager;
         private final PersistentManager<F> persistentManager;
-        private final LongAdder adder;
+        private final LongAdder filterUpdateCounter;
         @Nullable
         private ScheduledFuture<?> future;
 
         private PersistentFiltersJob(MeterRegistry registry,
                                      BloomFilterManager<F, ?> bloomFilterManager,
                                      PersistentManager<F> persistentManager,
-                                     LongAdder adder) {
+                                     LongAdder filterUpdateCounter) {
             this.persistentFiltersTimer = registry.timer("filter-service.persistentFilters");
             this.bloomFilterManager = bloomFilterManager;
             this.persistentManager = persistentManager;
-            this.adder = adder;
+            this.filterUpdateCounter = filterUpdateCounter;
         }
 
         @Override
         public void start(ScheduledExecutorService scheduledExecutorService) {
-            future = scheduledExecutorService.scheduleWithFixedDelay(persistentFiltersTimer.wrap(() -> {
-                try {
-                    persistentManager.freezeAllFilters(bloomFilterManager);
-                } catch (IOException ex) {
-                    logger.error("Persistent bloom filters failed.", ex);
-                } catch (Throwable t) {
-                    // sorry for the duplication, but currently I don't figure out another way
-                    // to catch the direct buffer OOM when freeze filters to file
-                    logger.error("Persistent bloom filters failed.", t);
-                    throw t;
+            future = scheduledExecutorService.scheduleWithFixedDelay(() -> {
+                if (filterUpdateCounter.sumThenReset() > 1000L) {
+                    persistentFiltersTimer.wrap(() -> {
+                        try {
+                            persistentManager.freezeAllFilters(bloomFilterManager);
+                        } catch (IOException ex) {
+                            logger.error("Persistent bloom filters failed.", ex);
+                        } catch (Throwable t) {
+                            // sorry for the duplication, but currently I don't figure out another way
+                            // to catch the direct buffer OOM when freeze filters to file
+                            logger.error("Persistent bloom filters failed.", t);
+                            throw t;
+                        }
+                    });
                 }
-
-            }), 0, Configuration.persistentFiltersInterval().toMillis(), TimeUnit.MILLISECONDS);
+            }, 0, Configuration.persistentFiltersInterval().toMillis(), TimeUnit.MILLISECONDS);
         }
 
         @Override
@@ -200,8 +203,8 @@ public final class Bootstrap {
     private final List<Job> jobs;
 
     public Bootstrap(ServerOptions opts) throws Exception {
+        final LongAdder filterUpdateCounter = new LongAdder();
         this.metricsService = loadMetricsService();
-        LongAdder adder = new LongAdder();
         this.scheduledExecutorService = Executors.newScheduledThreadPool(10,
                 new ThreadFactoryBuilder()
                         .setNameFormat("scheduled-worker-%s")
@@ -209,13 +212,13 @@ public final class Bootstrap {
                                 logger.error("Scheduled worker thread: " + t.getName() + " got uncaught exception.", e))
                         .build());
         final MeterRegistry registry = metricsService.createMeterRegistry();
-        this.factory = new CountUpdateBloomFilterFactory<>(new GuavaBloomFilterFactory(), adder);
+        this.factory = new CountUpdateBloomFilterFactory<>(new GuavaBloomFilterFactory(), filterUpdateCounter);
         this.bloomFilterManager = newBloomFilterManager(factory);
         this.persistentManager = new PersistentManager<>(Paths.get(Configuration.persistentStorageDirectory()));
         this.server = newServer(registry, opts, bloomFilterManager);
         this.jobs = new ArrayList<>();
         this.jobs.add(new PurgeInvalidFiltersJob<>(registry, bloomFilterManager));
-        this.jobs.add(new PersistentFiltersJob<>(registry, bloomFilterManager, persistentManager, adder));
+        this.jobs.add(new PersistentFiltersJob<>(registry, bloomFilterManager, persistentManager, filterUpdateCounter));
     }
 
     private void start() throws Exception {
