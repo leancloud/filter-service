@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public final class PersistentManager<F extends BloomFilter> implements Closeable {
+public class PersistentManager<F extends BloomFilter> implements Closeable {
     private static final Logger logger = LoggerFactory.getLogger(PersistentManager.class);
     private static final String LOCK_FILE_NAME = "lock";
     private static final String TEMPORARY_PERSISTENT_FILE_SUFFIX = ".tmp";
@@ -38,11 +38,11 @@ public final class PersistentManager<F extends BloomFilter> implements Closeable
         this.basePath = persistentPath;
     }
 
-    public synchronized void freezeAllFilters(BloomFilterManager<F, ?> bloomFilterManager) throws IOException {
+    public synchronized void freezeAllFilters(Iterable<FilterRecord<F>> records) throws IOException {
         final Path tempPath = temporaryPersistentFilePath();
         int counter = 0;
         try (FileChannel channel = FileChannel.open(tempPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
-            for (FilterRecord<F> record : bloomFilterManager) {
+            for (FilterRecord<F> record : records) {
                 record.writeFullyTo(channel);
                 counter++;
             }

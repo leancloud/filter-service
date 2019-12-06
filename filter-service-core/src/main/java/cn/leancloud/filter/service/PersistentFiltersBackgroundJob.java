@@ -6,6 +6,7 @@ import io.micrometer.core.instrument.Timer;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -16,22 +17,22 @@ import java.util.concurrent.locks.ReentrantLock;
 
 final class PersistentFiltersBackgroundJob<F extends BloomFilter> implements BackgroundJob {
     private final Timer persistentFiltersTimer;
-    private final BloomFilterManager<F, ?> bloomFilterManager;
+    private final Iterable<FilterRecord<F>> records;
     private final PersistentManager<F> persistentManager;
-    private final LongAdder filterUpdateCounter;
+    private final LongAdder filterUpdateTimesCounter;
     private final List<ScheduledFuture<?>> futures;
     private final Lock persistenceLock;
-    private final List<TriggerPersistenceCriteria> persistenceCriteria;
+    private final Collection<TriggerPersistenceCriteria> persistenceCriteria;
 
     PersistentFiltersBackgroundJob(MeterRegistry registry,
-                                   BloomFilterManager<F, ?> bloomFilterManager,
+                                   Iterable<FilterRecord<F>> records,
                                    PersistentManager<F> persistentManager,
-                                   LongAdder filterUpdateCounter,
-                                   List<TriggerPersistenceCriteria> persistenceCriteria) {
+                                   LongAdder filterUpdateTimesCounter,
+                                   Collection<TriggerPersistenceCriteria> persistenceCriteria) {
         this.persistentFiltersTimer = registry.timer("filter-service.persistentFilters");
-        this.bloomFilterManager = bloomFilterManager;
+        this.records = records;
         this.persistentManager = persistentManager;
-        this.filterUpdateCounter = filterUpdateCounter;
+        this.filterUpdateTimesCounter = filterUpdateTimesCounter;
         this.futures = new ArrayList<>();
         this.persistenceLock = new ReentrantLock();
         this.persistenceCriteria = persistenceCriteria;
@@ -43,13 +44,13 @@ final class PersistentFiltersBackgroundJob<F extends BloomFilter> implements Bac
             futures.add(scheduledExecutorService.scheduleWithFixedDelay(() -> {
                 persistenceLock.lock();
                 try {
-                    final long sum = filterUpdateCounter.sum();
+                    final long sum = filterUpdateTimesCounter.sum();
                     if (sum > c.updatesThreshold()) {
                         if (logger.isDebugEnabled()) {
                             logger.debug("Updated {} times in last {} seconds meets threshold {} to persistence filters",
                                     sum, c.checkingPeriod().getSeconds(), c.updatesThreshold());
                         }
-                        filterUpdateCounter.reset();
+                        filterUpdateTimesCounter.reset();
                         doPersistence();
                     }
                 } finally {
@@ -69,7 +70,7 @@ final class PersistentFiltersBackgroundJob<F extends BloomFilter> implements Bac
     private void doPersistence() {
         final long start = System.nanoTime();
         try {
-            persistentManager.freezeAllFilters(bloomFilterManager);
+            persistentManager.freezeAllFilters(records);
         } catch (IOException ex) {
             logger.error("Persistent bloom filters failed.", ex);
         } catch (Throwable t) {
