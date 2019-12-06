@@ -87,7 +87,7 @@ public interface BloomFilterManager<F extends BloomFilter, C extends BloomFilter
     void addFilters(Iterable<FilterRecord<? extends F>> filters);
 
     /**
-     * Get the Bloom filter with the input name.
+     * Get the Bloom filter with the input name including the invalid one.
      *
      * @param name the name of the target Bloom filter
      * @return the Bloom filter if it exists, or null if no Bloom filter with
@@ -99,17 +99,18 @@ public interface BloomFilterManager<F extends BloomFilter, C extends BloomFilter
     /**
      * Get the Bloom filter with the input name. The difference between this method
      * and {@link #getFilter(String)} is that this method will throw a {@link FilterNotFoundException}
-     * instead of returns null when there's no Bloom filter with the target name in this manager.
+     * instead of returns the filter when it is invalid or null when there's no Bloom filter with
+     * the target name in this manager.
      *
      * @param name the name of the target Bloom filter
      * @return the Bloom filter with the target name in this manager
      * @throws FilterNotFoundException when there's no Bloom filter with the target name
      *                                 exists in this manager
      */
-    F ensureGetFilter(String name) throws FilterNotFoundException;
+    F ensureGetValidFilter(String name) throws FilterNotFoundException;
 
     /**
-     * Returns all the names of the Bloom filters in this manager.
+     * Returns all the names of the Bloom filters in this manager including the invalid ones.
      *
      * @return a list of names of the Bloom filters in this manager.
      */

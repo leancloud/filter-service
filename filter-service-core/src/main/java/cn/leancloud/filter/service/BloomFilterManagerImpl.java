@@ -10,24 +10,24 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
-public final class BloomFilterManagerImpl<T extends BloomFilter>
-        implements BloomFilterManager<T, ExpirableBloomFilterConfig>,
-        Listenable<BloomFilterManagerListener<T, ExpirableBloomFilterConfig>> {
+public final class BloomFilterManagerImpl<T extends BloomFilter, C extends BloomFilterConfig<? extends C>>
+        implements BloomFilterManager<T, C>,
+        Listenable<BloomFilterManagerListener<? super T, C>> {
     private static final FilterNotFoundException FILTER_NOT_FOUND_EXCEPTION = new FilterNotFoundException();
 
-    private final List<BloomFilterManagerListener<T, ExpirableBloomFilterConfig>> listeners;
+    private final List<BloomFilterManagerListener<? super T, C>> listeners;
     private final ConcurrentHashMap<String, T> filterMap;
-    private final BloomFilterFactory<? extends T, ? super ExpirableBloomFilterConfig> factory;
+    private final BloomFilterFactory<? extends T, ? super C> factory;
     private final Lock filterMapLock = new ReentrantLock();
 
-    BloomFilterManagerImpl(BloomFilterFactory<? extends T, ? super ExpirableBloomFilterConfig> factory) {
+    BloomFilterManagerImpl(BloomFilterFactory<? extends T, ? super C> factory) {
         this.filterMap = new ConcurrentHashMap<>();
         this.factory = factory;
         this.listeners = new CopyOnWriteArrayList<>();
     }
 
     @Override
-    public CreateFilterResult<T> createFilter(String name, ExpirableBloomFilterConfig config, boolean overwrite) {
+    public CreateFilterResult<T> createFilter(String name, C config, boolean overwrite) {
         T filter;
         T prevFilter;
         boolean created = false;
@@ -75,9 +75,9 @@ public final class BloomFilterManagerImpl<T extends BloomFilter>
     }
 
     @Override
-    public T ensureGetFilter(String name) throws FilterNotFoundException {
+    public T ensureGetValidFilter(String name) throws FilterNotFoundException {
         final T filter = getFilter(name);
-        if (filter == null) {
+        if (filter == null || !filter.valid()) {
             throw FILTER_NOT_FOUND_EXCEPTION;
         }
         return filter;
@@ -131,16 +131,16 @@ public final class BloomFilterManagerImpl<T extends BloomFilter>
     }
 
     @Override
-    public void addListener(BloomFilterManagerListener<T, ExpirableBloomFilterConfig> listener) {
+    public void addListener(BloomFilterManagerListener<? super T, C> listener) {
         listeners.add(listener);
     }
 
     @Override
-    public boolean removeListener(BloomFilterManagerListener<T, ExpirableBloomFilterConfig> listener) {
+    public boolean removeListener(BloomFilterManagerListener<? super T, C> listener) {
         return listeners.remove(listener);
     }
 
-    private void notifyBloomFilterCreated(String name, ExpirableBloomFilterConfig config, T filter) {
+    private void notifyBloomFilterCreated(String name, C config, T filter) {
         notifyListeners(l -> l.onBloomFilterCreated(name, config, filter));
     }
 
@@ -148,8 +148,8 @@ public final class BloomFilterManagerImpl<T extends BloomFilter>
         notifyListeners(l -> l.onBloomFilterRemoved(name, filter));
     }
 
-    private void notifyListeners(Consumer<BloomFilterManagerListener<T, ExpirableBloomFilterConfig>> consumer) {
-        for (BloomFilterManagerListener<T, ExpirableBloomFilterConfig> listener : listeners) {
+    private void notifyListeners(Consumer<BloomFilterManagerListener<? super T, C>> consumer) {
+        for (BloomFilterManagerListener<? super T, C> listener : listeners) {
             consumer.accept(listener);
         }
     }

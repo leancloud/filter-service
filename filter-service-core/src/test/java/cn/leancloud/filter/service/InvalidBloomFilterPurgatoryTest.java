@@ -9,7 +9,7 @@ import java.time.ZonedDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ExpirableBloomFilterPurgatoryTest {
+public class InvalidBloomFilterPurgatoryTest {
     private static final String testingFilterName = "TestingFilterName";
     @Test
     public void testPurge() {
@@ -26,10 +26,10 @@ public class ExpirableBloomFilterPurgatoryTest {
                         expirationTime,
                         null));
 
-        final BloomFilterManagerImpl<GuavaBloomFilter> manager = new BloomFilterManagerImpl<>(mockedFactory);
+        final BloomFilterManagerImpl<GuavaBloomFilter, ExpirableBloomFilterConfig> manager = new BloomFilterManagerImpl<>(mockedFactory);
         final GuavaBloomFilter filter = manager.createFilter(testingFilterName, config).getFilter();
-        final ExpirableBloomFilterPurgatory<GuavaBloomFilter> purgatory =
-                new ExpirableBloomFilterPurgatory<>(manager);
+        final InvalidBloomFilterPurgatory<GuavaBloomFilter> purgatory =
+                new InvalidBloomFilterPurgatory<>(manager);
 
         assertThat(filter.expired()).isTrue();
         assertThat(manager.getFilter(testingFilterName)).isSameAs(filter);

@@ -86,7 +86,7 @@ public class BloomFilterHttpServiceTest {
     @Test
     public void testGetFilterInfo() throws Exception {
         final GuavaBloomFilter expectedFilter = factory.createFilter(new ExpirableBloomFilterConfig());
-        when(mockedManager.ensureGetFilter(testingFilterName)).thenReturn(expectedFilter);
+        when(mockedManager.ensureGetValidFilter(testingFilterName)).thenReturn(expectedFilter);
         final GuavaBloomFilter filter = mapper.convertValue(service.getFilterInfo(testingFilterName), GuavaBloomFilter.class);
         assertThat(filter).isEqualTo(expectedFilter);
     }
@@ -126,7 +126,7 @@ public class BloomFilterHttpServiceTest {
     public void testCheckAndSet() throws Exception {
         final String testingValue = "testing-value";
         final GuavaBloomFilter testingFilter = factory.createFilter(new ExpirableBloomFilterConfig());
-        when(mockedManager.ensureGetFilter(testingFilterName)).thenReturn(testingFilter);
+        when(mockedManager.ensureGetValidFilter(testingFilterName)).thenReturn(testingFilter);
         final ObjectNode param = mapper.createObjectNode();
         param.put("value", testingValue);
         final JsonNode res = service.checkAndSet(testingFilterName, param);
@@ -159,7 +159,7 @@ public class BloomFilterHttpServiceTest {
         testingValues.add("testing-value2");
         testingValues.add("testing-value3");
         final GuavaBloomFilter testingFilter = factory.createFilter(new ExpirableBloomFilterConfig());
-        when(mockedManager.ensureGetFilter(testingFilterName)).thenReturn(testingFilter);
+        when(mockedManager.ensureGetValidFilter(testingFilterName)).thenReturn(testingFilter);
         final ArrayNode values = mapper.createArrayNode();
         testingValues.forEach(values::add);
         final ObjectNode param = mapper.createObjectNode();
@@ -197,7 +197,7 @@ public class BloomFilterHttpServiceTest {
     public void testCheck() throws Exception {
         final String testingValue = "testing-value";
         final GuavaBloomFilter testingFilter = factory.createFilter(new ExpirableBloomFilterConfig());
-        when(mockedManager.ensureGetFilter(testingFilterName)).thenReturn(testingFilter);
+        when(mockedManager.ensureGetValidFilter(testingFilterName)).thenReturn(testingFilter);
         final ObjectNode param = mapper.createObjectNode();
         param.put("value", testingValue);
         final JsonNode res = service.check(testingFilterName, param);
@@ -225,7 +225,7 @@ public class BloomFilterHttpServiceTest {
     @Test
     public void testMultiCheckAndSet() throws Exception {
         final GuavaBloomFilter testingFilter = factory.createFilter(new ExpirableBloomFilterConfig());
-        when(mockedManager.ensureGetFilter(testingFilterName)).thenReturn(testingFilter);
+        when(mockedManager.ensureGetValidFilter(testingFilterName)).thenReturn(testingFilter);
         final ArrayNode values = mapper.createArrayNode();
         values.add("testing-value1");
         values.add("testing-value2");

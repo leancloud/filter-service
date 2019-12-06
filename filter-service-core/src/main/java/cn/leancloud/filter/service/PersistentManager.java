@@ -12,23 +12,20 @@ import java.nio.channels.FileLock;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public final class PersistentManager<F extends BloomFilter> implements Closeable {
+public class PersistentManager<F extends BloomFilter> implements Closeable {
     private static final Logger logger = LoggerFactory.getLogger(PersistentManager.class);
     private static final String LOCK_FILE_NAME = "lock";
     private static final String TEMPORARY_PERSISTENT_FILE_SUFFIX = ".tmp";
     private static final String PERSISTENT_FILE_SUFFIX = ".db";
     private static final String PERSISTENT_FILE_NAME = "snapshot";
 
-    private final BloomFilterManager<F, ?> manager;
-    private final BloomFilterFactory<F, ?> factory;
     private final Path basePath;
     private final FileLock fileLock;
 
-    public PersistentManager(BloomFilterManager<F, ?> manager,
-                             BloomFilterFactory<F, ?> factory,
-                             Path persistentPath)
+    public PersistentManager(Path persistentPath)
             throws IOException {
         final File dir = persistentPath.toFile();
         if (dir.exists() && !dir.isDirectory()) {
@@ -39,15 +36,13 @@ public final class PersistentManager<F extends BloomFilter> implements Closeable
 
         this.fileLock = FileUtils.lockDirectory(persistentPath, LOCK_FILE_NAME);
         this.basePath = persistentPath;
-        this.manager = manager;
-        this.factory = factory;
     }
 
-    public synchronized void freezeAllFilters() throws IOException {
+    public synchronized void freezeAllFilters(Iterable<FilterRecord<F>> records) throws IOException {
         final Path tempPath = temporaryPersistentFilePath();
         int counter = 0;
         try (FileChannel channel = FileChannel.open(tempPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
-            for (FilterRecord<F> record : manager) {
+            for (FilterRecord<F> record : records) {
                 record.writeFullyTo(channel);
                 counter++;
             }
@@ -59,11 +54,13 @@ public final class PersistentManager<F extends BloomFilter> implements Closeable
         logger.debug("Persistent " + counter + " filters.");
     }
 
-    public synchronized void recoverFiltersFromFile(boolean allowRecoverFromCorruptedFile) throws IOException {
+    public synchronized List<FilterRecord<? extends F>> recoverFiltersFromFile(BloomFilterFactory<? extends F, ?> factory,
+                                                                               boolean allowRecoverFromCorruptedFile)
+            throws IOException {
         if (persistentFilePath().toFile().exists()) {
             final List<FilterRecord<? extends F>> records = new ArrayList<>();
             try {
-                try (FilterRecordInputStream<F> filterStream = new FilterRecordInputStream<>(persistentFilePath(), factory)) {
+                try (FilterRecordInputStream<? extends F> filterStream = new FilterRecordInputStream<>(persistentFilePath(), factory)) {
                     readFiltersFromFile(filterStream)
                             .forEach(r -> {
                                 if (r.filter().valid()) {
@@ -71,19 +68,20 @@ public final class PersistentManager<F extends BloomFilter> implements Closeable
                                 }
                             });
                 }
-
-                manager.addFilters(records);
+                logger.info("Recovered " + records.size() + " filters from: " + persistentFilePath());
+                return records;
             } catch (InvalidFilterException ex) {
                 if (allowRecoverFromCorruptedFile) {
                     logger.warn("Recover " + records.size() + " filters from corrupted file:" + persistentFilePath() +
                             ". The exception captured as follows:", ex);
-                    manager.addFilters(records);
+                    return records;
                 } else {
                     throw new PersistentStorageException("failed to recover filters from: " + persistentFilePath(), ex);
                 }
             }
         } else {
             logger.info("By pass recover filters from persistent file due to no persistent file exists under path: " + basePath);
+            return Collections.emptyList();
         }
     }
 
@@ -101,7 +99,7 @@ public final class PersistentManager<F extends BloomFilter> implements Closeable
         return basePath.resolve(PERSISTENT_FILE_NAME + PERSISTENT_FILE_SUFFIX);
     }
 
-    private Iterable<FilterRecord<? extends F>> readFiltersFromFile(FilterRecordInputStream<F> filterStream) {
+    private Iterable<FilterRecord<? extends F>> readFiltersFromFile(FilterRecordInputStream<? extends F> filterStream) {
         return () -> new AbstractIterator<FilterRecord<? extends F>>() {
             @Nullable
             @Override

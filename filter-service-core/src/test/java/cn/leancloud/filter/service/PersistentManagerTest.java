@@ -36,11 +36,7 @@ public class PersistentManagerTest {
         filterManager = mock(BloomFilterManager.class);
         factory = mock(GuavaBloomFilterFactory.class);
         when(factory.readFrom(any())).thenCallRealMethod();
-        manager = new PersistentManager<>(
-                filterManager,
-                factory,
-                tempDirPath
-        );
+        manager = new PersistentManager<>(tempDirPath);
     }
 
     @After
@@ -51,10 +47,7 @@ public class PersistentManagerTest {
     @Test
     public void testPersistentDirIsFile() throws Exception {
         FileChannel.open(tempDirPath.resolve("plain_file"), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-        assertThatThrownBy(() -> new PersistentManager<>(
-                filterManager,
-                factory,
-                tempDirPath.resolve("plain_file")
+        assertThatThrownBy(() -> new PersistentManager<>(tempDirPath.resolve("plain_file")
         )).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("invalid persistent directory path, it's a regular file");
     }
@@ -62,36 +55,21 @@ public class PersistentManagerTest {
     @Test
     public void testLockAndReleaseLock() throws Exception {
         final Path lockPath = tempDirPath.resolve("lock_path");
-        final PersistentManager<BloomFilter> manager = new PersistentManager<>(
-                filterManager,
-                factory,
-                lockPath
-        );
+        final PersistentManager<BloomFilter> manager = new PersistentManager<>(lockPath);
 
-        assertThatThrownBy(() -> new PersistentManager<>(
-                filterManager,
-                factory,
-                lockPath
-        )).isInstanceOf(OverlappingFileLockException.class);
+        assertThatThrownBy(() -> new PersistentManager<>(lockPath))
+                .isInstanceOf(OverlappingFileLockException.class);
 
         manager.close();
 
-        new PersistentManager<>(
-                filterManager,
-                factory,
-                lockPath
-        );
+        new PersistentManager<>(lockPath);
     }
 
     @Test
     public void testMakeBaseDir() throws Exception {
         final Path newPath = tempDirPath.resolve("base_dir");
         assertThat(newPath.toFile().exists()).isFalse();
-        new PersistentManager<>(
-                filterManager,
-                factory,
-                newPath
-        );
+        new PersistentManager<>(newPath);
         assertThat(newPath.toFile().exists()).isTrue();
     }
 
@@ -100,7 +78,7 @@ public class PersistentManagerTest {
         final List<FilterRecord<BloomFilter>> records = generateFilterRecords(10);
         when(filterManager.iterator()).thenReturn(records.iterator());
 
-        manager.freezeAllFilters();
+        manager.freezeAllFilters(filterManager);
 
         try (FilterRecordInputStream<GuavaBloomFilter> stream = new FilterRecordInputStream<>(
                 manager.persistentFilePath(),
@@ -115,7 +93,7 @@ public class PersistentManagerTest {
 
     @Test
     public void testByPassRecovery() throws IOException {
-        manager.recoverFiltersFromFile(true);
+        manager.recoverFiltersFromFile(factory, true);
         verify(filterManager, never()).addFilters(anyCollection());
     }
 
@@ -124,10 +102,8 @@ public class PersistentManagerTest {
         final List<FilterRecord<BloomFilter>> records = generateFilterRecords(10);
         when(filterManager.iterator()).thenReturn(records.iterator());
 
-        manager.freezeAllFilters();
-        manager.recoverFiltersFromFile(false);
-
-        verify(filterManager, times(1)).addFilters(records);
+        manager.freezeAllFilters(filterManager);
+        assertThat(manager.recoverFiltersFromFile(factory, false)).isEqualTo(records);
     }
 
     @Test
@@ -137,21 +113,20 @@ public class PersistentManagerTest {
         records.add(new FilterRecord("Invalid_Filter", invalidFilter));
         when(filterManager.iterator()).thenReturn(records.iterator());
 
-        manager.freezeAllFilters();
-        manager.recoverFiltersFromFile(false);
-
-        verify(filterManager, times(1)).addFilters(records.subList(0, records.size() - 1));
+        manager.freezeAllFilters(filterManager);
+        assertThat(manager.recoverFiltersFromFile(factory, false))
+                .isEqualTo(records.subList(0, records.size() - 1));
     }
 
     @Test
     public void testDoNotAllowRecoverFromCorruptedFile() throws IOException {
         final List<FilterRecord<BloomFilter>> records = generateFilterRecords(10);
         when(filterManager.iterator()).thenReturn(records.iterator());
-        manager.freezeAllFilters();
+        manager.freezeAllFilters(filterManager);
         try (FileChannel channel = FileChannel.open(manager.persistentFilePath(), StandardOpenOption.WRITE)) {
             channel.truncate(channel.size() - 1);
 
-            assertThatThrownBy(() -> manager.recoverFiltersFromFile(false))
+            assertThatThrownBy(() -> manager.recoverFiltersFromFile(factory, false))
                     .isInstanceOf(PersistentStorageException.class)
                     .hasMessageContaining("failed to recover filters from:");
         }
@@ -161,13 +136,12 @@ public class PersistentManagerTest {
     public void testAllowRecoverFromCorruptedFile() throws IOException {
         final List<FilterRecord<BloomFilter>> records = generateFilterRecords(10);
         when(filterManager.iterator()).thenReturn(records.iterator());
-        manager.freezeAllFilters();
+        manager.freezeAllFilters(filterManager);
         try (FileChannel channel = FileChannel.open(manager.persistentFilePath(), StandardOpenOption.WRITE)) {
             channel.truncate(channel.size() - 1);
 
-            manager.recoverFiltersFromFile(true);
-
-            verify(filterManager, times(1)).addFilters(records.subList(0, records.size() - 1));
+            assertThat(manager.recoverFiltersFromFile(factory, true))
+                    .isEqualTo(records.subList(0, records.size() - 1));
         }
     }
 }
