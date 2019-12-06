@@ -1,7 +1,7 @@
 package cn.leancloud.filter.service;
 
+import cn.leancloud.filter.service.Configuration.TriggerPersistenceCriteria;
 import cn.leancloud.filter.service.metrics.MetricsService;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.linecorp.armeria.common.metric.MeterIdPrefixFunction;
 import com.linecorp.armeria.server.Server;
 import com.linecorp.armeria.server.ServerBuilder;
@@ -19,13 +19,9 @@ import picocli.CommandLine.UnmatchedArgumentException;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.LongAdder;
 
 public final class Bootstrap {
@@ -110,44 +106,38 @@ public final class Bootstrap {
     }
 
     private final MetricsService metricsService;
-    private final ScheduledExecutorService scheduledExecutorService;
+    private final BackgroundJobScheduler scheduler;
     private final CountUpdateBloomFilterFactory<ExpirableBloomFilterConfig> factory;
     private final BloomFilterManagerImpl<BloomFilter, ExpirableBloomFilterConfig> bloomFilterManager;
     private final PersistentManager<BloomFilter> persistentManager;
     private final Server server;
-    private final List<BackgroundJob> jobs;
 
     public Bootstrap(ServerOptions opts) throws Exception {
-        final LongAdder filterUpdateTimesCounter = new LongAdder();
         this.metricsService = loadMetricsService();
-        this.scheduledExecutorService = Executors.newScheduledThreadPool(10,
-                new ThreadFactoryBuilder()
-                        .setNameFormat("scheduled-worker-%s")
-                        .setUncaughtExceptionHandler((t, e) ->
-                                logger.error("Scheduled worker thread: " + t.getName() + " got uncaught exception.", e))
-                        .build());
         final MeterRegistry registry = metricsService.createMeterRegistry();
-        this.factory = new CountUpdateBloomFilterFactory<>(new GuavaBloomFilterFactory(), filterUpdateTimesCounter);
+        this.scheduler = new BackgroundJobScheduler(registry);
+        this.factory = new CountUpdateBloomFilterFactory<>(new GuavaBloomFilterFactory(), new LongAdder());
         this.bloomFilterManager = newBloomFilterManager(factory);
         this.persistentManager = new PersistentManager<>(Paths.get(Configuration.persistentStorageDirectory()));
         this.server = newServer(registry, opts, bloomFilterManager);
-        this.jobs = new ArrayList<>();
-        this.jobs.add(new PurgeFiltersBackgroundJob<>(
-                registry,
-                new InvalidBloomFilterPurgatory<>(bloomFilterManager),
-                Configuration.purgeFilterInterval()));
-        this.jobs.add(new PersistentFiltersBackgroundJob<>(
-                registry,
-                bloomFilterManager,
-                persistentManager,
-                filterUpdateTimesCounter,
-                Configuration.persistenceCriteria()));
     }
 
     private void start() throws Exception {
         recoverPreviousBloomFilters();
 
-        jobs.forEach(j -> j.start(scheduledExecutorService));
+        scheduler.scheduleFixedIntervalJob(
+                new PurgeFiltersJob(new InvalidBloomFilterPurgatory<>(bloomFilterManager)),
+                "purgeExpiredFilters",
+                Configuration.purgeFilterInterval());
+
+        for (TriggerPersistenceCriteria criteria : Configuration.persistenceCriteria()) {
+            scheduler.scheduleFixedIntervalJob(
+                    new PersistentFiltersJob<>(bloomFilterManager, persistentManager, factory.filterUpdateTimesCounter(), criteria),
+                    "persistentFilters",
+                    criteria.checkingPeriod()
+            );
+        }
+
         metricsService.start();
         server.start().join();
         logger.info("Filter server has been started with configurations: {}", Configuration.spec());
@@ -157,14 +147,7 @@ public final class Bootstrap {
         try {
             server.stop().join();
 
-            jobs.forEach(BackgroundJob::stop);
-
-            final CompletableFuture<Void> shutdownFuture = new CompletableFuture<>();
-            scheduledExecutorService.execute(() ->
-                    shutdownFuture.complete(null)
-            );
-            shutdownFuture.join();
-            scheduledExecutorService.shutdown();
+            scheduler.stop();
 
             metricsService.stop();
             persistentManager.close();

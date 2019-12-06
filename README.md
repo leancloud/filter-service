@@ -9,7 +9,7 @@ Filter-Service is a daemon network service which is used to expose bloom filters
 
 * Scalable non-blocking core allows for many connected clients and concurrent operations
 * Implements scalable bloom filters, allowing dynamic filter sizes
-* All the bloom filters are persisted on local disk periodically and can be recovered on process rebooting
+* All the bloom filters are persisted on local disk and can be recovered on process rebooting
 * All the bloom filters can have a expiration time and can be removed automatically after expire
 * Spit metrics by [micrometer](https://github.com/micrometer-metrics/micrometer) which can bridge to many popular monitoring tools
 * Provide RESTFul API, which is convient to use and test
@@ -26,6 +26,21 @@ Filter-Service requires Java 8 or  newer  to build and run. So please ensure tha
 ## Persistence
 
 Filter-Service uses a file named `snapshot.db`in a dedicated directory given in `config/configuration.xml` to save all the filters every several seconds. It will lock this directory so only one Filter-Service can use the same directory on the same time. During persistence operation, firstly Filter-Service will save filters to a file named `snapshot.tmp`. After that, if everything is OK, it will rename `snapshot.tmp` to `snapshot.db` in an atomic operation. 
+
+You can configurate when to save filters to file by both of number of seconds and number of update operations occurred. In the example below, the behaviour will be to save:
+* after 900 sec if at least 1 filter update operations occurred
+* after 300 sec if at least 100 filter update operations occurred
+* after 60 sec if at least 10000 filter update operations occurred
+
+```yaml
+triggerPersistenceCriteria:
+  - periodInSeconds: 900
+    updatesMoreThan: 1
+  - periodInSeconds: 300
+    updatesMoreThan: 100
+  - periodInSeconds: 60
+    updatesMoreThan: 10000
+```
 
 On startup, after Filter-Service have locked the working directory, it tries to find the `snapshot.db` file and recover filters from that file. It recovers in a one-by-one process. Reading all the bytes needed to recover a filter, checking some stuff, then it deserialize filter from these bytes. It repeats this process to recover the rest filters until all the bytes in the file have been read. If the bytes for a filter is not correct, like checksum unmatched, magic unmached, not enough bytes etc. It will stop the recovering process immediately because all the bytes afterwards is definitely corrupted. You can use configuration to let Filter-Service throws a exception and does not recover anything on this situation or let Filter-Service just tolerates the corrupted file and tries to recover as many filters as it can from it. 
 
