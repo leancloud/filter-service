@@ -5,6 +5,14 @@ purgeFilterIntervalMillis: 300
 # the interval for the persistent thread to scan all the filters and persistent them on disk
 persistentFiltersIntervalMillis: 5000
 
+triggerPersistenceCriteria:
+  - periodInSeconds: 900
+    updatesMoreThan: 1
+  - periodInSeconds: 300
+    updatesMoreThan: 10
+  - periodInSeconds: 60
+    updatesMoreThan: 10000
+
 # maximum allowed http/https concurrent connections
 maxHttpConnections: 1000
 
@@ -24,15 +32,15 @@ defaultFalsePositiveProbability: 0.01
 defaultValidSecondsAfterCreate: 86400
 
 # the path to a directory to store persistent file. Leave it empty to use the path to "user.dir" system property
-persistentStorageDirectory:
+persistentStorageDirectory: ~
 
 # when this switch is on, we try to recover filters from a corrupted or unfinished persistent file as many filters as we can;
 # otherwise, we will throw an exception when we make sure that the persistent file is corrupted or unfinished.
-allowRecoverFromCorruptedPersistentFile: True
+allowRecoverFromCorruptedPersistentFile: true
 
 # the configuration options for every underlying TCP socket
 channelOptions:
   SO_BACKLOG: 2048
   SO_RCVBUF: 2048
   SO_SNDBUF: 2048
-  TCP_NODELAY: True
+  TCP_NODELAY: true

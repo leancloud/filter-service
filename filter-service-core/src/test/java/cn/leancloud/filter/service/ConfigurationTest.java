@@ -1,5 +1,6 @@
 package cn.leancloud.filter.service;
 
+import cn.leancloud.filter.service.Configuration.TriggerPersistenceCriteria;
 import org.junit.Test;
 
 import java.nio.file.Paths;
@@ -44,6 +45,7 @@ public class ConfigurationTest {
     @Test
     public void testNormalConfigurationFile() throws Exception {
         Configuration.initConfiguration("src/test/resources/testing-configuration.yaml");
+        System.out.println(Configuration.spec());
         assertThat(Configuration.persistentFiltersInterval()).isEqualTo(Duration.ofSeconds(2));
         assertThat(Configuration.purgeFilterInterval()).isEqualTo(Duration.ofMillis(200));
         assertThat(Configuration.maxHttpConnections()).isEqualTo(2000);
@@ -58,5 +60,10 @@ public class ConfigurationTest {
         assertThat(Configuration.channelOptions().SO_RCVBUF()).isEqualTo(1024);
         assertThat(Configuration.channelOptions().SO_SNDBUF()).isEqualTo(1024);
         assertThat(Configuration.channelOptions().TCP_NODELAY()).isFalse();
+        assertThat(Configuration.persistenceCriteria())
+                .hasSize(3)
+                .contains(new TriggerPersistenceCriteria(Duration.ofSeconds(900), 1))
+                .contains(new TriggerPersistenceCriteria(Duration.ofSeconds(300), 10))
+                .contains(new TriggerPersistenceCriteria(Duration.ofSeconds(60), 10000));
     }
 }
