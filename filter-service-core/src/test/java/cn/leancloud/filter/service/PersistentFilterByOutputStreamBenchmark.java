@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Thread)
 @BenchmarkMode({Mode.SampleTime})
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-public class PersistentFilterBenchmark {
+public class PersistentFilterByOutputStreamBenchmark {
     GuavaBloomFilter filter;
     FileChannel fileChannel;
 
@@ -70,14 +70,22 @@ public class PersistentFilterBenchmark {
     @Benchmark
     public int testBufferedOutputStream() throws Exception {
         long pos = fileChannel.position();
-        BufferedOutputStream bout = new BufferedOutputStream(Channels.newOutputStream(fileChannel), 10485760);
+        BufferedOutputStream bout = new BufferedOutputStream(Channels.newOutputStream(fileChannel), 102400);
+        filter.writeTo(bout);
+        return (int) (fileChannel.position() - pos);
+    }
+
+    @Benchmark
+    public int testChecksumedBufferedOutputStream() throws Exception {
+        long pos = fileChannel.position();
+        ChecksumedBufferedOutputStream bout = new ChecksumedBufferedOutputStream(Channels.newOutputStream(fileChannel), 102400);
         filter.writeTo(bout);
         return (int) (fileChannel.position() - pos);
     }
 
     public static void main(String[] args) throws Exception {
         Options opt = new OptionsBuilder()
-                .include(PersistentFilterBenchmark.class.getSimpleName())
+                .include(PersistentFilterByOutputStreamBenchmark.class.getSimpleName())
                 .warmupIterations(3)
                 .warmupTime(TimeValue.seconds(10))
                 .measurementIterations(3)
