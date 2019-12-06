@@ -43,7 +43,7 @@ fi
 # Please set a reasonable value for jdk.nio.maxCachedBufferSize to prevent the thread doing IO operations try to cache
 # too many big direct buffer which might cause direct buffer OOM too.
 if [ -z "$FILTER_SERVICE_HEAP_OPTS" ]; then
-  FILTER_SERVICE_HEAP_OPTS="-Xmx1G -Xms1G -XX:MaxDirectMemorySize=512M -Djdk.nio.maxCachedBufferSize=16777216"
+  FILTER_SERVICE_HEAP_OPTS="-Xmx1G -Xms1G -XX:MaxDirectMemorySize=256M -Djdk.nio.maxCachedBufferSize=16777216"
 fi
 
 # JVM performance options

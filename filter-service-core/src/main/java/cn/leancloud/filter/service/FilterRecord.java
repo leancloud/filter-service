@@ -1,9 +1,9 @@
 package cn.leancloud.filter.service;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.channels.GatheringByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -44,21 +44,30 @@ public final class FilterRecord<F extends BloomFilter> {
         return filter;
     }
 
-    public int writeFullyTo(GatheringByteChannel channel) throws IOException {
-        final byte[] body = serializeBody();
-        final ByteBuffer buffer = ByteBuffer.allocate(HEADER_OVERHEAD + body.length);
-        // write body first
-        buffer.mark();
-        buffer.position(HEADER_OVERHEAD);
-        buffer.put(body);
-        buffer.reset();
+    public int writeFullyTo(FileChannel channel) throws IOException {
+        final long startPos = channel.position();
+        // write body first then we can know how large the body is
+        channel.position(startPos + HEADER_OVERHEAD);
+
+        final ChecksumedBufferedOutputStream stream = new ChecksumedBufferedOutputStream(
+                Channels.newOutputStream(channel),
+                Configuration.defaultChannelBufferSizeForFilterPersistence());
+        writeBody(stream);
+        stream.flush();
 
         // write header
-        buffer.putInt(BODY_LENGTH_OFFSET, body.length);
-        buffer.put(MAGIC_OFFSET, DEFAULT_MAGIC);
-        final long crc = Crc32C.compute(buffer, HEADER_OVERHEAD, body.length);
-        buffer.putInt(CRC_OFFSET, (int) crc);
-        return writeFullyTo(channel, buffer);
+        int bodyLen = (int) (channel.position() - startPos - HEADER_OVERHEAD);
+        channel.position(startPos);
+
+        final ByteBuffer headerBuffer = ByteBuffer.allocate(HEADER_OVERHEAD);
+        headerBuffer.putInt(BODY_LENGTH_OFFSET, bodyLen);
+        headerBuffer.put(MAGIC_OFFSET, DEFAULT_MAGIC);
+        headerBuffer.putInt(CRC_OFFSET, (int) stream.checksum());
+        writeBufferTo(channel, headerBuffer);
+
+        // move position forward to the end of this record
+        channel.position(startPos + HEADER_OVERHEAD + bodyLen);
+        return HEADER_OVERHEAD + bodyLen;
     }
 
     @Override
@@ -83,17 +92,15 @@ public final class FilterRecord<F extends BloomFilter> {
                 '}';
     }
 
-    private byte[] serializeBody() throws IOException {
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+    private void writeBody(OutputStream out) throws IOException {
         final DataOutputStream dout = new DataOutputStream(out);
         final byte[] nameInBytes = name.getBytes(StandardCharsets.UTF_8);
         dout.writeInt(nameInBytes.length);
         dout.write(nameInBytes);
         filter.writeTo(out);
-        return out.toByteArray();
     }
 
-    private int writeFullyTo(GatheringByteChannel channel, ByteBuffer buffer) throws IOException {
+    private int writeBufferTo(GatheringByteChannel channel, ByteBuffer buffer) throws IOException {
         buffer.mark();
         int written = 0;
         while (written < buffer.limit()) {
