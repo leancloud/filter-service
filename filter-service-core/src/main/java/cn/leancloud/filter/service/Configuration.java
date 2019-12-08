@@ -69,6 +69,10 @@ public final class Configuration {
         return instance.allowRecoverFromCorruptedPersistentFile;
     }
 
+    static int defaultChannelBufferSizeForFilterPersistence() {
+        return instance.defaultChannelBufferSizeForFilterPersistence;
+    }
+
     static SupportedChannelOptions channelOptions() {
         return instance.channelOptions;
     }
@@ -86,9 +90,10 @@ public final class Configuration {
                 "defaultFalsePositiveProbability: " + defaultFalsePositiveProbability() + "\n" +
                 "defaultValidSecondsAfterCreate: " + defaultValidPeriodAfterCreate().getSeconds() + "\n" +
                 "persistentStorageDirectory: " + persistentStorageDirectory() + "\n" +
+                "defaultChannelBufferSizeForFilterPersistence: " + defaultChannelBufferSizeForFilterPersistence() + "B" + "\n" +
+                "triggerPersistenceCriteria: " + persistenceCriteria() + "\n" +
                 "allowRecoverFromCorruptedPersistentFile: " + allowRecoverFromCorruptedPersistentFile() + "\n" +
-                "channelOptions: " + channelOptions() + "\n" +
-                "triggerPersistenceCriteria: " + persistenceCriteria() + "\n";
+                "channelOptions: " + channelOptions() + "\n";
     }
 
     private Duration purgeFilterInterval;
@@ -100,6 +105,7 @@ public final class Configuration {
     private Duration defaultValidSecondsAfterCreate;
     private String persistentStorageDirectory;
     private boolean allowRecoverFromCorruptedPersistentFile;
+    private int defaultChannelBufferSizeForFilterPersistence;
     private SupportedChannelOptions channelOptions;
     private List<TriggerPersistenceCriteria> persistenceCriteria;
 
@@ -113,6 +119,7 @@ public final class Configuration {
         this.defaultValidSecondsAfterCreate = Duration.ofDays(1);
         this.persistentStorageDirectory = System.getProperty("user.dir");
         this.allowRecoverFromCorruptedPersistentFile = true;
+        this.defaultChannelBufferSizeForFilterPersistence = 102400;
         this.channelOptions = new SupportedChannelOptions();
         this.persistenceCriteria = Collections.singletonList(new TriggerPersistenceCriteria(Duration.ofMinutes(5), 100));
     }
@@ -177,6 +184,14 @@ public final class Configuration {
         this.defaultValidSecondsAfterCreate = Duration.ofSeconds(defaultValidSecondsAfterCreate);
     }
 
+    public void setDefaultChannelBufferSizeForFilterPersistence(int defaultChannelBufferSizeForFilterPersistence) {
+        if (defaultChannelBufferSizeForFilterPersistence <= 0) {
+            throw new IllegalArgumentException("defaultChannelBufferSizeForFilterPersistence: "
+                    + defaultChannelBufferSizeForFilterPersistence + " (expected: > 0)");
+        }
+        this.defaultChannelBufferSizeForFilterPersistence = defaultChannelBufferSizeForFilterPersistence;
+    }
+
     public void setPersistentStorageDirectory(@Nullable String persistentStorageDirectory) {
         if (persistentStorageDirectory == null || persistentStorageDirectory.isEmpty()) {
             persistentStorageDirectory = System.getProperty("user.dir");
@@ -197,7 +212,6 @@ public final class Configuration {
 
     @JsonProperty("triggerPersistenceCriteria")
     public void setPersistenceCriteria(@Nullable List<TriggerPersistenceCriteria> criteriaList) {
-        System.out.println("sd " + criteriaList);
         if (criteriaList == null) {
             criteriaList = Collections.emptyList();
         }

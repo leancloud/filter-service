@@ -71,7 +71,7 @@ public final class FilterRecordInputStream<F extends BloomFilter> implements Clo
         readFullyOrFail(channel, headerBuffer, position);
         headerBuffer.rewind();
 
-        int bodyLen = headerBuffer.getInt(BODY_LENGTH_OFFSET);
+        final int bodyLen = headerBuffer.getInt(BODY_LENGTH_OFFSET);
         if (end - position < HEADER_OVERHEAD + bodyLen) {
             throw shortReadFilterBody(recordFilePath.toString(), (int) ((bodyLen + HEADER_OVERHEAD) - (end - position)));
         }
@@ -100,7 +100,7 @@ public final class FilterRecordInputStream<F extends BloomFilter> implements Clo
     }
 
     private void checkMagic(ByteBuffer headerBuffer) {
-        byte magic = headerBuffer.get(MAGIC_OFFSET);
+        final byte magic = headerBuffer.get(MAGIC_OFFSET);
         if (magic != DEFAULT_MAGIC) {
             throw new InvalidFilterException("read unknown Magic: " + magic + " from position: "
                     + position + " from file: " + recordFilePath);
@@ -109,7 +109,7 @@ public final class FilterRecordInputStream<F extends BloomFilter> implements Clo
 
     private void checkCrc(ByteBuffer headerBuffer, ByteBuffer bodyBuffer) {
         final long expectCrc = readCrc(headerBuffer);
-        long actualCrc = Crc32C.compute(bodyBuffer, 0, bodyBuffer.limit());
+        final long actualCrc = Crc32C.compute(bodyBuffer, 0, bodyBuffer.limit());
         if (actualCrc != expectCrc) {
             throw new InvalidFilterException("got unmatched crc when read filter from position: "
                     + position + " from file: " + recordFilePath + ". expect: " + expectCrc + ", actual: " + actualCrc);
