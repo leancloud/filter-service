@@ -212,7 +212,6 @@ public final class Configuration {
 
     @JsonProperty("triggerPersistenceCriteria")
     public void setPersistenceCriteria(@Nullable List<TriggerPersistenceCriteria> criteriaList) {
-        System.out.println("sd " + criteriaList);
         if (criteriaList == null) {
             criteriaList = Collections.emptyList();
         }
