@@ -184,7 +184,7 @@ public final class Configuration {
         this.defaultValidSecondsAfterCreate = Duration.ofSeconds(defaultValidSecondsAfterCreate);
     }
 
-    public void setdefaultChannelBufferSizeForFilterPersistence(int defaultChannelBufferSizeForFilterPersistence) {
+    public void setDefaultChannelBufferSizeForFilterPersistence(int defaultChannelBufferSizeForFilterPersistence) {
         if (defaultChannelBufferSizeForFilterPersistence <= 0) {
             throw new IllegalArgumentException("defaultChannelBufferSizeForFilterPersistence: "
                     + defaultChannelBufferSizeForFilterPersistence + " (expected: > 0)");

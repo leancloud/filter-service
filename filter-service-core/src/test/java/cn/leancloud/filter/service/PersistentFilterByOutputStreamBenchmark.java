@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Thread)
 @BenchmarkMode({Mode.Throughput})
 @OutputTimeUnit(TimeUnit.SECONDS)
+@Threads(value = 1)
 public class PersistentFilterByOutputStreamBenchmark {
     GuavaBloomFilter filter;
     FileChannel fileChannel;
@@ -30,7 +31,7 @@ public class PersistentFilterByOutputStreamBenchmark {
     @Setup
     public void setup() throws Exception {
         final Duration validPeriodAfterAccess = Duration.ofSeconds(3);
-        final int expectedInsertions = 100000000;
+        final int expectedInsertions = 10000000;
         final double fpp = 0.001;
         final ZonedDateTime creation = ZonedDateTime.now(ZoneOffset.UTC);
         final ZonedDateTime expiration = creation.plus(Duration.ofSeconds(10));
