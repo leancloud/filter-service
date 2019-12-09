@@ -175,7 +175,7 @@ public final class Bootstrap {
 
     private void recoverPreviousBloomFilters() throws IOException {
         final List<FilterRecord<? extends BloomFilter>> records =
-                persistentManager.recoverFiltersFromFile(factory, Configuration.allowRecoverFromCorruptedPersistentFile());
+                persistentManager.recoverFilters(factory, Configuration.allowRecoverFromCorruptedPersistentFile());
         bloomFilterManager.addFilters(records);
     }
 

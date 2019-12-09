@@ -11,6 +11,7 @@ import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.List;
 
 import static cn.leancloud.filter.service.TestingUtils.generateFilterRecords;
@@ -92,8 +93,8 @@ public class PersistentManagerTest {
     }
 
     @Test
-    public void testByPassRecovery() throws IOException {
-        manager.recoverFiltersFromFile(factory, true);
+    public void testNoFilesToRecover() throws IOException {
+        manager.recoverFilters(factory, true);
         verify(filterManager, never()).addFilters(anyCollection());
     }
 
@@ -103,7 +104,7 @@ public class PersistentManagerTest {
         when(filterManager.iterator()).thenReturn(records.iterator());
 
         manager.freezeAllFilters(filterManager);
-        assertThat(manager.recoverFiltersFromFile(factory, false)).isEqualTo(records);
+        assertThat(manager.recoverFilters(factory, false)).isEqualTo(records);
     }
 
     @Test
@@ -114,7 +115,7 @@ public class PersistentManagerTest {
         when(filterManager.iterator()).thenReturn(records.iterator());
 
         manager.freezeAllFilters(filterManager);
-        assertThat(manager.recoverFiltersFromFile(factory, false))
+        assertThat(manager.recoverFilters(factory, false))
                 .isEqualTo(records.subList(0, records.size() - 1));
     }
 
@@ -126,7 +127,7 @@ public class PersistentManagerTest {
         try (FileChannel channel = FileChannel.open(manager.persistentFilePath(), StandardOpenOption.WRITE)) {
             channel.truncate(channel.size() - 1);
 
-            assertThatThrownBy(() -> manager.recoverFiltersFromFile(factory, false))
+            assertThatThrownBy(() -> manager.recoverFilters(factory, false))
                     .isInstanceOf(PersistentStorageException.class)
                     .hasMessageContaining("failed to recover filters from:");
         }
@@ -140,8 +141,40 @@ public class PersistentManagerTest {
         try (FileChannel channel = FileChannel.open(manager.persistentFilePath(), StandardOpenOption.WRITE)) {
             channel.truncate(channel.size() - 1);
 
-            assertThat(manager.recoverFiltersFromFile(factory, true))
+            assertThat(manager.recoverFilters(factory, true))
                     .isEqualTo(records.subList(0, records.size() - 1));
         }
+    }
+
+    @Test
+    public void testRecoverOnlyFromTemporaryFile() throws IOException {
+        final List<FilterRecord<BloomFilter>> records = generateFilterRecords(10);
+        when(filterManager.iterator()).thenReturn(records.iterator());
+
+        manager.freezeAllFilters(filterManager);
+        FileUtils.atomicMoveWithFallback(manager.persistentFilePath(), manager.temporaryPersistentFilePath());
+
+        assertThat(manager.recoverFilters(factory, false)).isEqualTo(records);
+    }
+
+    @Test
+    public void testRecoverFromTemporaryFileAndNormalFile() throws IOException {
+        final Path temporaryPath = manager.persistentFilePath().resolveSibling("tmp.bak");
+        final List<FilterRecord<BloomFilter>> records = generateFilterRecords(20);
+        final List<FilterRecord<BloomFilter>> expected = new ArrayList<>();
+        expected.addAll(records);
+        expected.addAll(records.subList(10, 20));
+
+        // prepare temporary file
+        when(filterManager.iterator()).thenReturn(records.subList(10, 20).iterator());
+        manager.freezeAllFilters(filterManager);
+        FileUtils.atomicMoveWithFallback(manager.persistentFilePath(), temporaryPath);
+
+        // prepare normal file
+        when(filterManager.iterator()).thenReturn(records.iterator());
+        manager.freezeAllFilters(filterManager);
+
+        FileUtils.atomicMoveWithFallback(temporaryPath, manager.temporaryPersistentFilePath());
+        assertThat(manager.recoverFilters(factory, false)).isEqualTo(expected);
     }
 }
