@@ -14,7 +14,6 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 public final class Configuration {
     private static Configuration instance = new Configuration();
@@ -49,6 +48,10 @@ public final class Configuration {
         return instance.defaultRequestTimeout;
     }
 
+    static long idleTimeoutMillis() {
+        return instance.idleTimeoutMillis;
+    }
+
     static int defaultExpectedInsertions() {
         return instance.defaultExpectedInsertions;
     }
@@ -81,11 +84,20 @@ public final class Configuration {
         return instance.persistenceCriteria;
     }
 
+    static long gracefulShutdownQuietPeriodMillis() {
+        return instance.gracefulShutdownQuietPeriodMillis;
+    }
+
+    static long gracefulShutdownTimeoutMillis() {
+        return instance.gracefulShutdownTimeoutMillis;
+    }
+
     static String spec() {
         return "\npurgeFilterIntervalMillis: " + purgeFilterInterval().toMillis() + "\n" +
                 "maxHttpConnections: " + maxHttpConnections() + "\n" +
                 "maxHttpRequestLength: " + maxHttpRequestLength() + "B\n" +
                 "defaultRequestTimeoutSeconds: " + defaultRequestTimeout().getSeconds() + "\n" +
+                "idleTimeoutMillis: " + idleTimeoutMillis() + "\n" +
                 "defaultExpectedInsertions: " + defaultExpectedInsertions() + "\n" +
                 "defaultFalsePositiveProbability: " + defaultFalsePositiveProbability() + "\n" +
                 "defaultValidSecondsAfterCreate: " + defaultValidPeriodAfterCreate().getSeconds() + "\n" +
@@ -93,13 +105,16 @@ public final class Configuration {
                 "defaultChannelBufferSizeForFilterPersistence: " + defaultChannelBufferSizeForFilterPersistence() + "B" + "\n" +
                 "triggerPersistenceCriteria: " + persistenceCriteria() + "\n" +
                 "allowRecoverFromCorruptedPersistentFile: " + allowRecoverFromCorruptedPersistentFile() + "\n" +
-                "channelOptions: " + channelOptions() + "\n";
+                "channelOptions: " + channelOptions() + "\n" +
+                "gracefulShutdownQuietPeriodMillis: " + gracefulShutdownQuietPeriodMillis() + "\n" +
+                "gracefulShutdownTimeoutMillis: " + gracefulShutdownTimeoutMillis() + "\n";
     }
 
     private Duration purgeFilterInterval;
     private int maxHttpConnections;
     private int maxHttpRequestLength;
     private Duration defaultRequestTimeout;
+    private long idleTimeoutMillis;
     private int defaultExpectedInsertions;
     private double defaultFalsePositiveProbability;
     private Duration defaultValidSecondsAfterCreate;
@@ -108,12 +123,15 @@ public final class Configuration {
     private int defaultChannelBufferSizeForFilterPersistence;
     private SupportedChannelOptions channelOptions;
     private List<TriggerPersistenceCriteria> persistenceCriteria;
+    private long gracefulShutdownQuietPeriodMillis;
+    private long gracefulShutdownTimeoutMillis;
 
     private Configuration() {
         this.purgeFilterInterval = Duration.ofMillis(300);
         this.maxHttpConnections = 1000;
         this.maxHttpRequestLength = 10485760;
         this.defaultRequestTimeout = Duration.ofSeconds(5);
+        this.idleTimeoutMillis = 10_000;
         this.defaultExpectedInsertions = 1000_000;
         this.defaultFalsePositiveProbability = 0.0001;
         this.defaultValidSecondsAfterCreate = Duration.ofDays(1);
@@ -122,6 +140,8 @@ public final class Configuration {
         this.defaultChannelBufferSizeForFilterPersistence = 102400;
         this.channelOptions = new SupportedChannelOptions();
         this.persistenceCriteria = Collections.singletonList(new TriggerPersistenceCriteria(Duration.ofMinutes(5), 100));
+        this.gracefulShutdownQuietPeriodMillis = 0;
+        this.gracefulShutdownTimeoutMillis = 0;
     }
 
     @JsonSetter("purgeFilterIntervalMillis")
@@ -156,6 +176,14 @@ public final class Configuration {
                     + defaultRequestTimeoutSeconds + " (expected: > 0)");
         }
         this.defaultRequestTimeout = Duration.ofSeconds(defaultRequestTimeoutSeconds);
+    }
+
+    public void setIdleTimeoutMillis(int idleTimeoutMillis) {
+        if (idleTimeoutMillis <= 0) {
+            throw new IllegalArgumentException("idleTimeoutMillis: "
+                    + idleTimeoutMillis + " (expected: > 0)");
+        }
+        this.idleTimeoutMillis = idleTimeoutMillis;
     }
 
     public void setDefaultExpectedInsertions(int defaultExpectedInsertions) {
@@ -217,6 +245,23 @@ public final class Configuration {
         }
 
         this.persistenceCriteria = criteriaList;
+    }
+
+    public void setGracefulShutdownQuietPeriodMillis(long gracefulShutdownQuietPeriodMillis) {
+        if (gracefulShutdownQuietPeriodMillis <= 0) {
+            throw new IllegalArgumentException("gracefulShutdownQuietPeriodMillis: "
+                    + gracefulShutdownQuietPeriodMillis + " (expected: > 0)");
+        }
+        this.gracefulShutdownQuietPeriodMillis = gracefulShutdownQuietPeriodMillis;
+    }
+
+    public void setGracefulShutdownTimeoutMillis(long gracefulShutdownTimeoutMillis) {
+        if (gracefulShutdownTimeoutMillis <= 0) {
+            throw new IllegalArgumentException("gracefulShutdownTimeoutMillis: "
+                    + gracefulShutdownTimeoutMillis + " (expected: > 0)");
+        }
+
+        this.gracefulShutdownTimeoutMillis = gracefulShutdownTimeoutMillis;
     }
 
     public static class SupportedChannelOptions {

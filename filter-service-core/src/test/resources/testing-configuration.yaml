@@ -17,6 +17,8 @@ maxHttpRequestLength: 5242880
 # the default timeout of a request
 defaultRequestTimeoutSeconds: 6
 
+idleTimeoutMillis: 20000
+
 # the configuration options for every underlying TCP socket
 channelOptions:
   SO_BACKLOG: 1024
@@ -51,3 +53,6 @@ defaultChannelBufferSizeForFilterPersistence: 102401
 # otherwise, we will throw an exception when we make sure that the persistent file is corrupted.
 allowRecoverFromCorruptedPersistentFile: False
 
+
+gracefulShutdownQuietPeriodMillis: 1
+gracefulShutdownTimeoutMillis: 1

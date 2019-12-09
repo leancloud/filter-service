@@ -191,6 +191,10 @@ public final class Bootstrap {
                 .maxNumConnections(Configuration.maxHttpConnections())
                 .maxRequestLength(Configuration.maxHttpRequestLength())
                 .requestTimeout(Configuration.defaultRequestTimeout())
+                .disableDateHeader()
+                .disableServerHeader()
+                .gracefulShutdownTimeout(Configuration.gracefulShutdownQuietPeriodMillis(), Configuration.gracefulShutdownTimeoutMillis())
+                .idleTimeoutMillis(Configuration.idleTimeoutMillis())
                 .meterRegistry(registry);
 
         sb.annotatedService("/v1/bloomfilter", new BloomFilterHttpService(bloomFilterManager))
