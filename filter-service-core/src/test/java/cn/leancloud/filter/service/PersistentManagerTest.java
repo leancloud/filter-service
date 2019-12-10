@@ -178,4 +178,25 @@ public class PersistentManagerTest {
         FilterServiceFileUtils.atomicMoveWithFallback(temporaryPath, manager.temporaryPersistentFilePath());
         assertThat(manager.recoverFilters(factory, false)).isEqualTo(expected);
     }
+
+    @Test
+    public void testRecoverFromTemporaryFileFailed() throws IOException {
+        final Path temporaryPath = manager.persistentFilePath().resolveSibling("tmp.bak");
+        final List<FilterRecord<BloomFilter>> records = generateFilterRecords(20);
+
+        // prepare temporary file
+        when(filterManager.iterator()).thenReturn(generateFilterRecords(50, 20).iterator());
+        manager.freezeAllFilters(filterManager);
+        FilterServiceFileUtils.atomicMoveWithFallback(manager.persistentFilePath(), temporaryPath);
+
+        // prepare normal file
+        when(filterManager.iterator()).thenReturn(records.iterator());
+        manager.freezeAllFilters(filterManager);
+
+        FilterServiceFileUtils.atomicMoveWithFallback(temporaryPath, manager.temporaryPersistentFilePath());
+        try (FileChannel channel = FileChannel.open(manager.temporaryPersistentFilePath(), StandardOpenOption.WRITE)) {
+            channel.truncate(channel.size() - 1);
+            assertThat(manager.recoverFilters(factory, false)).isEqualTo(records);
+        }
+    }
 }

@@ -63,7 +63,12 @@ public class PersistentManager<F extends BloomFilter> implements Closeable {
         }
 
         if (temporaryPersistentFilePath().toFile().exists()) {
-            records.addAll(recoverFiltersFromFile(factory, allowRecoverFromCorruptedFile, temporaryPersistentFilePath()));
+            try {
+                records.addAll(recoverFiltersFromFile(factory, allowRecoverFromCorruptedFile, temporaryPersistentFilePath()));
+            } catch (IOException | PersistentStorageException ex) {
+                logger.warn("Failed to recover from the file: \"{}\" and got error msg: \"{}\". We just ignore it and carry on.",
+                        temporaryPersistentFilePath(), ex.getMessage());
+            }
         }
 
         return records;

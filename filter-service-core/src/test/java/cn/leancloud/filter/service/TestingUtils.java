@@ -21,6 +21,10 @@ public final class TestingUtils {
     }
 
     public static List<FilterRecord<BloomFilter>> generateFilterRecords(int size) {
+        return generateFilterRecords(0, size);
+    }
+
+    public static List<FilterRecord<BloomFilter>> generateFilterRecords(int startNumName, int size) {
         List<FilterRecord<BloomFilter>> records = new ArrayList<>(size);
         for (int i = 0; i < size; ++i) {
             final ZonedDateTime creation = ZonedDateTime.now(ZoneOffset.UTC);
