@@ -11,6 +11,7 @@ public interface BloomFilterManagerListener<F extends BloomFilter, C extends Blo
      * Called when a Bloom filter was created by {@link BloomFilterManager}.
      * Please note do not block in this method, due to this maybe a synchronous method.
      *
+     * @param name   the name of the operated filter
      * @param config the configuration used to create the {@code filter}
      * @param filter the newly created Bloom filter
      */
@@ -20,6 +21,7 @@ public interface BloomFilterManagerListener<F extends BloomFilter, C extends Blo
      * Called when a Bloom filter was removed from {@link BloomFilterManager}.
      * Please note do not block in this method, due to this maybe a synchronous method.
      *
+     * @param name   the name of the operated filter
      * @param filter the removed Bloom filter
      */
     default void onBloomFilterRemoved(String name, F filter) {}

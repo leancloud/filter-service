@@ -52,7 +52,7 @@ public final class FilterRecord<F extends BloomFilter> {
         // we don't need to close this stream. it'll be effectively closed when the underlying channel closed
         final ChecksumedBufferedOutputStream stream = new ChecksumedBufferedOutputStream(
                 Channels.newOutputStream(channel),
-                Configuration.defaultChannelBufferSizeForFilterPersistence());
+                Configuration.channelBufferSizeForFilterPersistence());
         writeBody(stream);
         stream.flush();
 

@@ -1,4 +1,7 @@
 ---
+# the prefix for all the metrics generated from micrometer
+metricsPrefix: "filterServiceTest"
+
 # the default expected insertions to filter. If no value provided on creating filter, this value will be used
 defaultExpectedInsertions: 2000000
 
@@ -15,7 +18,13 @@ maxHttpConnections: 2000
 maxHttpRequestLength: 5242880
 
 # the default timeout of a request
-defaultRequestTimeoutSeconds: 6
+requestTimeoutSeconds: 6
+
+# the idle timeout of a connection in milliseconds for keep-alive
+idleTimeoutMillis: 20000
+
+# maximum thread pool size to execute internal potential long running tasks
+maxWorkerThreadPoolSize: 11
 
 # the configuration options for every underlying TCP socket
 channelOptions:
@@ -45,9 +54,17 @@ triggerPersistenceCriteria:
 persistentStorageDirectory: "./log/storage"
 
 # 100KB
-defaultChannelBufferSizeForFilterPersistence: 102401
+channelBufferSizeForFilterPersistence: 102401
 
-# when this switch is on, we try to recover filters from a corrupted persistent file as many as we can;
-# otherwise, we will throw an exception when we make sure that the persistent file is corrupted.
+# when this switch is on, we try to recover filters from a corrupted or unfinished persistent file as many filters as we can;
+# otherwise, we will throw an exception when we make sure that the persistent file is corrupted or unfinished.
 allowRecoverFromCorruptedPersistentFile: False
 
+# the number of milliseconds to wait for active requests to go end before shutting down. 0 means the server
+# will stop right away without waiting
+gracefulShutdownQuietPeriodMillis: 1
+
+# the number of milliseconds to wait before shutting down the server regardless of active requests.
+# This should be set to a time greater than gracefulShutdownQuietPeriodMillis to ensure the server
+# shuts down even if there is a stuck request.
+gracefulShutdownTimeoutMillis: 1
