@@ -25,7 +25,7 @@ fi
 # Log4j settings
 if [ -z "$FILTER_SERVICE_LOG4J_OPTS" ]; then
   # use the log4j2.xml in $BASE_DIR or internal log4j2.xml to log
-  FILTER_SERVICE_LOG4J_OPTS=""
+  FILTER_SERVICE_LOG4J_OPTS="-Dlog4j2.AsyncQueueFullPolicy=Discard -DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector -Dlog4j.logdir=$LOG_DIR"
 fi
 
 # GC logs
@@ -55,8 +55,7 @@ $JAVA \
     $FILTER_SERVICE_HEAP_OPTS \
     $FILTER_SERVICE_JVM_PERFORMANCE_OPTS \
     $FILTER_SERVICE_JVM_GC_LOG_CONFIGS \
-    -DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector \
-    -Dlog4j.logdir=$LOG_DIR \
+    $FILTER_SERVICE_LOG4J_OPTS \
     -cp $CLASSPATH \
     cn.leancloud.filter.service.Bootstrap \
     $@
