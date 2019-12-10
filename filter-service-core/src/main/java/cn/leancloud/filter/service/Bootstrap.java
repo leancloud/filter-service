@@ -2,6 +2,7 @@ package cn.leancloud.filter.service;
 
 import cn.leancloud.filter.service.Configuration.TriggerPersistenceCriteria;
 import cn.leancloud.filter.service.metrics.MetricsService;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.linecorp.armeria.common.metric.MeterIdPrefixFunction;
 import com.linecorp.armeria.server.Server;
 import com.linecorp.armeria.server.ServerBuilder;
@@ -22,6 +23,9 @@ import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
 public final class Bootstrap {
@@ -115,11 +119,21 @@ public final class Bootstrap {
     public Bootstrap(ServerOptions opts) throws Exception {
         this.metricsService = loadMetricsService();
         final MeterRegistry registry = metricsService.createMeterRegistry();
-        this.scheduler = new BackgroundJobScheduler(registry);
+        final ScheduledThreadPoolExecutor scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(
+                Configuration.maxWorkerThreadPoolSize(),
+                new ThreadFactoryBuilder()
+                        .setNameFormat("filter-service-worker-%s")
+                        .setUncaughtExceptionHandler((t, e) ->
+                                logger.error("Worker thread: " + t.getName() + " got uncaught exception.", e))
+                        .build());
+        scheduledThreadPoolExecutor.setKeepAliveTime(300, TimeUnit.SECONDS);
+        scheduledThreadPoolExecutor.allowCoreThreadTimeOut(true);
+
+        this.scheduler = new BackgroundJobScheduler(registry, scheduledThreadPoolExecutor);
         this.factory = new CountUpdateBloomFilterFactory<>(new GuavaBloomFilterFactory(), new LongAdder());
-        this.bloomFilterManager = newBloomFilterManager(factory);
         this.persistentManager = new PersistentManager<>(Paths.get(Configuration.persistentStorageDirectory()));
-        this.server = newServer(registry, opts, bloomFilterManager);
+        this.bloomFilterManager = newBloomFilterManager();
+        this.server = newServer(registry, opts, scheduledThreadPoolExecutor);
     }
 
     private void start() throws Exception {
@@ -179,9 +193,7 @@ public final class Bootstrap {
         bloomFilterManager.addFilters(records);
     }
 
-    private Server newServer(MeterRegistry registry,
-                             ServerOptions opts,
-                             BloomFilterManager<?, ? super ExpirableBloomFilterConfig> bloomFilterManager) {
+    private Server newServer(MeterRegistry registry, ServerOptions opts, ScheduledExecutorService scheduledExecutorService) {
         final ServerBuilder sb = Server.builder()
                 .channelOption(ChannelOption.SO_BACKLOG, Configuration.channelOptions().SO_BACKLOG())
                 .channelOption(ChannelOption.SO_RCVBUF, Configuration.channelOptions().SO_RCVBUF())
@@ -190,9 +202,10 @@ public final class Bootstrap {
                 .http(opts.getPort())
                 .maxNumConnections(Configuration.maxHttpConnections())
                 .maxRequestLength(Configuration.maxHttpRequestLength())
-                .requestTimeout(Configuration.defaultRequestTimeout())
+                .requestTimeout(Configuration.requestTimeout())
                 .disableDateHeader()
                 .disableServerHeader()
+                .blockingTaskExecutor(scheduledExecutorService, false)
                 .gracefulShutdownTimeout(Configuration.gracefulShutdownQuietPeriodMillis(), Configuration.gracefulShutdownTimeoutMillis())
                 .idleTimeoutMillis(Configuration.idleTimeoutMillis())
                 .meterRegistry(registry);
@@ -205,8 +218,7 @@ public final class Bootstrap {
         return sb.build();
     }
 
-    private BloomFilterManagerImpl<BloomFilter, ExpirableBloomFilterConfig> newBloomFilterManager(
-            CountUpdateBloomFilterFactory<ExpirableBloomFilterConfig> factory) {
+    private BloomFilterManagerImpl<BloomFilter, ExpirableBloomFilterConfig> newBloomFilterManager() {
         final BloomFilterManagerImpl<BloomFilter, ExpirableBloomFilterConfig> bloomFilterManager = new BloomFilterManagerImpl<>(factory);
         bloomFilterManager.addListener(new BloomFilterManagerListener<BloomFilter, ExpirableBloomFilterConfig>() {
             @Override

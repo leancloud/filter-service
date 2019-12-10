@@ -32,6 +32,10 @@ public final class Configuration {
         }
     }
 
+    static void initConfiguration(Configuration configuration) {
+        instance = configuration;
+    }
+
     static Duration purgeFilterInterval() {
         return instance.purgeFilterInterval;
     }
@@ -44,8 +48,12 @@ public final class Configuration {
         return instance.maxHttpRequestLength;
     }
 
-    static Duration defaultRequestTimeout() {
-        return instance.defaultRequestTimeout;
+    static int maxWorkerThreadPoolSize() {
+        return instance.maxWorkerThreadPoolSize;
+    }
+
+    static Duration requestTimeout() {
+        return instance.requestTimeout;
     }
 
     static long idleTimeoutMillis() {
@@ -96,7 +104,8 @@ public final class Configuration {
         return "\npurgeFilterIntervalMillis: " + purgeFilterInterval().toMillis() + "\n" +
                 "maxHttpConnections: " + maxHttpConnections() + "\n" +
                 "maxHttpRequestLength: " + maxHttpRequestLength() + "B\n" +
-                "defaultRequestTimeoutSeconds: " + defaultRequestTimeout().getSeconds() + "\n" +
+                "maxWorkerThreadPoolSize: " + maxWorkerThreadPoolSize() + "\n" +
+                "requestTimeoutSeconds: " + requestTimeout().getSeconds() + "\n" +
                 "idleTimeoutMillis: " + idleTimeoutMillis() + "\n" +
                 "defaultExpectedInsertions: " + defaultExpectedInsertions() + "\n" +
                 "defaultFalsePositiveProbability: " + defaultFalsePositiveProbability() + "\n" +
@@ -113,7 +122,8 @@ public final class Configuration {
     private Duration purgeFilterInterval;
     private int maxHttpConnections;
     private int maxHttpRequestLength;
-    private Duration defaultRequestTimeout;
+    private int maxWorkerThreadPoolSize;
+    private Duration requestTimeout;
     private long idleTimeoutMillis;
     private int defaultExpectedInsertions;
     private double defaultFalsePositiveProbability;
@@ -126,11 +136,13 @@ public final class Configuration {
     private long gracefulShutdownQuietPeriodMillis;
     private long gracefulShutdownTimeoutMillis;
 
-    private Configuration() {
+    // package private for testing
+    Configuration() {
         this.purgeFilterInterval = Duration.ofMillis(300);
         this.maxHttpConnections = 1000;
         this.maxHttpRequestLength = 10485760;
-        this.defaultRequestTimeout = Duration.ofSeconds(5);
+        this.maxWorkerThreadPoolSize = 10;
+        this.requestTimeout = Duration.ofSeconds(5);
         this.idleTimeoutMillis = 10_000;
         this.defaultExpectedInsertions = 1000_000;
         this.defaultFalsePositiveProbability = 0.0001;
@@ -169,13 +181,21 @@ public final class Configuration {
         this.maxHttpRequestLength = maxHttpRequestLength;
     }
 
-    @JsonSetter("defaultRequestTimeoutSeconds")
-    public void setDefaultRequestTimeout(int defaultRequestTimeoutSeconds) {
-        if (defaultRequestTimeoutSeconds <= 0) {
-            throw new IllegalArgumentException("defaultRequestTimeoutSeconds: "
-                    + defaultRequestTimeoutSeconds + " (expected: > 0)");
+    public void setMaxWorkerThreadPoolSize(int maxWorkerThreadPoolSize) {
+        if (maxWorkerThreadPoolSize <= 0) {
+            throw new IllegalArgumentException("maxWorkerThreadPoolSize: "
+                    + maxWorkerThreadPoolSize + " (expected: > 0)");
         }
-        this.defaultRequestTimeout = Duration.ofSeconds(defaultRequestTimeoutSeconds);
+        this.maxWorkerThreadPoolSize = maxWorkerThreadPoolSize;
+    }
+
+    @JsonSetter("requestTimeoutSeconds")
+    public void setRequestTimeout(int requestTimeoutSeconds) {
+        if (requestTimeoutSeconds <= 0) {
+            throw new IllegalArgumentException("requestTimeoutSeconds: "
+                    + requestTimeoutSeconds + " (expected: > 0)");
+        }
+        this.requestTimeout = Duration.ofSeconds(requestTimeoutSeconds);
     }
 
     public void setIdleTimeoutMillis(int idleTimeoutMillis) {
@@ -252,6 +272,10 @@ public final class Configuration {
             throw new IllegalArgumentException("gracefulShutdownQuietPeriodMillis: "
                     + gracefulShutdownQuietPeriodMillis + " (expected: > 0)");
         }
+        if (gracefulShutdownQuietPeriodMillis > this.gracefulShutdownTimeoutMillis) {
+            this.gracefulShutdownTimeoutMillis = gracefulShutdownQuietPeriodMillis;
+        }
+
         this.gracefulShutdownQuietPeriodMillis = gracefulShutdownQuietPeriodMillis;
     }
 
@@ -259,6 +283,10 @@ public final class Configuration {
         if (gracefulShutdownTimeoutMillis <= 0) {
             throw new IllegalArgumentException("gracefulShutdownTimeoutMillis: "
                     + gracefulShutdownTimeoutMillis + " (expected: > 0)");
+        }
+
+        if (gracefulShutdownTimeoutMillis < this.gracefulShutdownQuietPeriodMillis) {
+            this.gracefulShutdownQuietPeriodMillis = gracefulShutdownTimeoutMillis;
         }
 
         this.gracefulShutdownTimeoutMillis = gracefulShutdownTimeoutMillis;
@@ -302,19 +330,19 @@ public final class Configuration {
             this.TCP_NODELAY = TCP_NODELAY;
         }
 
-        public int SO_RCVBUF() {
+        int SO_RCVBUF() {
             return SO_RCVBUF;
         }
 
-        public int SO_SNDBUF() {
+        int SO_SNDBUF() {
             return SO_SNDBUF;
         }
 
-        public int SO_BACKLOG() {
+        int SO_BACKLOG() {
             return SO_BACKLOG;
         }
 
-        public boolean TCP_NODELAY() {
+        boolean TCP_NODELAY() {
             return TCP_NODELAY;
         }
 
@@ -349,9 +377,10 @@ public final class Configuration {
         private Duration checkingPeriod;
         private int updatesThreshold;
 
+        // used by Jackson to deserialze YMAL to Object
         private TriggerPersistenceCriteria() {}
 
-        public TriggerPersistenceCriteria(Duration checkingPeriod, int updatesThreshold) {
+        TriggerPersistenceCriteria(Duration checkingPeriod, int updatesThreshold) {
             this.checkingPeriod = checkingPeriod;
             this.updatesThreshold = updatesThreshold;
         }
@@ -375,11 +404,11 @@ public final class Configuration {
             this.updatesThreshold = updatesMoreThan;
         }
 
-        public Duration checkingPeriod() {
+        Duration checkingPeriod() {
             return checkingPeriod;
         }
 
-        public int updatesThreshold() {
+        int updatesThreshold() {
             return updatesThreshold;
         }
 

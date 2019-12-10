@@ -1,29 +1,20 @@
 package cn.leancloud.filter.service;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.concurrent.*;
 
 final class BackgroundJobScheduler {
-    private static final Logger logger = LoggerFactory.getLogger(BackgroundJobScheduler.class);
     private final ScheduledExecutorService scheduledExecutorService;
     private final MeterRegistry registry;
     private final CopyOnWriteArrayList<ScheduledFuture<?>> futures;
 
-    BackgroundJobScheduler(MeterRegistry registry) {
+    BackgroundJobScheduler(MeterRegistry registry, ScheduledExecutorService scheduledExecutorService) {
         this.registry = registry;
         this.futures = new CopyOnWriteArrayList<>();
-        this.scheduledExecutorService = Executors.newScheduledThreadPool(10,
-                new ThreadFactoryBuilder()
-                        .setNameFormat("scheduled-worker-%s")
-                        .setUncaughtExceptionHandler((t, e) ->
-                                logger.error("Scheduled worker thread: " + t.getName() + " got uncaught exception.", e))
-                        .build());
+        this.scheduledExecutorService = scheduledExecutorService;
     }
 
     void scheduleFixedIntervalJob(Runnable runnable, String name, Duration interval) {

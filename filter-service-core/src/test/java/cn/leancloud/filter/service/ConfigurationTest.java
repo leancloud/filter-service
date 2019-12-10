@@ -3,7 +3,6 @@ package cn.leancloud.filter.service;
 import cn.leancloud.filter.service.Configuration.TriggerPersistenceCriteria;
 import org.junit.Test;
 
-import java.nio.file.Paths;
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,7 +14,8 @@ public class ConfigurationTest {
         assertThat(Configuration.purgeFilterInterval()).isEqualTo(Duration.ofMillis(300));
         assertThat(Configuration.maxHttpConnections()).isEqualTo(1000);
         assertThat(Configuration.maxHttpRequestLength()).isEqualTo(10 * 1024 * 1024);
-        assertThat(Configuration.defaultRequestTimeout()).isEqualTo(Duration.ofSeconds(5));
+        assertThat(Configuration.maxWorkerThreadPoolSize()).isEqualTo(10);
+        assertThat(Configuration.requestTimeout()).isEqualTo(Duration.ofSeconds(5));
         assertThat(Configuration.idleTimeoutMillis()).isEqualTo(10_000);
         assertThat(Configuration.defaultExpectedInsertions()).isEqualTo(1000_000);
         assertThat(Configuration.defaultFalsePositiveProbability()).isEqualTo(0.0001);
@@ -52,7 +52,8 @@ public class ConfigurationTest {
         assertThat(Configuration.purgeFilterInterval()).isEqualTo(Duration.ofMillis(200));
         assertThat(Configuration.maxHttpConnections()).isEqualTo(2000);
         assertThat(Configuration.maxHttpRequestLength()).isEqualTo(5 * 1024 * 1024);
-        assertThat(Configuration.defaultRequestTimeout()).isEqualTo(Duration.ofSeconds(6));
+        assertThat(Configuration.maxWorkerThreadPoolSize()).isEqualTo(11);
+        assertThat(Configuration.requestTimeout()).isEqualTo(Duration.ofSeconds(6));
         assertThat(Configuration.idleTimeoutMillis()).isEqualTo(20_000);
         assertThat(Configuration.defaultExpectedInsertions()).isEqualTo(2000_000);
         assertThat(Configuration.defaultFalsePositiveProbability()).isEqualTo(0.0002);
@@ -71,5 +72,34 @@ public class ConfigurationTest {
                 .contains(new TriggerPersistenceCriteria(Duration.ofSeconds(61), 10001));
         assertThat(Configuration.gracefulShutdownQuietPeriodMillis()).isEqualTo(1);
         assertThat(Configuration.gracefulShutdownTimeoutMillis()).isEqualTo(1);
+    }
+
+    @Test
+    public void testNegativeGracefulShutdownMillis() {
+        final Configuration c = new Configuration();
+        assertThatThrownBy(() -> c.setGracefulShutdownQuietPeriodMillis(-1))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> c.setGracefulShutdownTimeoutMillis(-1))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    public void testSetGracefulShutdownQuietGreaterThanTimeoutPeriod() {
+        final Configuration c = new Configuration();
+        c.setGracefulShutdownQuietPeriodMillis(100);
+        Configuration.initConfiguration(c);
+        assertThat(Configuration.gracefulShutdownQuietPeriodMillis()).isEqualTo(100);
+        assertThat(Configuration.gracefulShutdownTimeoutMillis()).isEqualTo(100);
+    }
+
+    @Test
+    public void testSetGracefulShutdownTimeoutLowerThanQuietPeriod() {
+        final Configuration c = new Configuration();
+        c.setGracefulShutdownTimeoutMillis(100);
+        c.setGracefulShutdownQuietPeriodMillis(50);
+        c.setGracefulShutdownTimeoutMillis(49);
+        Configuration.initConfiguration(c);
+        assertThat(Configuration.gracefulShutdownQuietPeriodMillis()).isEqualTo(49);
+        assertThat(Configuration.gracefulShutdownTimeoutMillis()).isEqualTo(49);
     }
 }

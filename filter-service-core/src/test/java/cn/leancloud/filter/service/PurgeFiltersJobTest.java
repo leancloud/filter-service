@@ -24,7 +24,7 @@ public class PurgeFiltersJobTest {
 
     @Test
     public void testPurgeThrowsException() {
-        final RuntimeException ex = new RuntimeException();
+        final RuntimeException ex = new RuntimeException("expected exception");
         doThrow(ex).when(purgatory).purge();
         job.run();
         verify(purgatory, times(1)).purge();

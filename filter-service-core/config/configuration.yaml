@@ -15,9 +15,13 @@ maxHttpConnections: 1000
 maxHttpRequestLength: 10485760
 
 # the default timeout of a request
-defaultRequestTimeoutSeconds: 5
+requestTimeoutSeconds: 5
 
+# the idle timeout of a connection in milliseconds for keep-alive
 idleTimeoutMillis: 10000
+
+# maximum thread pool size to execute internal potential long running tasks
+maxWorkerThreadPoolSize: 10
 
 # the configuration options for every underlying TCP socket
 channelOptions:
@@ -53,5 +57,11 @@ defaultChannelBufferSizeForFilterPersistence: 102400
 # otherwise, we will throw an exception when we make sure that the persistent file is corrupted or unfinished.
 allowRecoverFromCorruptedPersistentFile: true
 
+# the number of milliseconds to wait for active requests to go end before shutting down. 0 means the server
+# will stop right away without waiting
 gracefulShutdownQuietPeriodMillis: 0
+
+# the number of milliseconds to wait before shutting down the server regardless of active requests.
+# This should be set to a time greater than gracefulShutdownQuietPeriodMillis to ensure the server
+# shuts down even if there is a stuck request.
 gracefulShutdownTimeoutMillis: 0
