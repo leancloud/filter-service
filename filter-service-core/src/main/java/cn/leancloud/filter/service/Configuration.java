@@ -283,9 +283,9 @@ public final class Configuration {
     }
 
     public void setGracefulShutdownQuietPeriodMillis(long gracefulShutdownQuietPeriodMillis) {
-        if (gracefulShutdownQuietPeriodMillis <= 0) {
+        if (gracefulShutdownQuietPeriodMillis < 0) {
             throw new IllegalArgumentException("gracefulShutdownQuietPeriodMillis: "
-                    + gracefulShutdownQuietPeriodMillis + " (expected: > 0)");
+                    + gracefulShutdownQuietPeriodMillis + " (expected: >= 0)");
         }
         if (gracefulShutdownQuietPeriodMillis > this.gracefulShutdownTimeoutMillis) {
             this.gracefulShutdownTimeoutMillis = gracefulShutdownQuietPeriodMillis;
@@ -295,9 +295,9 @@ public final class Configuration {
     }
 
     public void setGracefulShutdownTimeoutMillis(long gracefulShutdownTimeoutMillis) {
-        if (gracefulShutdownTimeoutMillis <= 0) {
+        if (gracefulShutdownTimeoutMillis < 0) {
             throw new IllegalArgumentException("gracefulShutdownTimeoutMillis: "
-                    + gracefulShutdownTimeoutMillis + " (expected: > 0)");
+                    + gracefulShutdownTimeoutMillis + " (expected: >= 0)");
         }
 
         if (gracefulShutdownTimeoutMillis < this.gracefulShutdownQuietPeriodMillis) {
