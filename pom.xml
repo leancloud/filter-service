@@ -272,11 +272,12 @@
                         <descriptorRefs>
                             <descriptorRef>jar-with-dependencies</descriptorRef>
                         </descriptorRefs>
-                        <archive>
-                            <manifestEntries>
-                                <Multi-Release>true</Multi-Release>
-                            </manifestEntries>
-                        </archive>
+                            <!-- We need to uncomment this when armeria is ready ref. -->
+<!--                        <archive>-->
+<!--                            <manifestEntries>-->
+<!--                                <Multi-Release>true</Multi-Release>-->
+<!--                            </manifestEntries>-->
+<!--                        </archive>-->
                     </configuration>
                     <executions>
                         <execution>
