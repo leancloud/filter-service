@@ -1,5 +1,6 @@
 package cn.leancloud.filter.service;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -152,7 +153,7 @@ public class PersistentManagerTest {
         when(filterManager.iterator()).thenReturn(records.iterator());
 
         manager.freezeAllFilters(filterManager);
-        FileUtils.atomicMoveWithFallback(manager.persistentFilePath(), manager.temporaryPersistentFilePath());
+        FilterServiceFileUtils.atomicMoveWithFallback(manager.persistentFilePath(), manager.temporaryPersistentFilePath());
 
         assertThat(manager.recoverFilters(factory, false)).isEqualTo(records);
     }
@@ -168,13 +169,13 @@ public class PersistentManagerTest {
         // prepare temporary file
         when(filterManager.iterator()).thenReturn(records.subList(10, 20).iterator());
         manager.freezeAllFilters(filterManager);
-        FileUtils.atomicMoveWithFallback(manager.persistentFilePath(), temporaryPath);
+        FilterServiceFileUtils.atomicMoveWithFallback(manager.persistentFilePath(), temporaryPath);
 
         // prepare normal file
         when(filterManager.iterator()).thenReturn(records.iterator());
         manager.freezeAllFilters(filterManager);
 
-        FileUtils.atomicMoveWithFallback(temporaryPath, manager.temporaryPersistentFilePath());
+        FilterServiceFileUtils.atomicMoveWithFallback(temporaryPath, manager.temporaryPersistentFilePath());
         assertThat(manager.recoverFilters(factory, false)).isEqualTo(expected);
     }
 }

@@ -1,5 +1,6 @@
 package cn.leancloud.filter.service;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +34,7 @@ public class PersistentManager<F extends BloomFilter> implements Closeable {
 
         FileUtils.forceMkdir(persistentPath.toFile());
 
-        this.fileLock = FileUtils.lockDirectory(persistentPath, LOCK_FILE_NAME);
+        this.fileLock = FilterServiceFileUtils.lockDirectory(persistentPath, LOCK_FILE_NAME);
         this.basePath = persistentPath;
     }
 
@@ -49,7 +50,7 @@ public class PersistentManager<F extends BloomFilter> implements Closeable {
             channel.force(true);
         }
 
-        FileUtils.atomicMoveWithFallback(tempPath, persistentFilePath());
+        FilterServiceFileUtils.atomicMoveWithFallback(tempPath, persistentFilePath());
         logger.debug("Persistent " + counter + " filters.");
     }
 
@@ -70,7 +71,7 @@ public class PersistentManager<F extends BloomFilter> implements Closeable {
 
     @Override
     public synchronized void close() throws IOException {
-        FileUtils.releaseDirectoryLock(fileLock);
+        FilterServiceFileUtils.releaseDirectoryLock(fileLock);
     }
 
     // Package private for testing
