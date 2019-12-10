@@ -15,6 +15,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static java.util.Objects.requireNonNull;
+
 public final class Configuration {
     private static Configuration instance = new Configuration();
 
@@ -34,6 +36,10 @@ public final class Configuration {
 
     static void initConfiguration(Configuration configuration) {
         instance = configuration;
+    }
+
+    static String metricsPrefix() {
+        return instance.metricsPrefix;
     }
 
     static Duration purgeFilterInterval() {
@@ -101,7 +107,8 @@ public final class Configuration {
     }
 
     static String spec() {
-        return "\npurgeFilterIntervalMillis: " + purgeFilterInterval().toMillis() + "\n" +
+        return "\nmetricsPrefix: " + metricsPrefix() + "\n" +
+                "purgeFilterIntervalMillis: " + purgeFilterInterval().toMillis() + "\n" +
                 "maxHttpConnections: " + maxHttpConnections() + "\n" +
                 "maxHttpRequestLength: " + maxHttpRequestLength() + "B\n" +
                 "maxWorkerThreadPoolSize: " + maxWorkerThreadPoolSize() + "\n" +
@@ -119,6 +126,7 @@ public final class Configuration {
                 "gracefulShutdownTimeoutMillis: " + gracefulShutdownTimeoutMillis() + "\n";
     }
 
+    private String metricsPrefix;
     private Duration purgeFilterInterval;
     private int maxHttpConnections;
     private int maxHttpRequestLength;
@@ -138,6 +146,7 @@ public final class Configuration {
 
     // package private for testing
     Configuration() {
+        this.metricsPrefix = "filterService";
         this.purgeFilterInterval = Duration.ofMillis(300);
         this.maxHttpConnections = 1000;
         this.maxHttpRequestLength = 10485760;
@@ -154,6 +163,12 @@ public final class Configuration {
         this.persistenceCriteria = Collections.singletonList(new TriggerPersistenceCriteria(Duration.ofMinutes(5), 100));
         this.gracefulShutdownQuietPeriodMillis = 0;
         this.gracefulShutdownTimeoutMillis = 0;
+    }
+
+    public void setMetricsPrefix(String metricsPrefix) {
+        requireNonNull(metricsPrefix, "metricsPrefix");
+
+        this.metricsPrefix = metricsPrefix;
     }
 
     @JsonSetter("purgeFilterIntervalMillis")

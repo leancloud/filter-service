@@ -18,7 +18,7 @@ final class BackgroundJobScheduler {
     }
 
     void scheduleFixedIntervalJob(Runnable runnable, String name, Duration interval) {
-        Timer timer = registry.timer("filter-service." + name);
+        final Timer timer = registry.timer(Configuration.metricsPrefix() + name);
         ScheduledFuture<?> future = scheduledExecutorService.scheduleWithFixedDelay(
                 timer.wrap(runnable),
                 interval.toMillis(),

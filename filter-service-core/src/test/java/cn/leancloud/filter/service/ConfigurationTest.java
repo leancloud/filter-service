@@ -11,6 +11,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class ConfigurationTest {
     @Test
     public void testDefaultValues() {
+        assertThat(Configuration.metricsPrefix()).isEqualTo("filterService");
         assertThat(Configuration.purgeFilterInterval()).isEqualTo(Duration.ofMillis(300));
         assertThat(Configuration.maxHttpConnections()).isEqualTo(1000);
         assertThat(Configuration.maxHttpRequestLength()).isEqualTo(10 * 1024 * 1024);
@@ -49,6 +50,7 @@ public class ConfigurationTest {
     public void testNormalConfigurationFile() throws Exception {
         Configuration.initConfiguration("src/test/resources/testing-configuration.yaml");
         System.out.println(Configuration.spec());
+        assertThat(Configuration.metricsPrefix()).isEqualTo("filterServiceTest");
         assertThat(Configuration.purgeFilterInterval()).isEqualTo(Duration.ofMillis(200));
         assertThat(Configuration.maxHttpConnections()).isEqualTo(2000);
         assertThat(Configuration.maxHttpRequestLength()).isEqualTo(5 * 1024 * 1024);

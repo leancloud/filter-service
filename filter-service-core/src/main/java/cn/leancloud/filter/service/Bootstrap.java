@@ -211,7 +211,7 @@ public final class Bootstrap {
                 .meterRegistry(registry);
 
         sb.annotatedService("/v1/bloomfilter", new BloomFilterHttpService(bloomFilterManager))
-                .decorator(MetricCollectingService.newDecorator(MeterIdPrefixFunction.ofDefault("filter-service")));
+                .decorator(MetricCollectingService.newDecorator(MeterIdPrefixFunction.ofDefault(Configuration.metricsPrefix())));
         if (opts.isDocServiceEnabled()) {
             sb.serviceUnder("/docs", new DocService());
         }

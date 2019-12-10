@@ -1,4 +1,7 @@
 ---
+# the prefix for all the metrics generated from micrometer
+metricsPrefix: "filterService"
+
 # the default expected insertions to filter. If no value provided on creating filter, this value will be used
 defaultExpectedInsertions: 1000000
 
