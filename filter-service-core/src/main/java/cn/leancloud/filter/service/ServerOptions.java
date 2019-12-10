@@ -15,6 +15,7 @@ import javax.annotation.Nullable;
 final class ServerOptions {
     @Option(names = {"-c", "--configuration-file"},
             description = "The path to a YAML configuration file.")
+    @Nullable
     private String configFilePath;
     @Option(names = {"-p", "--port"},
             defaultValue = "8080",
@@ -26,16 +27,16 @@ final class ServerOptions {
             description = "true when you want to serve the testing document service under path \"/docs\".")
     private boolean docService;
 
-    public int getPort() {
+    int getPort() {
         return port;
     }
 
-    public boolean isDocServiceEnabled() {
+    boolean isDocServiceEnabled() {
         return docService;
     }
 
     @Nullable
-    public String configFilePath() {
+    String configFilePath() {
         return configFilePath;
     }
 }

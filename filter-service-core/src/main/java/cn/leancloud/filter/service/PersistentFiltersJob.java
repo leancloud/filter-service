@@ -27,6 +27,9 @@ public class PersistentFiltersJob<F extends BloomFilter> implements Runnable {
 
     @Override
     public void run() {
+        // synchronized on an instance of a class only to prevent several PersistentFiltersJob to
+        // access on the same filterUpdateTimesCounter. It's not mean to and can't prevent thread
+        // not in PersistentFiltersJob to access this counter
         synchronized (filterUpdateTimesCounter) {
             final long sum = filterUpdateTimesCounter.sum();
             if (sum > criteria.updatesThreshold()) {
