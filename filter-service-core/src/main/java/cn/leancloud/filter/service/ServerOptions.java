@@ -8,7 +8,7 @@ import javax.annotation.Nullable;
 @Command(name = "filter-service",
         sortOptions = false,
         showDefaultValues = true,
-        version = "filter-service v1.4-SNAPSHOT",
+        version = "filter-service v1.4",
         description = "filter-service is a daemon network service which is used to expose bloom filters " +
                 "and operations by RESTFul API.",
         mixinStandardHelpOptions = true)
