@@ -80,8 +80,8 @@ public final class Configuration {
         return instance.allowRecoverFromCorruptedPersistentFile;
     }
 
-    static int defaultChannelBufferSizeForFilterPersistence() {
-        return instance.defaultChannelBufferSizeForFilterPersistence;
+    static int channelBufferSizeForFilterPersistence() {
+        return instance.channelBufferSizeForFilterPersistence;
     }
 
     static SupportedChannelOptions channelOptions() {
@@ -111,7 +111,7 @@ public final class Configuration {
                 "defaultFalsePositiveProbability: " + defaultFalsePositiveProbability() + "\n" +
                 "defaultValidSecondsAfterCreate: " + defaultValidPeriodAfterCreate().getSeconds() + "\n" +
                 "persistentStorageDirectory: " + persistentStorageDirectory() + "\n" +
-                "defaultChannelBufferSizeForFilterPersistence: " + defaultChannelBufferSizeForFilterPersistence() + "B" + "\n" +
+                "channelBufferSizeForFilterPersistence: " + channelBufferSizeForFilterPersistence() + "B" + "\n" +
                 "triggerPersistenceCriteria: " + persistenceCriteria() + "\n" +
                 "allowRecoverFromCorruptedPersistentFile: " + allowRecoverFromCorruptedPersistentFile() + "\n" +
                 "channelOptions: " + channelOptions() + "\n" +
@@ -130,7 +130,7 @@ public final class Configuration {
     private Duration defaultValidSecondsAfterCreate;
     private String persistentStorageDirectory;
     private boolean allowRecoverFromCorruptedPersistentFile;
-    private int defaultChannelBufferSizeForFilterPersistence;
+    private int channelBufferSizeForFilterPersistence;
     private SupportedChannelOptions channelOptions;
     private List<TriggerPersistenceCriteria> persistenceCriteria;
     private long gracefulShutdownQuietPeriodMillis;
@@ -149,7 +149,7 @@ public final class Configuration {
         this.defaultValidSecondsAfterCreate = Duration.ofDays(1);
         this.persistentStorageDirectory = System.getProperty("user.dir");
         this.allowRecoverFromCorruptedPersistentFile = true;
-        this.defaultChannelBufferSizeForFilterPersistence = 102400;
+        this.channelBufferSizeForFilterPersistence = 102400;
         this.channelOptions = new SupportedChannelOptions();
         this.persistenceCriteria = Collections.singletonList(new TriggerPersistenceCriteria(Duration.ofMinutes(5), 100));
         this.gracefulShutdownQuietPeriodMillis = 0;
@@ -232,12 +232,12 @@ public final class Configuration {
         this.defaultValidSecondsAfterCreate = Duration.ofSeconds(defaultValidSecondsAfterCreate);
     }
 
-    public void setDefaultChannelBufferSizeForFilterPersistence(int defaultChannelBufferSizeForFilterPersistence) {
-        if (defaultChannelBufferSizeForFilterPersistence <= 0) {
-            throw new IllegalArgumentException("defaultChannelBufferSizeForFilterPersistence: "
-                    + defaultChannelBufferSizeForFilterPersistence + " (expected: > 0)");
+    public void setchannelBufferSizeForFilterPersistence(int channelBufferSizeForFilterPersistence) {
+        if (channelBufferSizeForFilterPersistence <= 0) {
+            throw new IllegalArgumentException("channelBufferSizeForFilterPersistence: "
+                    + channelBufferSizeForFilterPersistence + " (expected: > 0)");
         }
-        this.defaultChannelBufferSizeForFilterPersistence = defaultChannelBufferSizeForFilterPersistence;
+        this.channelBufferSizeForFilterPersistence = channelBufferSizeForFilterPersistence;
     }
 
     public void setPersistentStorageDirectory(@Nullable String persistentStorageDirectory) {

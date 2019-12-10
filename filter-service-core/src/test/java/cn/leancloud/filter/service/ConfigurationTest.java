@@ -21,7 +21,7 @@ public class ConfigurationTest {
         assertThat(Configuration.defaultFalsePositiveProbability()).isEqualTo(0.0001);
         assertThat(Configuration.defaultValidPeriodAfterCreate()).isEqualTo(Duration.ofDays(1));
         assertThat(Configuration.persistentStorageDirectory()).isEqualTo(System.getProperty("user.dir"));
-        assertThat(Configuration.defaultChannelBufferSizeForFilterPersistence()).isEqualTo(102400);
+        assertThat(Configuration.channelBufferSizeForFilterPersistence()).isEqualTo(102400);
         assertThat(Configuration.allowRecoverFromCorruptedPersistentFile()).isTrue();
         assertThat(Configuration.channelOptions().SO_BACKLOG()).isEqualTo(2048);
         assertThat(Configuration.channelOptions().SO_RCVBUF()).isEqualTo(2048);
@@ -59,7 +59,7 @@ public class ConfigurationTest {
         assertThat(Configuration.defaultFalsePositiveProbability()).isEqualTo(0.0002);
         assertThat(Configuration.defaultValidPeriodAfterCreate()).isEqualTo(Duration.ofDays(2));
         assertThat(Configuration.persistentStorageDirectory()).isEqualTo("./log/storage");
-        assertThat(Configuration.defaultChannelBufferSizeForFilterPersistence()).isEqualTo(102401);
+        assertThat(Configuration.channelBufferSizeForFilterPersistence()).isEqualTo(102401);
         assertThat(Configuration.allowRecoverFromCorruptedPersistentFile()).isFalse();
         assertThat(Configuration.channelOptions().SO_BACKLOG()).isEqualTo(1024);
         assertThat(Configuration.channelOptions().SO_RCVBUF()).isEqualTo(1024);

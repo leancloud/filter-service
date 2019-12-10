@@ -51,7 +51,7 @@ triggerPersistenceCriteria:
 persistentStorageDirectory: ~
 
 # 100KB
-defaultChannelBufferSizeForFilterPersistence: 102400
+channelBufferSizeForFilterPersistence: 102400
 
 # when this switch is on, we try to recover filters from a corrupted or unfinished persistent file as many filters as we can;
 # otherwise, we will throw an exception when we make sure that the persistent file is corrupted or unfinished.
