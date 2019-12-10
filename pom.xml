@@ -272,7 +272,7 @@
                         <descriptorRefs>
                             <descriptorRef>jar-with-dependencies</descriptorRef>
                         </descriptorRefs>
-                            <!-- We need to uncomment this when armeria is ready ref. -->
+                            <!-- We need to uncomment this when armeria is ready. https://github.com/leancloud/filter-service/pull/25 -->
 <!--                        <archive>-->
 <!--                            <manifestEntries>-->
 <!--                                <Multi-Release>true</Multi-Release>-->
