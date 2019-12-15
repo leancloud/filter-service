@@ -20,12 +20,14 @@ Filter-Service requires Java 8 or  newer  to build and run. So please ensure tha
 
 1. Download the latest `filter-service.tar.gz` file from the releases list [here](https://github.com/leancloud/filter-service/releases), and uncompressed this package to your local directory;
 2. Under the extracted directory `filter-service`, execute `./bin/filter-service` to run Filter-Service on port 8080 by default;
-3. Please using the `-h` option and checking `./config/configuration.xml` file to browse all the available configurable options for Filter-Service;
+3. Please using the `-h` option and checking `./config/configuration.yaml` file to browse all the available configurable options for Filter-Service;
 4. The doc for all the available API is written in [Swagger](https://swagger.io/) and is put under the `doc` directory [at here](https://github.com/leancloud/filter-service/blob/master/doc/bloom-filter-swagger.yaml). Please use a swagger rendering tool to check those API. If you don't have a swagger rendering tool available, please consider import the [bloom-filter-swagger.yaml](https://github.com/leancloud/filter-service/blob/master/doc/bloom-filter-swagger.yaml) file to [Swagger Editor](https://editor.swagger.io/) to browse.
+
+If you would like to package by your self, please use JDK 11 and execute `mvn package` under the project main directory. The packaged `jar` file can be run under JDK 8+. Please consider to use [jenv](https://github.com/jenv/jenv) to swich between JDK 8 and  JDK 11 smoothly.
 
 ## Persistence
 
-Filter-Service uses a file named `snapshot.db`in a dedicated directory given in `config/configuration.xml` to save all the filters every several seconds. It will lock this directory so only one Filter-Service can use the same directory on the same time. During persistence operation, firstly Filter-Service will save filters to a file named `snapshot.tmp`. After that, if everything is OK, it will rename `snapshot.tmp` to `snapshot.db` in an atomic operation. 
+Filter-Service uses a file named `snapshot.db`in a dedicated directory given in `config/configuration.yaml` to save all the filters every several seconds. It will lock this directory so only one Filter-Service can use the same directory on the same time. During persistence operation, firstly Filter-Service will save filters to a file named `snapshot.tmp`. After that, if everything is OK, it will rename `snapshot.tmp` to `snapshot.db` in an atomic operation. 
 
 You can configurate when to save filters to file by both of number of seconds and number of update operations occurred. In the example below, the behaviour will be to save:
 * after 900 sec if at least 1 filter update operations occurred
@@ -42,15 +44,15 @@ triggerPersistenceCriteria:
     updatesMoreThan: 10000
 ```
 
-On startup, after Filter-Service have locked the working directory, it tries to find the `snapshot.db` file and recover filters from that file. It recovers in a one-by-one process. Reading all the bytes needed to recover a filter, checking some stuff, then it deserialize filter from these bytes. It repeats this process to recover the rest filters until all the bytes in the file have been read. If the bytes for a filter is not correct, like checksum unmatched, magic unmached, not enough bytes etc. It will stop the recovering process immediately because all the bytes afterwards is definitely corrupted. You can use configuration to let Filter-Service throws a exception and does not recover anything on this situation or let Filter-Service just tolerates the corrupted file and tries to recover as many filters as it can from it. 
+For the recovering process, on startup, after Filter-Service have locked the working directory, it tries to find the `snapshot.db` file and recover filters from that file. It recover filters in a one-by-one process. Reading all the bytes needed to recover a filter, checking these bytes to see if they are valid, then it deserialize filter from these bytes. It repeats this process to recover the rest filters until all valid filters in the file have been deserialized. If the bytes for a filter is not valid, like checksum unmatched, magic unmached, not enough bytes etc. It will stop the recovering process immediately because all the bytes afterwards is definitely corrupted. You can configurate Filter-Service to throw an exception or just tolerate the corrupted file and try to recover as many filters as it can from the corrupted file.
 
-Sometimes before you start a Filter-Service, you can see a `snapshot.tmp` file stands by a `snapshot.db` file. It means the last persistence filter operation was not fully completed. Maybe the process crashed unintentionly, or even the host machine is down when writing filters to `snapshot.tmp`. You can leave `snapshot.tmp` file as it is. Filter-Service will recover from `snapshot.tmp` too after it have read all filters from `snapshot.db`. If the `snapshot.tmp` file is corrupted, Filter-Service will not throw any exception no matter what your configuration is. It just try it best to recover as more filters as it can from `snapshot.tmp`.
+Sometimes before you start a Filter-Service, you can see a `snapshot.tmp` file stands by a `snapshot.db` file. It means the last persistence filter operation was not fully completed. Maybe the process crashed unintentionly, or even the host machine is down when writing filters to `snapshot.tmp`. You can leave `snapshot.tmp` file as it is. Filter-Service will recover from `snapshot.tmp` after it have read all filters from `snapshot.db`. If the `snapshot.tmp` file is corrupted, Filter-Service will not throw any exception no matter what your configurations are. It just tries it best to recover filters from `snapshot.tmp` and leaves those corrupted ones. You can tune the persistence interval to reduce the posibility of non-recoverable filters occur.
 
 ## Metrics
 
 Filter-Service spits a lot of metrics like QPS of all the APIs, current connections, active worker threads size, requests queue size, etc. We are using [Micrometer](https://github.com/micrometer-metrics/micrometer), a metrics facade for many popular monitoring tools, to collect these metrics. Please check the docunment on [Micrometer Document](https://micrometer.io/docs) for more informations.
 
-For simplicity, we are taking [DefaultMetricsService](https://github.com/leancloud/filter-service/blob/master/filter-service-core/src/main/java/cn/leancloud/filter/service/DefaultMetricsService.java) as a default implemntation for [MetricsService](https://github.com/leancloud/filter-service/blob/master/filter-service-metrics/src/main/java/cn/leancloud/filter/service/metrics/MetricsService.java) to handle metrics. It only use [LoggingMeterRegistry](https://static.javadoc.io/io.micrometer/micrometer-core/1.1.3/io/micrometer/core/instrument/logging/LoggingMeterRegistry.html) , from `Micrometer`, to log all the available metrics to a file. If you think it's not enough, you can implrement your own `MetricsService`, then package it as a SPI implementation and put it to the extracted directory `filter-service`. Filter-Service will use [ServiceLoader](https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html) to load the `MetricsService`you implemented from the provided Jar file and use it to handle metrics.
+For simplicity, we are taking [DefaultMetricsService](https://github.com/leancloud/filter-service/blob/master/filter-service-core/src/main/java/cn/leancloud/filter/service/DefaultMetricsService.java) as a default implemntation for [MetricsService](https://github.com/leancloud/filter-service/blob/master/filter-service-metrics/src/main/java/cn/leancloud/filter/service/metrics/MetricsService.java) to handle metrics. It only use [LoggingMeterRegistry](https://static.javadoc.io/io.micrometer/micrometer-core/1.1.3/io/micrometer/core/instrument/logging/LoggingMeterRegistry.html) , from `Micrometer`, to log all the available metrics. If you think it's not enough, you can implrement your own `MetricsService`, then package it as a SPI implementation and put the packaged Jar file to the classpath of Filter-Service. Filter-Service will use [ServiceLoader](https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html) to load the `MetricsService` you implemented and use it to handle metrics.
 
 For example, assume that you are using [Prometheus](https://prometheus.io/) to collect metrcis and we are taking [the codes from Micrometer](https://micrometer.io/docs/registry/prometheus) as an example.
 
@@ -102,7 +104,7 @@ src
       `--resources
           `-- META-INFO
                `--services
-					 `-- cn.leancloud.filter.service.metrics.MetricsService
+                    `-- cn.leancloud.filter.service.metrics.MetricsService
 ```
 
 3. Package your project into a Jar;

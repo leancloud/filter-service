@@ -18,12 +18,17 @@
         </license>
     </licenses>
 
+    <organization>
+        <name>LeanCloud</name>
+        <url>https://leancloud.cn/</url>
+    </organization>
+
     <developers>
         <developer>
             <name>Rui Guo</name>
             <email>rguo@leancloud.rocks</email>
-            <organization>com.github.ylgrgyq</organization>
-            <organizationUrl>https://github.com/ylgrgyq</organizationUrl>
+            <organization>LeanCloud</organization>
+            <organizationUrl>https://leancloud.cn/</organizationUrl>
         </developer>
     </developers>
 
@@ -34,13 +39,41 @@
 
     <scm>
         <connection>scm:git:git://github.com/leancloud/filter-service.git</connection>
-        <developerConnection>scm:git:ssh://github.com/leancloud/filter-service.git</developerConnection>
+        <developerConnection>scm:git:https://github.com/leancloud/filter-service.git</developerConnection>
         <url>http://github.com/leancloud/filter-service/tree/master</url>
         <tag>HEAD</tag>
     </scm>
 
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
     <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <armeria.version>0.97.0</armeria.version>
+        <micrometer.version>1.3.1</micrometer.version>
+        <disruptor.version>3.4.2</disruptor.version>
+        <guava.version>28.1-jre</guava.version>
+        <slf4j.version>1.7.29</slf4j.version>
+        <log4j.version>2.12.1</log4j.version>
+        <findbugs.version>3.0.2</findbugs.version>
+        <dropwizard.metrics.version>4.1.0</dropwizard.metrics.version>
+        <commons-io.version>2.6</commons-io.version>
+        <picocli.version>4.0.4</picocli.version>
+        <jackson-yaml.version>2.10.0</jackson-yaml.version>
+        <assertj.version>3.13.2</assertj.version>
+        <awaitility.version>3.1.6</awaitility.version>
+        <junit.version>4.12</junit.version>
+        <mockito.version>3.0.0</mockito.version>
+        <jmh.version>1.22</jmh.version>
     </properties>
 
     <dependencyManagement>
@@ -53,47 +86,48 @@
             <dependency>
                 <groupId>com.linecorp.armeria</groupId>
                 <artifactId>armeria</artifactId>
-                <version>0.97.0</version>
+                <version>${armeria.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.micrometer</groupId>
                 <artifactId>micrometer-core</artifactId>
-                <version>1.3.1</version>
-            </dependency>
-            <dependency>
-                <groupId>com.lmax</groupId>
-                <artifactId>disruptor</artifactId>
-                <version>3.4.2</version>
+                <version>${micrometer.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>28.1-jre</version>
+                <version>${guava.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>1.7.29</version>
+                <version>${slf4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-slf4j-impl</artifactId>
-                <version>2.12.1</version>
+                <version>${log4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-core</artifactId>
-                <version>2.12.1</version>
+                <version>${log4j.version}</version>
+            </dependency>
+            <!-- used by async logger in log4j2 -->
+            <dependency>
+                <groupId>com.lmax</groupId>
+                <artifactId>disruptor</artifactId>
+                <version>${disruptor.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.google.code.findbugs</groupId>
                 <artifactId>jsr305</artifactId>
-                <version>3.0.2</version>
+                <version>${findbugs.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-core</artifactId>
-                <version>4.1.0</version>
+                <version>${dropwizard.metrics.version}</version>
                 <exclusions>
                     <exclusion>
                         <artifactId>slf4j-api</artifactId>
@@ -104,53 +138,53 @@
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
-                <version>2.6</version>
+                <version>${commons-io.version}</version>
             </dependency>
             <dependency>
                 <groupId>info.picocli</groupId>
                 <artifactId>picocli</artifactId>
-                <version>4.0.4</version>
+                <version>${picocli.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.dataformat</groupId>
                 <artifactId>jackson-dataformat-yaml</artifactId>
-                <version>2.10.0</version>
+                <version>${jackson-yaml.version}</version>
             </dependency>
             <!-- Test dependencies -->
             <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
-                <version>3.13.2</version>
+                <version>${assertj.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.awaitility</groupId>
                 <artifactId>awaitility</artifactId>
-                <version>3.1.6</version>
+                <version>${awaitility.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
-                <version>4.12</version>
+                <version>${junit.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
-                <version>3.0.0</version>
+                <version>${mockito.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.openjdk.jmh</groupId>
                 <artifactId>jmh-core</artifactId>
-                <version>1.22</version>
+                <version>${jmh.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.openjdk.jmh</groupId>
                 <artifactId>jmh-generator-annprocess</artifactId>
-                <version>1.22</version>
+                <version>${jmh.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
@@ -191,22 +225,18 @@
                     </configuration>
                 </plugin>
                 <plugin>
-                    <artifactId>maven-deploy-plugin</artifactId>
-                    <version>2.8.2</version>
-                    <executions>
-                        <execution>
-                            <id>default-deploy</id>
-                            <phase>deploy</phase>
-                            <goals>
-                                <goal>deploy</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-gpg-plugin</artifactId>
                     <version>1.6</version>
+                    <executions>
+                        <execution>
+                            <id>sign-artifacts</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>sign</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -326,50 +356,6 @@
                     <value>true</value>
                 </property>
             </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-            <distributionManagement>
-                <repository>
-                    <id>ossrh</id>
-                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-                </repository>
-                <snapshotRepository>
-                    <id>ossrh</id>
-                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-                </snapshotRepository>
-            </distributionManagement>
-        </profile>
-        <profile>
-            <id>release-clojars</id>
-            <repositories>
-                <repository>
-                    <id>clojars.org</id>
-                    <url>https://repo.clojars.org</url>
-                </repository>
-            </repositories>
-
-            <distributionManagement>
-                <repository>
-                    <id>clojars</id>
-                    <name>Clojars repository</name>
-                    <url>https://clojars.org/repo</url>
-                </repository>
-            </distributionManagement>
         </profile>
     </profiles>
 </project>
