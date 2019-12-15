@@ -51,7 +51,7 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
 
         this.validPeriodAfterAccess = validPeriod;
 
-        return this;
+        return self();
     }
 
     /**
@@ -100,5 +100,10 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
         config.validPeriodAfterCreate = validPeriodAfterCreate;
         config.validPeriodAfterAccess = validPeriodAfterAccess;
         return config;
+    }
+
+    @Override
+    protected ExpirableBloomFilterConfig self() {
+        return this;
     }
 }

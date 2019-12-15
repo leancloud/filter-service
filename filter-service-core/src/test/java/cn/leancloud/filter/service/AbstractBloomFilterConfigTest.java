@@ -77,6 +77,9 @@ public class AbstractBloomFilterConfigTest {
     }
 
     private static class TestingBloomFilterConfig extends AbstractBloomFilterConfig<TestingBloomFilterConfig> {
-
+        @Override
+        protected TestingBloomFilterConfig self() {
+            return this;
+        }
     }
 }

@@ -37,7 +37,7 @@ public abstract class AbstractBloomFilterConfig<T extends AbstractBloomFilterCon
                 expectedInsertions);
 
         this.expectedInsertions = expectedInsertions;
-        return (T) this;
+        return self();
     }
 
     @SuppressWarnings("unchecked")
@@ -49,7 +49,7 @@ public abstract class AbstractBloomFilterConfig<T extends AbstractBloomFilterCon
                 fpp);
 
         this.fpp = fpp;
-        return (T) this;
+        return self();
     }
 
     @Override
@@ -79,4 +79,6 @@ public abstract class AbstractBloomFilterConfig<T extends AbstractBloomFilterCon
         config.expectedInsertions = expectedInsertions;
         return config;
     }
+
+    protected abstract T self();
 }
