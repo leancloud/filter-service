@@ -1,1 +1,14 @@
 language: java
+
+cache:
+  directories:
+    - $HOME/.m2
+
+install:
+  - mvn clean install -Pci-install -B -U -e
+
+script:
+  - travis_retry mvn clean package -Pci-test
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
