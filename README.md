@@ -1,7 +1,9 @@
 # Filter Service
 
 [![Build Status](https://api.travis-ci.org/leancloud/filter-service.svg?branch=master)](https://travis-ci.org/leancloud/filter-service)
+[![Coverage Status](https://codecov.io/gh/leancloud/filter-service/branch/master/graph/badge.svg)](https://codecov.io/gh/leancloud/filter-service)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Maven](https://img.shields.io/github/release/leancloud/filter-service.svg)](https://github.com/leancloud/filter-service/releases)
 
 Filter-Service is a daemon network service which is used to expose bloom filters and operations by RESTFul API. There's already a great daemon like bloom filter lib called [bloomd](https://github.com/armon/bloomd) which has great performance results, but we still write our own because performance is not our first priority but monitorability and client dependency free is (Yes, HTTP still needs client but it is far more common and versatile). So here is Filter-Service.  
 
