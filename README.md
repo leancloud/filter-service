@@ -165,5 +165,5 @@ On the left side of the screen shows all the available operations of Filter-Serv
 
 ## License
 
-Copyright 2019 LeanCloud. Released under the [MIT License](https://github.com/leancloud/filter-service/blob/master/LICENSE.md) .
+Copyright 2020 LeanCloud. Released under the [MIT License](https://github.com/leancloud/filter-service/blob/master/LICENSE.md) .
 
