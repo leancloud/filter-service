@@ -9,7 +9,6 @@ import java.util.NoSuchElementException;
  * @param <T> The type of thing we are iterating over
  */
 public abstract class AbstractIterator<T> implements Iterator<T> {
-
     private enum State {
         READY, NOT_READY, DONE, FAILED
     }
@@ -22,7 +21,7 @@ public abstract class AbstractIterator<T> implements Iterator<T> {
     public boolean hasNext() {
         switch (state) {
             case FAILED:
-                throw new IllegalStateException("Iterator is in failed state");
+                throw new IllegalStateException("iterator is in failed state");
             case DONE:
                 return false;
             case READY:
@@ -38,13 +37,13 @@ public abstract class AbstractIterator<T> implements Iterator<T> {
             throw new NoSuchElementException();
         state = State.NOT_READY;
         if (next == null)
-            throw new IllegalStateException("Expected item but none found.");
+            throw new IllegalStateException("expected item but none found");
         return next;
     }
 
     @Override
     public void remove() {
-        throw new UnsupportedOperationException("Removal not supported");
+        throw new UnsupportedOperationException("removal not supported");
     }
 
     public T peek() {

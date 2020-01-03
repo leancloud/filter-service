@@ -27,16 +27,26 @@ final class ServerOptions {
             description = "true when you want to serve the testing document service under path \"/docs\".")
     private boolean docService;
 
-    int getPort() {
+    int port() {
         return port;
     }
 
-    boolean isDocServiceEnabled() {
+    boolean docServiceEnabled() {
         return docService;
     }
 
     @Nullable
     String configFilePath() {
         return configFilePath;
+    }
+
+    ServerOptions() {
+
+    }
+
+    ServerOptions(@Nullable String configFilePath, int port, boolean docService) {
+        this.configFilePath = configFilePath;
+        this.port = port;
+        this.docService = docService;
     }
 }

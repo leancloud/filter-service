@@ -27,7 +27,10 @@ public final class Configuration {
         }
 
         try {
-            instance = new ObjectMapper(new YAMLFactory()).readValue(configFile, Configuration.class);
+            final Configuration configuration = new ObjectMapper(new YAMLFactory()).readValue(configFile, Configuration.class);
+            if (configuration != null) {
+                instance = configuration;
+            }
         } catch (JsonParseException | JsonMappingException ex) {
             throw new IllegalArgumentException("configuration file: " + configFilePath
                     + " is not a legal YAML file or has invalid configurations", ex);
@@ -247,7 +250,7 @@ public final class Configuration {
         this.defaultValidSecondsAfterCreate = Duration.ofSeconds(defaultValidSecondsAfterCreate);
     }
 
-    public void setchannelBufferSizeForFilterPersistence(int channelBufferSizeForFilterPersistence) {
+    public void setChannelBufferSizeForFilterPersistence(int channelBufferSizeForFilterPersistence) {
         if (channelBufferSizeForFilterPersistence <= 0) {
             throw new IllegalArgumentException("channelBufferSizeForFilterPersistence: "
                     + channelBufferSizeForFilterPersistence + " (expected: > 0)");
@@ -270,6 +273,8 @@ public final class Configuration {
     }
 
     public void setChannelOptions(SupportedChannelOptions channelOptions) {
+        requireNonNull(channelOptions, "channelOptions");
+
         this.channelOptions = channelOptions;
     }
 
@@ -401,22 +406,22 @@ public final class Configuration {
         }
 
         @JsonSetter("periodInSeconds")
-        public void setCheckingPeriod(long periodInSeconds) {
-            if (periodInSeconds <= 0) {
-                throw new IllegalArgumentException("periodInSeconds: "
-                        + periodInSeconds + " (expected: > 0)");
+        public void setCheckingPeriod(long persistentCheckingPeriodInSeconds) {
+            if (persistentCheckingPeriodInSeconds <= 0) {
+                throw new IllegalArgumentException("persistentCheckingPeriodInSeconds: "
+                        + persistentCheckingPeriodInSeconds + " (expected: > 0)");
             }
-            this.checkingPeriod = Duration.ofSeconds(periodInSeconds);
+            this.checkingPeriod = Duration.ofSeconds(persistentCheckingPeriodInSeconds);
         }
 
         @JsonSetter("updatesMoreThan")
-        public void setUpdatesThreshold(int updatesMoreThan) {
-            if (updatesMoreThan <= 0) {
-                throw new IllegalArgumentException("updatesMoreThan: "
-                        + updatesMoreThan + " (expected: > 0)");
+        public void setUpdatesThreshold(int persistentUpdatesCriteria) {
+            if (persistentUpdatesCriteria <= 0) {
+                throw new IllegalArgumentException("persistentUpdatesCriteria: "
+                        + persistentUpdatesCriteria + " (expected: > 0)");
             }
 
-            this.updatesThreshold = updatesMoreThan;
+            this.updatesThreshold = persistentUpdatesCriteria;
         }
 
         Duration checkingPeriod() {
