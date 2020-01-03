@@ -49,8 +49,8 @@ public class PersistentManagerTest {
     @Test
     public void testPersistentDirIsFile() throws Exception {
         FileChannel.open(tempDirPath.resolve("plain_file"), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-        assertThatThrownBy(() -> new PersistentManager<>(tempDirPath.resolve("plain_file")
-        )).isInstanceOf(IllegalStateException.class)
+        assertThatThrownBy(() -> new PersistentManager<>(tempDirPath.resolve("plain_file")))
+                .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("invalid persistent directory path, it's a regular file");
     }
 
@@ -129,8 +129,8 @@ public class PersistentManagerTest {
             channel.truncate(channel.size() - 1);
 
             assertThatThrownBy(() -> manager.recoverFilters(factory, false))
-                    .isInstanceOf(PersistentStorageException.class)
-                    .hasMessageContaining("failed to recover filters from:");
+                    .hasMessageContaining("failed to recover filters from:")
+                    .isInstanceOf(PersistentStorageException.class);
         }
     }
 
