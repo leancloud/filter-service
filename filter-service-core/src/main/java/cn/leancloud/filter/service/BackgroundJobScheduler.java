@@ -19,7 +19,7 @@ final class BackgroundJobScheduler {
 
     void scheduleFixedIntervalJob(Runnable runnable, String name, Duration interval) {
         final Timer timer = registry.timer(Configuration.metricsPrefix() + "." + name);
-        ScheduledFuture<?> future = scheduledExecutorService.scheduleWithFixedDelay(
+        final ScheduledFuture<?> future = scheduledExecutorService.scheduleWithFixedDelay(
                 timer.wrap(runnable),
                 interval.toMillis(),
                 interval.toMillis(),
@@ -32,12 +32,12 @@ final class BackgroundJobScheduler {
             f.cancel(false);
         }
 
+        futures.clear();
         final CompletableFuture<Void> shutdownFuture = new CompletableFuture<>();
         scheduledExecutorService.execute(() ->
                 shutdownFuture.complete(null)
         );
 
         shutdownFuture.join();
-        scheduledExecutorService.shutdown();
     }
 }

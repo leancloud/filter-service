@@ -111,6 +111,7 @@ public final class Bootstrap {
 
     private final MetricsService metricsService;
     private final BackgroundJobScheduler scheduler;
+    private final ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
     private final CountUpdateBloomFilterFactory<ExpirableBloomFilterConfig> factory;
     private final BloomFilterManagerImpl<BloomFilter, ExpirableBloomFilterConfig> bloomFilterManager;
     private final PersistentManager<BloomFilter> persistentManager;
@@ -119,7 +120,7 @@ public final class Bootstrap {
     public Bootstrap(ServerOptions opts) throws Exception {
         this.metricsService = loadMetricsService();
         final MeterRegistry registry = metricsService.createMeterRegistry();
-        final ScheduledThreadPoolExecutor scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(
+        scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(
                 Configuration.maxWorkerThreadPoolSize(),
                 new ThreadFactoryBuilder()
                         .setNameFormat("filter-service-worker-%s")
@@ -136,7 +137,7 @@ public final class Bootstrap {
         this.server = newServer(registry, opts, scheduledThreadPoolExecutor);
     }
 
-    private void start() throws Exception {
+    void start() throws Exception {
         recoverPreviousBloomFilters();
 
         scheduler.scheduleFixedIntervalJob(
@@ -157,11 +158,13 @@ public final class Bootstrap {
         logger.info("Filter server has been started with configurations: {}", Configuration.spec());
     }
 
-    private void stop() {
+    void stop() {
         try {
             server.stop().join();
 
             scheduler.stop();
+            scheduledThreadPoolExecutor.shutdown();
+            scheduledThreadPoolExecutor.awaitTermination(1, TimeUnit.DAYS);
 
             metricsService.stop();
             persistentManager.close();

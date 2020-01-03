@@ -39,4 +39,14 @@ final class ServerOptions {
     String configFilePath() {
         return configFilePath;
     }
+
+    ServerOptions() {
+
+    }
+
+    ServerOptions(@Nullable String configFilePath, int port, boolean docService) {
+        this.configFilePath = configFilePath;
+        this.port = port;
+        this.docService = docService;
+    }
 }
