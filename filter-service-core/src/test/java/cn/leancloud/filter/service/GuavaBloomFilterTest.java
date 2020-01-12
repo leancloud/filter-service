@@ -109,7 +109,7 @@ public class GuavaBloomFilterTest {
     @Test
     public void testToJson() throws Exception {
         final Duration validPeriodAfterAccess = Duration.ofSeconds(10);
-        final ExpirableBloomFilterConfig config = (ExpirableBloomFilterConfig) defaultTestingConfig.clone();
+        final ExpirableBloomFilterConfig config = new ExpirableBloomFilterConfig(defaultTestingConfig);
         config.setValidPeriodAfterAccess(validPeriodAfterAccess);
 
         final GuavaBloomFilter expectedFilter = testingFactory.createFilter(config);
@@ -175,5 +175,54 @@ public class GuavaBloomFilterTest {
         assertThat(actualFilter.validPeriodAfterAccess()).isEqualTo(validPeriodAfterAccess);
         assertThat(actualFilter.created().toEpochSecond()).isEqualTo(creation.toEpochSecond());
         assertThat(actualFilter.expired()).isFalse();
+    }
+
+    @Test
+    public void testHashcodeAndEquals() {
+        final Duration validPeriodAfterAccess = Duration.ofSeconds(3);
+        final int expectedInsertions = 1000000;
+        final double fpp = 0.0001;
+        final ZonedDateTime creation = ZonedDateTime.now(ZoneOffset.UTC);
+        final ZonedDateTime expiration = creation.plus(Duration.ofSeconds(10));
+        final GuavaBloomFilter filter = new GuavaBloomFilter(
+                expectedInsertions,
+                fpp,
+                creation,
+                expiration,
+                validPeriodAfterAccess);
+
+        final GuavaBloomFilter filter2 = new GuavaBloomFilter(
+                expectedInsertions,
+                fpp,
+                creation,
+                expiration,
+                validPeriodAfterAccess);
+
+        assertThat(filter.hashCode()).isEqualTo(filter2.hashCode());
+        assertThat(filter.equals(filter2)).isTrue();
+    }
+
+    @Test
+    public void testHashcodeAndEquals2() {
+        final Duration validPeriodAfterAccess = Duration.ofSeconds(3);
+        final double fpp = 0.0001;
+        final ZonedDateTime creation = ZonedDateTime.now(ZoneOffset.UTC);
+        final ZonedDateTime expiration = creation.plus(Duration.ofSeconds(10));
+        final GuavaBloomFilter filter = new GuavaBloomFilter(
+                1001,
+                fpp,
+                creation,
+                expiration,
+                validPeriodAfterAccess);
+
+        final GuavaBloomFilter filter2 = new GuavaBloomFilter(
+                1002,
+                fpp,
+                creation,
+                expiration,
+                validPeriodAfterAccess);
+
+        assertThat(filter.hashCode()).isNotEqualTo(filter2.hashCode());
+        assertThat(filter.equals(filter2)).isFalse();
     }
 }

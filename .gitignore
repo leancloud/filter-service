@@ -26,3 +26,5 @@ logs/
 hs_err_pid*
 
 *.iml
+lock
+snapshot.db

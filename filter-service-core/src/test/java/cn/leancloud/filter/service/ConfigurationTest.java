@@ -326,6 +326,91 @@ public class ConfigurationTest {
     }
 
     @Test
+    public void testHashAndEqualsInSupportedChannelOptions() {
+        final SupportedChannelOptions options = new SupportedChannelOptions();
+        options.setSoBacklog(1024);
+        options.setSoSndbuf(1024);
+        options.setSoRcvBuf(1024);
+        options.setTcpNodelay(true);
+
+        final SupportedChannelOptions options2 = new SupportedChannelOptions();
+        options2.setSoBacklog(1024);
+        options2.setSoSndbuf(1024);
+        options2.setSoRcvBuf(1024);
+        options2.setTcpNodelay(true);
+        assertThat(options.hashCode()).isEqualTo(options2.hashCode());
+        assertThat(options.equals(options2)).isTrue();
+    }
+
+    @Test
+    public void testHashAndEqualsInSupportedChannelOptions2() {
+        final SupportedChannelOptions options = new SupportedChannelOptions();
+        options.setSoBacklog(1024);
+        options.setSoSndbuf(1024);
+        options.setSoRcvBuf(1024);
+        options.setTcpNodelay(true);
+
+        final SupportedChannelOptions options2 = new SupportedChannelOptions();
+        options2.setSoBacklog(1025);
+        options2.setSoSndbuf(1024);
+        options2.setSoRcvBuf(1024);
+        options2.setTcpNodelay(true);
+        assertThat(options.hashCode()).isNotEqualTo(options2.hashCode());
+        assertThat(options.equals(options2)).isFalse();
+    }
+
+    @Test
+    public void testHashAndEqualsInSupportedChannelOptions3() {
+        final SupportedChannelOptions options = new SupportedChannelOptions();
+        options.setSoBacklog(1024);
+        options.setSoSndbuf(1024);
+        options.setSoRcvBuf(1024);
+        options.setTcpNodelay(true);
+
+        final SupportedChannelOptions options2 = new SupportedChannelOptions();
+        options2.setSoBacklog(1024);
+        options2.setSoSndbuf(1025);
+        options2.setSoRcvBuf(1024);
+        options2.setTcpNodelay(true);
+        assertThat(options.hashCode()).isNotEqualTo(options2.hashCode());
+        assertThat(options.equals(options2)).isFalse();
+    }
+
+    @Test
+    public void testHashAndEqualsInSupportedChannelOptions4() {
+        final SupportedChannelOptions options = new SupportedChannelOptions();
+        options.setSoBacklog(1024);
+        options.setSoSndbuf(1024);
+        options.setSoRcvBuf(1024);
+        options.setTcpNodelay(true);
+
+        final SupportedChannelOptions options2 = new SupportedChannelOptions();
+        options2.setSoBacklog(1024);
+        options2.setSoSndbuf(1024);
+        options2.setSoRcvBuf(1025);
+        options2.setTcpNodelay(true);
+        assertThat(options.hashCode()).isNotEqualTo(options2.hashCode());
+        assertThat(options.equals(options2)).isFalse();
+    }
+
+    @Test
+    public void testHashAndEqualsInSupportedChannelOptions5() {
+        final SupportedChannelOptions options = new SupportedChannelOptions();
+        options.setSoBacklog(1024);
+        options.setSoSndbuf(1024);
+        options.setSoRcvBuf(1024);
+        options.setTcpNodelay(true);
+
+        final SupportedChannelOptions options2 = new SupportedChannelOptions();
+        options2.setSoBacklog(1024);
+        options2.setSoSndbuf(1024);
+        options2.setSoRcvBuf(1024);
+        options2.setTcpNodelay(false);
+        assertThat(options.hashCode()).isNotEqualTo(options2.hashCode());
+        assertThat(options.equals(options2)).isFalse();
+    }
+
+    @Test
     public void testCreateCheckingPeriod() {
         final TriggerPersistenceCriteria options = new TriggerPersistenceCriteria(Duration.ofSeconds(10), 10);
         assertThat(options.updatesThreshold()).isEqualTo(10);
@@ -356,5 +441,29 @@ public class ConfigurationTest {
         assertThatThrownBy(() -> options.setUpdatesThreshold(0))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("persistentUpdatesCriteria: 0 (expected: > 0)");
+    }
+
+    @Test
+    public void testHashAndEqualsInTriggerPersistenceCriteria() {
+        final TriggerPersistenceCriteria options = new TriggerPersistenceCriteria(Duration.ofSeconds(10), 10);
+        final TriggerPersistenceCriteria options2 = new TriggerPersistenceCriteria(Duration.ofSeconds(10), 10);
+        assertThat(options.hashCode()).isEqualTo(options2.hashCode());
+        assertThat(options.equals(options2)).isTrue();
+    }
+
+    @Test
+    public void testHashAndEqualsInTriggerPersistenceCriteria2() {
+        final TriggerPersistenceCriteria options = new TriggerPersistenceCriteria(Duration.ofSeconds(10), 10);
+        final TriggerPersistenceCriteria options2 = new TriggerPersistenceCriteria(Duration.ofSeconds(11), 10);
+        assertThat(options.hashCode()).isNotEqualTo(options2.hashCode());
+        assertThat(options.equals(options2)).isFalse();
+    }
+
+    @Test
+    public void testHashAndEqualsInTriggerPersistenceCriteria3() {
+        final TriggerPersistenceCriteria options = new TriggerPersistenceCriteria(Duration.ofSeconds(10), 10);
+        final TriggerPersistenceCriteria options2 = new TriggerPersistenceCriteria(Duration.ofSeconds(10), 11);
+        assertThat(options.hashCode()).isNotEqualTo(options2.hashCode());
+        assertThat(options.equals(options2)).isFalse();
     }
 }

@@ -47,4 +47,52 @@ public class FilterRecordTest {
         final FilterRecordInputStream<GuavaBloomFilter> stream = new FilterRecordInputStream<>(tempFile.toPath(), new GuavaBloomFilterFactory());
         assertThat(stream.nextFilterRecord()).isEqualTo(new FilterRecord<>(testingFilterName, filter));
     }
+
+    @Test
+    public void testHashAndEquals() {
+        final GuavaBloomFilter filter = new GuavaBloomFilter(
+                expectedInsertions,
+                fpp,
+                creation,
+                expiration,
+                validPeriodAfterAccess);
+        final FilterRecord<GuavaBloomFilter> record = new FilterRecord<>(testingFilterName, filter);
+        final FilterRecord<GuavaBloomFilter> record2 = new FilterRecord<>(testingFilterName, filter);
+        assertThat(record.hashCode()).isEqualTo(record2.hashCode());
+        assertThat(record.equals(record2)).isTrue();
+    }
+
+    @Test
+    public void testHashAndEquals2() {
+        final GuavaBloomFilter filter = new GuavaBloomFilter(
+                expectedInsertions,
+                fpp,
+                creation,
+                expiration,
+                validPeriodAfterAccess);
+        final FilterRecord<GuavaBloomFilter> record = new FilterRecord<>("record1", filter);
+        final FilterRecord<GuavaBloomFilter> record2 = new FilterRecord<>("record2", filter);
+        assertThat(record.hashCode()).isNotEqualTo(record2.hashCode());
+        assertThat(record.equals(record2)).isFalse();
+    }
+
+    @Test
+    public void testHashAndEquals3() {
+        final FilterRecord<GuavaBloomFilter> record = new FilterRecord<>(testingFilterName,
+                new GuavaBloomFilter(
+                        expectedInsertions,
+                        0.01,
+                        creation,
+                        expiration,
+                        validPeriodAfterAccess));
+        final FilterRecord<GuavaBloomFilter> record2 = new FilterRecord<>(testingFilterName,
+                new GuavaBloomFilter(
+                        expectedInsertions,
+                        0.001,
+                        creation,
+                        expiration,
+                        validPeriodAfterAccess));
+        assertThat(record.hashCode()).isNotEqualTo(record2.hashCode());
+        assertThat(record.equals(record2)).isFalse();
+    }
 }

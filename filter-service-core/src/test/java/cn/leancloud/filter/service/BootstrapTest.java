@@ -16,7 +16,7 @@ public class BootstrapTest {
         final String configFilePath = "src/test/resources/testing-configuration.yaml";
         final ServerOptions opts = new ServerOptions(configFilePath, 8080, false);
         final Bootstrap bootstrap = new Bootstrap(opts);
-        bootstrap.start();
+        bootstrap.start(true);
 
         bootstrap.stop();
         FileUtils.forceDelete(Paths.get("lock").toFile());

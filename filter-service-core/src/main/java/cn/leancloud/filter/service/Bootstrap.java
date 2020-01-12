@@ -137,7 +137,7 @@ public final class Bootstrap {
         this.server = newServer(registry, opts, scheduledThreadPoolExecutor);
     }
 
-    void start() throws Exception {
+    void start(boolean forTesting) throws Exception {
         recoverPreviousBloomFilters();
 
         scheduler.scheduleFixedIntervalJob(
@@ -154,7 +154,10 @@ public final class Bootstrap {
         }
 
         metricsService.start();
-        server.start().join();
+
+        if (!forTesting) {
+            server.start().join();
+        }
         logger.info("Filter server has been started with configurations: {}", Configuration.spec());
     }
 
@@ -174,6 +177,10 @@ public final class Bootstrap {
         } finally {
             LogManager.shutdown();
         }
+    }
+
+    private void start() throws Exception {
+        start(false);
     }
 
     private MetricsService loadMetricsService() {

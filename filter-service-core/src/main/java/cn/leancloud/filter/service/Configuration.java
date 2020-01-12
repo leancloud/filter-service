@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
@@ -313,10 +312,10 @@ public final class Configuration {
     }
 
     public static class SupportedChannelOptions {
-        private int SO_RCVBUF = 2048;
-        private int SO_SNDBUF = 2048;
-        private int SO_BACKLOG = 2048;
-        private boolean TCP_NODELAY = true;
+        private int soRcvbuf = 2048;
+        private int soSndBuf = 2048;
+        private int soBackLog = 2048;
+        private boolean tcpNoDelay = true;
 
         @JsonSetter("SO_RCVBUF")
         public void setSoRcvBuf(int SO_RCVBUF) {
@@ -324,7 +323,7 @@ public final class Configuration {
                 throw new IllegalArgumentException("SO_RCVBUF: "
                         + SO_RCVBUF + " (expected: > 0)");
             }
-            this.SO_RCVBUF = SO_RCVBUF;
+            this.soRcvbuf = SO_RCVBUF;
         }
 
         @JsonSetter("SO_SNDBUF")
@@ -333,7 +332,7 @@ public final class Configuration {
                 throw new IllegalArgumentException("SO_SNDBUF: "
                         + SO_SNDBUF + " (expected: > 0)");
             }
-            this.SO_SNDBUF = SO_SNDBUF;
+            this.soSndBuf = SO_SNDBUF;
         }
 
         @JsonSetter("SO_BACKLOG")
@@ -342,28 +341,28 @@ public final class Configuration {
                 throw new IllegalArgumentException("SO_BACKLOG: "
                         + SO_BACKLOG + " (expected: > 0)");
             }
-            this.SO_BACKLOG = SO_BACKLOG;
+            this.soBackLog = SO_BACKLOG;
         }
 
         @JsonSetter("TCP_NODELAY")
         public void setTcpNodelay(boolean TCP_NODELAY) {
-            this.TCP_NODELAY = TCP_NODELAY;
+            this.tcpNoDelay = TCP_NODELAY;
         }
 
         int SO_RCVBUF() {
-            return SO_RCVBUF;
+            return soRcvbuf;
         }
 
         int SO_SNDBUF() {
-            return SO_SNDBUF;
+            return soSndBuf;
         }
 
         int SO_BACKLOG() {
-            return SO_BACKLOG;
+            return soBackLog;
         }
 
         boolean TCP_NODELAY() {
-            return TCP_NODELAY;
+            return tcpNoDelay;
         }
 
         @Override
@@ -371,15 +370,19 @@ public final class Configuration {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             final SupportedChannelOptions that = (SupportedChannelOptions) o;
-            return SO_RCVBUF == that.SO_RCVBUF &&
-                    SO_SNDBUF == that.SO_SNDBUF &&
-                    SO_BACKLOG == that.SO_BACKLOG &&
-                    TCP_NODELAY == that.TCP_NODELAY;
+            return soRcvbuf == that.soRcvbuf &&
+                    soSndBuf == that.soSndBuf &&
+                    soBackLog == that.soBackLog &&
+                    tcpNoDelay == that.tcpNoDelay;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(SO_RCVBUF, SO_SNDBUF, SO_BACKLOG, TCP_NODELAY);
+            int ret = Integer.hashCode(soRcvbuf);
+            ret = 31 * ret + Integer.hashCode(soSndBuf);
+            ret = 31 * ret + Integer.hashCode(soBackLog);
+            ret = 31 * ret + Boolean.hashCode(tcpNoDelay);
+            return ret;
         }
 
         @Override
@@ -443,7 +446,9 @@ public final class Configuration {
 
         @Override
         public int hashCode() {
-            return Objects.hash(checkingPeriod, updatesThreshold);
+            int ret = checkingPeriod.hashCode();
+            ret = 31 * ret + Integer.hashCode(updatesThreshold);
+            return ret;
         }
 
         @Override

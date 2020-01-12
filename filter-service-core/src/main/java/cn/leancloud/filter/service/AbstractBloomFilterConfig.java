@@ -1,7 +1,5 @@
 package cn.leancloud.filter.service;
 
-import java.util.Objects;
-
 import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkNotNull;
 import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkParameter;
 
@@ -63,21 +61,15 @@ public abstract class AbstractBloomFilterConfig<T extends AbstractBloomFilterCon
 
     @Override
     public int hashCode() {
-        return Objects.hash(expectedInsertions(), fpp());
+        int ret = Integer.hashCode(expectedInsertions);
+        ret = 31 * ret + Double.hashCode(fpp);
+        return ret;
     }
 
     @Override
     public String toString() {
         return "expectedInsertions=" + expectedInsertions +
                 ", fpp=" + fpp;
-    }
-
-    @Override
-    protected Object clone() throws CloneNotSupportedException {
-        final AbstractBloomFilterConfig config = (AbstractBloomFilterConfig) super.clone();
-        config.fpp = fpp;
-        config.expectedInsertions = expectedInsertions;
-        return config;
     }
 
     protected abstract T self();
