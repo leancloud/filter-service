@@ -1,5 +1,7 @@
 package cn.leancloud.filter.service;
 
+import cn.leancloud.filter.service.utils.Crc32C;
+
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;

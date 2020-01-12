@@ -1,4 +1,4 @@
-package cn.leancloud.filter.service;
+package cn.leancloud.filter.service.utils;
 
 import javax.annotation.Nullable;
 import java.util.Iterator;

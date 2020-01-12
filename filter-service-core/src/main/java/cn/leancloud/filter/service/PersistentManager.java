@@ -1,5 +1,6 @@
 package cn.leancloud.filter.service;
 
+import cn.leancloud.filter.service.utils.AbstractIterator;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
