@@ -1,5 +1,6 @@
 package cn.leancloud.filter.service;
 
+import cn.leancloud.filter.service.utils.ChecksumedBufferedOutputStream;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.options.Options;

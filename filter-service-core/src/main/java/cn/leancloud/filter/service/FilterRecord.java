@@ -1,5 +1,7 @@
 package cn.leancloud.filter.service;
 
+import cn.leancloud.filter.service.utils.ChecksumedBufferedOutputStream;
+
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;

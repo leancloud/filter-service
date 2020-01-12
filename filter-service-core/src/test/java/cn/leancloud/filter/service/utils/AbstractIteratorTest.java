@@ -1,4 +1,4 @@
-package cn.leancloud.filter.service;
+package cn.leancloud.filter.service.utils;
 
 import org.junit.Test;
 

@@ -1,4 +1,4 @@
-package cn.leancloud.filter.service;
+package cn.leancloud.filter.service.utils;
 
 import java.io.FilterOutputStream;
 import java.io.IOException;
@@ -119,7 +119,7 @@ public final class ChecksumedBufferedOutputStream extends FilterOutputStream {
         out.flush();
     }
 
-    synchronized long checksum() {
+    public synchronized long checksum() {
         return crc.getValue();
     }
 }
