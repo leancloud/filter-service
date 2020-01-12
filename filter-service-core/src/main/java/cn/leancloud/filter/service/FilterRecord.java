@@ -6,7 +6,6 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.GatheringByteChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 /**
  * The schema is:
@@ -82,7 +81,9 @@ public final class FilterRecord<F extends BloomFilter> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, filter);
+        int ret = name.hashCode();
+        ret = 31 * ret + filter.hashCode();
+        return ret;
     }
 
     @Override

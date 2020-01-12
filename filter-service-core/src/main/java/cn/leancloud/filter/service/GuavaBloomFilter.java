@@ -20,7 +20,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Objects;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class GuavaBloomFilter implements ExpirableBloomFilter {
@@ -229,11 +228,9 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
                     created.getOffset() == that.created.getOffset() &&
                     expiration.toInstant().getEpochSecond() == that.expiration.toInstant().getEpochSecond() &&
                     expiration.getOffset() == that.expiration.getOffset() &&
-                    filter.equals(that.filter) &&
                     (validPeriodAfterAccess == null ||
                             validPeriodAfterAccess.getSeconds() ==
-                                    that.validPeriodAfterAccess.getSeconds()) &&
-                    timer.equals(that.timer);
+                                    that.validPeriodAfterAccess.getSeconds());
 
         }
         return false;
@@ -241,18 +238,24 @@ public final class GuavaBloomFilter implements ExpirableBloomFilter {
 
     @Override
     public int hashCode() {
-        return Objects.hash(created, filter, expiration, fpp, expectedInsertions, validPeriodAfterAccess);
+        int ret = created.hashCode();
+        ret = 31 * ret + expiration.hashCode();
+        ret = 31 * ret + Double.hashCode(fpp);
+        ret = 31 * ret + Integer.hashCode(expectedInsertions);
+        if (validPeriodAfterAccess != null) {
+            ret = 31 * ret + validPeriodAfterAccess.hashCode();
+        }
+        return ret;
     }
 
     @Override
     public String toString() {
         return "GuavaBloomFilter{" +
-                ", created=" + created +
-                ", filter=" + filter +
-                ", expiration=" + expiration +
-                ", fpp=" + fpp +
                 ", expectedInsertions=" + expectedInsertions +
+                ", fpp=" + fpp +
+                ", expiration=" + expiration +
                 ", validPeriodAfterAccess" + validPeriodAfterAccess +
+                ", created=" + created +
                 '}';
     }
 

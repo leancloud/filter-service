@@ -3,7 +3,6 @@ package cn.leancloud.filter.service;
 import javax.annotation.Nullable;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
 import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkNotNull;
 import static cn.leancloud.filter.service.ServiceParameterPreconditions.checkParameter;
@@ -20,6 +19,11 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
     ExpirableBloomFilterConfig(int expectedInsertions, double fpp) {
         super(expectedInsertions, fpp);
         this.validPeriodAfterCreate = Configuration.defaultValidPeriodAfterCreate();
+    }
+
+    ExpirableBloomFilterConfig(ExpirableBloomFilterConfig config) {
+        super(config.expectedInsertions(), config.fpp());
+        this.validPeriodAfterAccess = config.validPeriodAfterAccess();
     }
 
     Duration validPeriodAfterCreate() {
@@ -82,7 +86,13 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), validPeriodAfterCreate, validPeriodAfterAccess);
+        int ret = super.hashCode();
+        ret = 31 * ret + validPeriodAfterCreate.hashCode();
+
+        if (validPeriodAfterAccess != null) {
+            ret = 31 * ret + validPeriodAfterAccess.hashCode();
+        }
+        return ret;
     }
 
     @Override
@@ -92,14 +102,6 @@ final class ExpirableBloomFilterConfig extends AbstractBloomFilterConfig<Expirab
                 "validPeriodAfterCreate=" + validPeriodAfterCreate +
                 ", validPeriodAfterAccess=" + validPeriodAfterAccess +
                 '}';
-    }
-
-    @Override
-    protected Object clone() throws CloneNotSupportedException {
-        final ExpirableBloomFilterConfig config = (ExpirableBloomFilterConfig) super.clone();
-        config.validPeriodAfterCreate = validPeriodAfterCreate;
-        config.validPeriodAfterAccess = validPeriodAfterAccess;
-        return config;
     }
 
     @Override
