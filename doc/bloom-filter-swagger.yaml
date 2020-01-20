@@ -234,6 +234,20 @@ paths:
             example: [true, false, false]
         400:
           description: "Some of the provided parameter is invalid."
+  /ping:
+    get:
+      tags:
+        - "Bloom Filter"
+      summary: "Test if this bloom filter service is ready to serve requests."
+      operationId: "ping"
+      produces:
+        - "text/plain"
+      responses:
+        200:
+          description: "Success. This bloom filter is healthy and can serve requests."
+          schema:
+            type: "string"
+            example: "pong"
 
 
 definitions:

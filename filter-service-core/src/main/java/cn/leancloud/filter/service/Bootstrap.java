@@ -3,9 +3,13 @@ package cn.leancloud.filter.service;
 import cn.leancloud.filter.service.Configuration.TriggerPersistenceCriteria;
 import cn.leancloud.filter.service.metrics.MetricsService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.linecorp.armeria.common.HttpRequest;
+import com.linecorp.armeria.common.HttpResponse;
 import com.linecorp.armeria.common.metric.MeterIdPrefixFunction;
+import com.linecorp.armeria.server.HttpService;
 import com.linecorp.armeria.server.Server;
 import com.linecorp.armeria.server.ServerBuilder;
+import com.linecorp.armeria.server.ServiceRequestContext;
 import com.linecorp.armeria.server.docs.DocService;
 import com.linecorp.armeria.server.metric.MetricCollectingService;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -220,10 +224,11 @@ public final class Bootstrap {
                 .idleTimeoutMillis(Configuration.idleTimeoutMillis())
                 .meterRegistry(registry);
 
+        sb.service("/v1/ping", (ctx, req) -> HttpResponse.of("pong"));
         sb.annotatedService("/v1/bloomfilter", new BloomFilterHttpService(bloomFilterManager))
                 .decorator(MetricCollectingService.newDecorator(MeterIdPrefixFunction.ofDefault(Configuration.metricsPrefix())));
         if (opts.docServiceEnabled()) {
-            sb.serviceUnder("/docs", new DocService());
+            sb.serviceUnder("/v1/docs", new DocService());
         }
         return sb.build();
     }
