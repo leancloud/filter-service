@@ -341,7 +341,8 @@
                 <configuration>
                     <serverId>ossrh</serverId>
                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>${module.deploy.skip}</autoReleaseAfterClose>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                    <skipNexusStagingDeployMojo>${module.deploy.skip}</skipNexusStagingDeployMojo>
                 </configuration>
             </plugin>
         </plugins>
