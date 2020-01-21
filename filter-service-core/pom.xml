@@ -11,10 +11,6 @@
     <packaging>jar</packaging>
     <name>filter-service-core ${project.version}</name>
 
-    <properties>
-        <module.deploy.skip>true</module.deploy.skip>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>cn.leancloud</groupId>

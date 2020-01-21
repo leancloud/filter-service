@@ -11,10 +11,6 @@
     <packaging>jar</packaging>
     <name>filter-service-metrics ${project.version}</name>
 
-    <properties>
-        <module.deploy.skip>false</module.deploy.skip>
-    </properties>
-
     <dependencies>
         <!--keep same with armeria-->
         <dependency>
