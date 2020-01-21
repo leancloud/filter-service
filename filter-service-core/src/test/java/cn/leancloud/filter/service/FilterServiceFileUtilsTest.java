@@ -22,5 +22,6 @@ public class FilterServiceFileUtilsTest {
         Path b = Paths.get(tempDir).resolve("path_b");
         assertThatThrownBy(() -> FilterServiceFileUtils.atomicMoveWithFallback(a, b))
                 .isInstanceOf(NoSuchFileException.class);
+        FileUtils.forceDelete(new File(tempDir));
     }
 }

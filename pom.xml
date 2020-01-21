@@ -5,7 +5,7 @@
     <groupId>cn.leancloud</groupId>
     <artifactId>filter-service</artifactId>
     <packaging>pom</packaging>
-    <version>1.6-SNAPSHOT</version>
+    <version>1.10-SNAPSHOT</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>A bloom filters daemon for Java.</description>
@@ -44,19 +44,7 @@
         <tag>HEAD</tag>
     </scm>
 
-    <distributionManagement>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-    </distributionManagement>
-
     <properties>
-        <maven.deploy.skip>true</maven.deploy.skip>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -78,6 +66,7 @@
         <jmh.version>1.22</jmh.version>
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <module.jacoco.skip>true</module.jacoco.skip>
+        <module.deploy.skip>true</module.deploy.skip>
         <skipTests>false</skipTests>
     </properties>
 
@@ -248,6 +237,11 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.6</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>3.1.1</version>
                 </plugin>
@@ -320,51 +314,6 @@
                 <artifactId>maven-release-plugin</artifactId>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <!-- We need to uncomment this when armeria is ready. https://github.com/leancloud/filter-service/pull/25 -->
-                    <archive>
-<!--                    <manifestEntries>-->
-<!--                        <Multi-Release>true</Multi-Release>-->
-<!--                    </manifestEntries>-->
-                    </archive>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>assemble-all</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <configuration>
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                    <detectOfflineLinks>true</detectOfflineLinks>
-                    <breakiterator>true</breakiterator>
-                    <author>false</author>
-                    <keywords>true</keywords>
-                    <skip>${maven.javadoc.skip}</skip>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <configuration>
@@ -385,6 +334,16 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>${module.deploy.skip}</autoReleaseAfterClose>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -409,19 +368,45 @@
         </profile>
         <!-- GPG Signature on release -->
         <profile>
-            <id>release-sign-artifacts</id>
+            <id>release</id>
             <activation>
                 <property>
                     <name>performRelease</name>
                     <value>true</value>
                 </property>
             </activation>
+            <properties>
+                <maven.javadoc.skip>false</maven.javadoc.skip>
+                <module.deploy.skip>false</module.deploy.skip>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <configuration>
+                            <encoding>${project.build.sourceEncoding}</encoding>
+                            <detectOfflineLinks>true</detectOfflineLinks>
+                            <breakiterator>true</breakiterator>
+                            <author>false</author>
+                            <keywords>true</keywords>
+                            <quiet>true</quiet>
+                            <failOnError>false</failOnError>
+                            <additionalparam>-Xdoclint:none</additionalparam>
+                            <includeDependencySources>true</includeDependencySources>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -432,20 +417,18 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.7</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
-                            <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
-                        </configuration>
-                    </plugin>
                 </plugins>
             </build>
+            <distributionManagement>
+                <repository>
+                    <id>ossrh</id>
+                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                </repository>
+                <snapshotRepository>
+                    <id>ossrh</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+                </snapshotRepository>
+            </distributionManagement>
         </profile>
     </profiles>
 </project>
