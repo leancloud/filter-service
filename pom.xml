@@ -6,7 +6,6 @@
     <artifactId>filter-service</artifactId>
     <packaging>pom</packaging>
     <version>1.11-SNAPSHOT</version>
-
     <name>${project.groupId}:${project.artifactId}</name>
     <description>A bloom filters daemon for Java.</description>
     <url>https://github.com/leancloud/filter-service</url>
