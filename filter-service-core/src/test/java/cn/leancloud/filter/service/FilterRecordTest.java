@@ -1,6 +1,7 @@
 package cn.leancloud.filter.service;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -22,13 +23,19 @@ public class FilterRecordTest {
     private static final String testingFilterName = "testing_filter";
 
     private File tempFile;
+    private String tempDir;
 
     @Before
     public void setUp() throws Exception {
-        final String tempDir = System.getProperty("java.io.tmpdir", "/tmp") +
+        tempDir = System.getProperty("java.io.tmpdir", "/tmp") +
                 File.separator + "filter_service_" + System.nanoTime();
         FileUtils.forceMkdir(new File(tempDir));
         tempFile = new File(tempDir + File.separator + "filter_record_test");
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        FileUtils.forceDelete(new File(tempDir));
     }
 
     @Test

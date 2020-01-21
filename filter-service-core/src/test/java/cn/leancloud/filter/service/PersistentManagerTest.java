@@ -44,6 +44,7 @@ public class PersistentManagerTest {
     @After
     public void tearDown() throws Exception {
         manager.close();
+        FileUtils.forceDelete(tempDirPath.toFile());
     }
 
     @Test

@@ -25,10 +25,11 @@ public class FilterRecordInputStreamTest {
 
     private FileChannel writeRecordChannel;
     private File tempFile;
+    private String tempDir;
 
     @Before
     public void setUp() throws Exception {
-        final String tempDir = System.getProperty("java.io.tmpdir", "/tmp") +
+        tempDir = System.getProperty("java.io.tmpdir", "/tmp") +
                 File.separator + "filter_service_" + System.nanoTime();
         FileUtils.forceMkdir(new File(tempDir));
         tempFile = new File(tempDir + File.separator + "filter_record_test");
@@ -38,6 +39,7 @@ public class FilterRecordInputStreamTest {
     @After
     public void tearDown() throws Exception {
         writeRecordChannel.close();
+        FileUtils.forceDelete(new File(tempDir));
     }
 
     @Test

@@ -3,13 +3,16 @@
     <parent>
         <artifactId>filter-service</artifactId>
         <groupId>cn.leancloud</groupId>
-        <version>1.7-SNAPSHOT</version>
+        <version>1.12-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>filter-service-metrics</artifactId>
+    <packaging>jar</packaging>
+    <name>filter-service-metrics ${project.version}</name>
+
     <properties>
-        <maven.deploy.skip>false</maven.deploy.skip>
+        <module.deploy.skip>false</module.deploy.skip>
     </properties>
 
     <dependencies>
@@ -48,11 +51,8 @@
     <build>
         <plugins>
             <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
