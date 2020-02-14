@@ -138,7 +138,7 @@ paths:
     post:
       tags:
       - "Bloom Filter"
-      summary: "Check if a list of value have been set to the taget Bloom filter"
+      summary: "Check if a list of values have been set to the taget Bloom filter"
       description: ""
       operationId: "checkMultiValue"
       consumes:
@@ -174,7 +174,7 @@ paths:
     post:
       tags:
       - "Bloom Filter"
-      summary: "Check if a value has been set to the taget Bloom filter. If not, set this value to the target Bloom filter."
+      summary: "Check if a value has been set to the taget Bloom filter. If not, set this value to that filter."
       description: ""
       operationId: "checkAndSetValue"
       consumes:
@@ -206,7 +206,7 @@ paths:
     post:
       tags:
       - "Bloom Filter"
-      summary: "Check if a list of values have been set to the taget Bloom filter. If not, set those values to the target Bloom filter."
+      summary: "Check if a list of values have been set to the taget Bloom filter. If not, set those values to that filter."
       description: ""
       operationId: "checkAndSetMultiValues"
       consumes:
@@ -310,7 +310,7 @@ definitions:
         minimum: 1
       overwrite:
         description: "true to force create a new Bloom filter. false to create a new
-        Bloom Filter only when there's no Bloom filter with the same name exits."
+        Bloom Filter only when there's no Bloom filter with the same name exists."
         type: "boolean"
     example: {"expectedInsertions":100000,
               "fpp":0.001,
