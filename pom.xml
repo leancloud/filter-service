@@ -60,7 +60,7 @@
         <jackson-yaml.version>2.10.0</jackson-yaml.version>
         <assertj.version>3.13.2</assertj.version>
         <awaitility.version>3.1.6</awaitility.version>
-        <junit.version>4.12</junit.version>
+        <junit.version>4.13.1</junit.version>
         <mockito.version>3.0.0</mockito.version>
         <jmh.version>1.22</jmh.version>
         <maven.javadoc.skip>true</maven.javadoc.skip>
