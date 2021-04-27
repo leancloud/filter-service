@@ -55,7 +55,7 @@
         <log4j.version>2.13.3</log4j.version>
         <findbugs.version>3.0.2</findbugs.version>
         <dropwizard.metrics.version>4.1.0</dropwizard.metrics.version>
-        <commons-io.version>2.6</commons-io.version>
+        <commons-io.version>2.7</commons-io.version>
         <picocli.version>4.0.4</picocli.version>
         <jackson-yaml.version>2.10.0</jackson-yaml.version>
         <assertj.version>3.13.2</assertj.version>
