@@ -52,7 +52,7 @@
         <disruptor.version>3.4.2</disruptor.version>
         <guava.version>29.0-jre</guava.version>
         <slf4j.version>1.7.29</slf4j.version>
-        <log4j.version>2.13.3</log4j.version>
+        <log4j.version>2.15.0</log4j.version>
         <findbugs.version>3.0.2</findbugs.version>
         <dropwizard.metrics.version>4.1.0</dropwizard.metrics.version>
         <commons-io.version>2.7</commons-io.version>
